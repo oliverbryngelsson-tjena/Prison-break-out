@@ -7,3 +7,4 @@ dist/
 android/app/build/
 .env
 /public/_staging/
+/.staging/

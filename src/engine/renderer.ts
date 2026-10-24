@@ -213,15 +213,18 @@ export class Renderer {
     this.trackPerformance(dt);
   }
 
-  private trackPerformance(dt: number): void {
-    const ms = dt * 1000;
+  private lastFrameAt = 0;
+  private trackPerformance(_dt: number): void {
+    // Use real elapsed time (the game clamps dt, which would hide slow frames).
+    const now = performance.now();
+    const ms = this.lastFrameAt ? Math.min(2000, now - this.lastFrameAt) : 16;
+    this.lastFrameAt = now;
     this.frameTimes.push(ms);
     if (this.frameTimes.length > 90) this.frameTimes.shift();
     const avg = this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;
     this.frameMs = avg;
     this.fps = 1000 / Math.max(avg, 1);
     if (!this.q.dynamicResolution || this.frameTimes.length < 90) return;
-    const now = performance.now();
     if (now - this.lastScaleChange < 2500) return;
     if (avg > 21 && this.scale > this.q.minScale) {
       this.scale = Math.max(this.q.minScale, this.scale - 0.08);

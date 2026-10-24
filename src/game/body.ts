@@ -24,6 +24,8 @@ export class Body implements Actor {
   height = 1.78;
   alive = true;
   hidden = false;
+  /** In cover (crouched in tall grass/bushes): undetectable except at very close range. */
+  concealed = false;
   crouched = false;
   solid = true;
   grounded = true;

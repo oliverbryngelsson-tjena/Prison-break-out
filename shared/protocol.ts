@@ -93,7 +93,7 @@ export interface PlayerSnap {
   y: number;
   /** ground speed */
   s: number;
-  /** flags: bit0 crouch, bit1 sprint, bit2 grounded, bit3 downed, bit4 onBike, bit5 blocking, bit6 hidden */
+  /** flags: bit0 crouch, bit1 sprint, bit2 grounded, bit3 downed, bit4 onBike, bit5 blocking, bit6 hidden, bit7 concealed */
   f: number;
   /** active action / animation override name */
   a?: string;

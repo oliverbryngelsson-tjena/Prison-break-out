@@ -545,6 +545,7 @@ export class PlayerController {
     if (this.state === 'bike') f |= 16;
     if (this.blocking) f |= 32;
     if (b.hidden) f |= 64;
+    if (b.concealed) f |= 128;
     const snap: PlayerSnap = {
       tm: time,
       p: [+b.pos.x.toFixed(3), +b.pos.y.toFixed(3), +b.pos.z.toFixed(3)],
@@ -642,6 +643,7 @@ export class RemoteAvatar {
       b.crouched = !!(a.f & 1);
       b.grounded = !!(a.f & 4);
       b.hidden = !!(a.f & 64);
+      b.concealed = !!(a.f & 128);
       this.downed = !!(a.f & 8);
       this.blocking = !!(a.f & 32);
       if (a.hp !== undefined) b.hp = a.hp;

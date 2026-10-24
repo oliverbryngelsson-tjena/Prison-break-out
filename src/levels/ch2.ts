@@ -241,7 +241,8 @@ export class Chapter2 extends Chapter {
     // Leaking steam pipe across the tunnel at z 3.6
     B.add(cylinderBetween(v3(14.2, TY + 2.25, 3.6), v3(16.2, TY + 2.25, 3.6), 0.1, 10), rust);
     // Flood water
-    new Water(w, { rect: { x0, z0: flood0 - 1, x1, z1: flood1 + 1 }, y: TY + 0.06, color: 0x1a1d16, opacity: 0.92 });
+    this.floodWater = new Water(w, { rect: { x0, z0: flood0 - 1, x1, z1: flood1 + 1 }, y: TY + 0.06, color: 0x1a1d16, opacity: 0.92 });
+    this.waters.push(this.floodWater);
     // Grate (bolted bars) at z 15.6
     this.grate = new THREE.Group();
     w.root.add(this.grate);
@@ -357,7 +358,7 @@ export class Chapter2 extends Chapter {
       chunk: 32,
     });
     await this.terrain.build(w);
-    new Water(w, { path: RIVER, width: 15, y: RIVER_Y, color: 0x101c1c, flow: [1, 0.08], opacity: 0.9 });
+    this.waters.push(new Water(w, { path: RIVER, width: 15, y: RIVER_Y, color: 0x101c1c, flow: [1, 0.08], opacity: 0.9 }));
     // Trees and rocks
     const items: FoliageItem[] = [
       { model: 'tree_fir_a', impostor: true, collider: 0.25, colliderHeight: 4 },
@@ -886,8 +887,24 @@ export class Chapter2 extends Chapter {
   }
 
   // ================================================================== frame
+  /** Cheap zone culling: the outdoors can't be seen from inside the walls, and vice versa for the tunnel. */
+  private updateVisibility(): void {
+    const c = this.g.cam.camera.position;
+    const indoors = c.y < -0.8 || (c.z < 6.2 && c.x > -14.5 && c.x < 16.4) || (c.z < -22 && c.z > -42.5);
+    const outsideVisible = !indoors;
+    if (this.terrain && this.terrain.group.visible !== outsideVisible) {
+      this.terrain.group.visible = outsideVisible;
+      if (this.foliage) this.foliage.group.visible = outsideVisible;
+      for (const w of this.waters) w.mesh.visible = outsideVisible || w === this.floodWater;
+      for (const s of this.searchlights) s.culled = !outsideVisible;
+    }
+  }
+  private waters: Water[] = [];
+  private floodWater: Water | null = null;
+
   update(dt: number): void {
     const g = this.g;
+    this.updateVisibility();
     // Animate hatch/drain/grate/ladder toward their states.
     const ease = (cur: number, tgt: number, sp: number) => cur + Math.sign(tgt - cur) * Math.min(Math.abs(tgt - cur), dt * sp);
     const hT = this.flags.hatchOpen ? 1 : 0, dT = this.flags.drainOpen ? 1 : 0, gT = this.flags.grateOpen ? 1 : 0;

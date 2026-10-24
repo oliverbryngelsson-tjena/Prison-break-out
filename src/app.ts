@@ -50,6 +50,9 @@ export class App {
   private pendingNext: number | null = null;
   private startingGame = false;
   private soloDev = false;
+  /** Test harness option (?render=N): draw only every Nth frame so logic runs at full speed under software GL. */
+  private renderEvery = Math.max(1, Number(new URLSearchParams(location.search).get('render')) || 1);
+  private frameNo = 0;
   /** Test/debug hook. */
   readonly debug: Record<string, unknown> = {};
 
@@ -517,7 +520,7 @@ export class App {
         if (this.state === 'game' && !this.paused && this.input.buttons.pause.pressed && !this.game.inCutscene) this.setPaused(true);
         else if (this.paused && this.input.buttons.pause.pressed) this.setPaused(false);
         this.game.update(dt);
-        this.renderer.render(dt);
+        if (++this.frameNo % this.renderEvery === 0) this.renderer.render(dt);
       } else if (this.menuScene) {
         this.menuScene.update(dt);
         this.renderer.render(dt);

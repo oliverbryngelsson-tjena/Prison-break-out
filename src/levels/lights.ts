@@ -110,6 +110,8 @@ export class Searchlight implements LightCone {
   /** Seconds per full loop. */
   period: number;
   private t = 0;
+  /** Hidden by zone culling (still simulated). */
+  culled = false;
   /** When set, the light tracks this point instead of the path (alarm). */
   track: THREE.Vector3 | null = null;
   readonly spotRadius: number;
@@ -136,7 +138,7 @@ export class Searchlight implements LightCone {
   /** Deterministic from shared time so both clients see the same sweep. */
   update(dt: number, sharedTime: number, groundY: (x: number, z: number) => number): void {
     void dt;
-    this.mesh.visible = this.pool.visible = this.on;
+    this.mesh.visible = this.pool.visible = this.on && !this.culled;
     if (this.light) this.light.visible = this.on;
     if (!this.on) return;
     if (this.track) this.target.lerp(this.track, 0.15);
