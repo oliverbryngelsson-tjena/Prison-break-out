@@ -264,7 +264,7 @@ export class BikeSystem {
   ctrl: BikeController;
   mounted = false;
   private engines = new Map<CharacterId, EngineSound>();
-  private remoteB: [number, number, number, number, number] = [0, 0, 0, 1200, 0];
+  private remoteB: number[] = [0, 0, 0, 1200, 0, 0, 0];
   private dustT = 0;
   enabled = true;
 
@@ -336,7 +336,7 @@ export class BikeSystem {
         if (b.poseName !== 'ride') b.setPose('ride', {}, { restart: true });
         b.updatePoseCtx({ points: vis.points(), k: { lean: c.lean, stand: c.grounded ? 0 : 0.6, steer: c.steer } });
       }
-      g.bikeSnap = [+c.lean.toFixed(2), +c.pitch.toFixed(2), +c.steer.toFixed(2), Math.round(c.rpm), +c.spin.toFixed(2)];
+      g.bikeSnap = [+c.lean.toFixed(2), +c.pitch.toFixed(2), +c.steer.toFixed(2), Math.round(c.rpm), +c.spin.toFixed(2), +c.speed.toFixed(1), c.crashed ? 1 : 0];
       this.engines.get(g.localChar)?.set(c.rpm, ctl.throttle, 0.55, c.pos);
       // Dust / mud from the rear wheel
       this.dustT -= dt;

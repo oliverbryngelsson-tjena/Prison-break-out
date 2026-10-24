@@ -98,7 +98,7 @@ export class Game implements SessionHandlers, CutsceneHost {
   /** Loading screen status callback. */
   onLoadStatus: ((s: string) => void) | null = null;
   /** Local bike state for snapshots [lean, pitch, steer, rpm, spin] (set by BikeSystem). */
-  bikeSnap: [number, number, number, number, number] | null = null;
+  bikeSnap: number[] | null = null;
   /** Optional camera target override (bikes). */
   camTarget: (() => { pos: THREE.Vector3; yaw: number; speed: number; mode: 'follow' | 'bike' }) | null = null;
   debug: Record<string, unknown> = {};

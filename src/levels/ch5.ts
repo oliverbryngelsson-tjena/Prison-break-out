@@ -43,7 +43,7 @@ export class Chapter5 extends Chapter {
   private track: THREE.Vector3[] = [];
   private trackS: number[] = [];
   private trackPath!: Path;
-  private cops: Array<{ car: Car; s: number; v: number; lane: number; siren: ReturnType<import('../engine/audio').AudioManager['siren']>; stuckT: number }> = [];
+  private cops: Array<{ car: Car; s: number; v: number; lane: number; siren: ReturnType<import('../engine/audio').AudioManager['siren']>; stuckT: number; active: boolean }> = [];
   private block: Car[] = [];
   private catchT: Record<CharacterId, number> = { elias: 0, jax: 0 };
   private respawnT = -1;
@@ -121,7 +121,7 @@ export class Chapter5 extends Chapter {
       const car = await Car.create(w, { police: true });
       car.sirenOn = true;
       car.root.visible = false;
-      this.cops.push({ car, s: -60 - i * 25, v: 0, lane: i % 2 ? 2.2 : -2.2, siren: null, stuckT: 0 });
+      this.cops.push({ car, s: -60 - i * 25, v: 0, lane: i % 2 ? 2.2 : -2.2, siren: null, stuckT: 0, active: false });
     }
     w.ambientLoop('amb_wind', 0.35);
     w.tickers.add((dt, t) => {
@@ -432,12 +432,13 @@ export class Chapter5 extends Chapter {
     this.cops.forEach((c, i) => {
       c.s = s0 - i * 22;
       c.v = 0;
-      c.car.root.visible = true;
+      c.active = true;
+      c.car.root.visible = c.s > 0;
       c.siren ??= g.audio.siren();
     });
   }
   private stopCops(): void {
-    for (const c of this.cops) { c.car.root.visible = false; c.siren?.stop(); c.siren = null; c.car.collider && (c.car.collider.enabled = false); }
+    for (const c of this.cops) { c.active = false; c.car.root.visible = false; c.siren?.stop(); c.siren = null; c.car.collider && (c.car.collider.enabled = false); }
   }
 
   // ================================================================== events
@@ -464,7 +465,7 @@ export class Chapter5 extends Chapter {
       case 'cars': {
         if (this.authority) return true;
         const s = a.s as number[], v = a.v as number[];
-        this.cops.forEach((c, i) => { if (s[i] !== undefined) { c.s = s[i]; c.v = v[i]; c.car.root.visible = true; c.siren ??= g.audio.siren(); } });
+        this.cops.forEach((c, i) => { if (s[i] !== undefined) { c.s = s[i]; c.v = v[i]; c.active = true; c.siren ??= g.audio.siren(); } });
         return true;
       }
       case 'progress': {
@@ -556,7 +557,7 @@ export class Chapter5 extends Chapter {
     const slow = Math.min(this.lastS.elias, this.lastS.jax);
     const total = this.trackS[this.trackS.length - 1];
     for (const [i, c] of this.cops.entries()) {
-      if (!c.car.root.visible) continue;
+      if (!c.active) continue;
       if (this.authority) {
         // Rubber band: catch up when far, ease off when close; never pass the slow rider by much.
         const gap = slow - c.s - i * 14;
@@ -572,6 +573,7 @@ export class Chapter5 extends Chapter {
       const p = at.pos.clone().addScaledVector(side, c.lane);
       p.y = this.terrain.height(p.x, p.z);
       c.car.root.visible = c.s > 0;
+      if (c.car.collider) c.car.collider.enabled = c.s > 0;
       if (c.s > 0) c.car.setPose(p, at.yaw, g.world.physics);
       c.siren?.set(p.clone().setY(p.y + 1.5), 0.55, 0);
     }
@@ -584,8 +586,9 @@ export class Chapter5 extends Chapter {
       // A cruiser catches a stopped/crashed rider
       for (const ch of ['elias', 'jax'] as CharacterId[]) {
         const b = g.body(ch);
-        const near = this.cops.some((c) => c.car.root.visible && c.car.root.position.distanceTo(b.pos) < 4.5);
-        const slowRider = ch === g.localChar ? (this.bikes.ctrl.crashed || Math.abs(this.bikes.ctrl.speed) < 3) : (g.remote.bike ? false : true) || b.speed < 0.1 && !g.remote.onBike;
+        const near = this.cops.some((c) => c.active && c.s > 0 && c.car.root.position.distanceTo(b.pos) < 4.5);
+        const rb = g.remote.bike;
+        const slowRider = ch === g.localChar ? (this.bikes.ctrl.crashed || Math.abs(this.bikes.ctrl.speed) < 3) : !g.remote.onBike || !rb || (rb[6] ?? 0) > 0.5 || Math.abs(rb[5] ?? 0) < 3;
         this.catchT[ch] = near && slowRider ? this.catchT[ch] + dt : Math.max(0, this.catchT[ch] - dt);
         if (this.catchT[ch] > 1.6) {
           this.catchT[ch] = 0;

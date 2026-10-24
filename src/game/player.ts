@@ -585,7 +585,7 @@ export class RemoteAvatar {
   blocking = false;
   /** Riding a bike (snapshot bit 4) and the interpolated bike state [lean, pitch, steer, rpm, spin]. */
   onBike = false;
-  bike: [number, number, number, number, number] | null = null;
+  bike: number[] | null = null;
   /** Driven by a local script (cutscene) instead of the network. */
   scripted = false;
   private lastPoseKey = '';
@@ -656,7 +656,7 @@ export class RemoteAvatar {
         const lerp = (i: number) => a.b![i] + (c.b![i] - a.b![i]) * k;
         let ds = c.b[4] - a.b[4];
         if (ds < -Math.PI) ds += Math.PI * 2;
-        this.bike = [lerp(0), lerp(1), lerp(2), lerp(3), a.b[4] + ds * k];
+        this.bike = [lerp(0), lerp(1), lerp(2), lerp(3), a.b[4] + ds * k, lerp(5), c.b[6] ?? 0];
       } else this.bike = a.b ?? null;
       if (a.hp !== undefined) b.hp = a.hp;
       if (a.v && a.v !== this.variant) { this.variant = a.v; this.onVariant?.(a.v); }

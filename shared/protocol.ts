@@ -100,8 +100,8 @@ export interface PlayerSnap {
   /** action start time (sender game time) */
   at?: number;
   hp?: number;
-  /** bike: [lean, pitch, steer, rpm, wheelSpin] */
-  b?: [number, number, number, number, number];
+  /** bike: [lean, pitch, steer, rpm, wheelSpin, speed, crashed(0/1)] */
+  b?: number[];
   /** look target for head (world) */
   lk?: [number, number, number];
   /** pose parameters (world points / scalars) for the active pose */
