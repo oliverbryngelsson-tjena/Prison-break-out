@@ -88,6 +88,15 @@ export class MaterialLib {
     return m;
   }
 
+  /** Raw textures of a set (colour sRGB, normal/roughness linear), repeat-wrapped. */
+  async textureSet(set: string): Promise<{ c?: THREE.Texture; n?: THREE.Texture; r?: THREE.Texture }> {
+    await this.init();
+    const s = this.sets[set];
+    if (!s) { console.warn('unknown texture set', set); return {}; }
+    const [c, n, r] = await Promise.all([s.c ? this.tex(s.c, true) : undefined, s.n ? this.tex(s.n, false) : undefined, s.r ? this.tex(s.r, false) : undefined]);
+    return { c, n, r };
+  }
+
   /** Plain (untextured) PBR material. */
   plain(color: THREE.ColorRepresentation, roughness = 0.7, metalness = 0, extra: Partial<THREE.MeshStandardMaterialParameters> = {}): THREE.MeshStandardMaterial {
     const key = `plain:${new THREE.Color(color).getHexString()}:${roughness}:${metalness}:${JSON.stringify(extra)}`;

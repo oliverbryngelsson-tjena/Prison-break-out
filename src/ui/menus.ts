@@ -85,6 +85,9 @@ export class Menus {
   }
 
   show(name: string | null): void {
+    // Drop focus from text fields on the previous screen, or the game would ignore keys typed "into" a hidden input.
+    const active = document.activeElement as HTMLElement | null;
+    if (active && active !== document.body && typeof active.blur === 'function') active.blur();
     for (const [n, el] of this.screens) el.classList.toggle('show', n === name);
     this.current = name ?? '';
     if (name === 'main') this.refreshMain();

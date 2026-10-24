@@ -327,6 +327,8 @@ export class Game implements SessionHandlers, CutsceneHost {
     const name = surfaceSound[s] ?? 'step_concrete';
     const dist = b.pos.distanceTo(this.cam.camera.position);
     if (dist > 30) return;
+    if (s === 'water') this.world.particles.emit('splash', b.pos.clone().setY(b.pos.y + 0.15), 6 + Math.round(loud * 6));
+    else if ((s === 'dirt' || s === 'mud') && b.speed > 3) this.world.particles.emit(s === 'mud' ? 'mud' : 'dust', b.pos.clone().setY(b.pos.y + 0.05), 3);
     this.audio.play(name, { pos: b.pos.clone().setY(b.pos.y + 0.05), volume: (0.25 + 0.5 * loud) * (b.crouched ? 0.35 : 1), jitter: 0.08, ref: 1.5, maxDist: 30 });
   }
 

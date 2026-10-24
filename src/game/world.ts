@@ -176,6 +176,7 @@ export class World {
   }
 
   surfaceAt(x: number, z: number, y: number): Surface {
+    if (this.physics.water.length && this.physics.inWater(x, z, y + 0.08)) return 'water';
     return this.physics.groundAt(x, z, y + 0.3)?.surface ?? 'concrete';
   }
 

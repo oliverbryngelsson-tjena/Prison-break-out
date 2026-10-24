@@ -307,6 +307,9 @@ export class PlayerController {
       else target = mag < 0.55 ? 1.5 * (mag / 0.55) + 0.2 : 3.2 + (mag - 0.55) * 1.3;
       if (this.blocking) target = Math.min(target, 1.2);
       target = Math.min(target, this.maxSpeed);
+      // Wading slows you down.
+      const depth = this.waterDepth();
+      if (depth > 0.15) target *= Math.max(0.45, 1 - depth * 0.6);
     }
     if (attacking) target = 0;
     const curSpeed = Math.hypot(this.moveVel.x, this.moveVel.z);
@@ -352,6 +355,14 @@ export class PlayerController {
     const loud = this.sprinting ? 9 : b.speed > 2.5 ? 5.5 : b.crouched ? 0 : b.speed > 0.5 ? 1.8 : 0;
     if (loud > 0 && Math.random() < dt * 4) this.ctx.world.addNoise(b.pos, loud, this.char, 'step');
     cam.fovBoost = this.sprinting ? 6 : 0;
+  }
+
+  /** Depth of water at the player's feet (0 when dry). */
+  waterDepth(): number {
+    const b = this.body;
+    const ph = this.ctx.world.physics;
+    for (const w of ph.water) if (b.pos.x >= w.minX && b.pos.x <= w.maxX && b.pos.z >= w.minZ && b.pos.z <= w.maxZ && b.pos.y < w.y) return w.y - b.pos.y;
+    return 0;
   }
 
   private applyGravity(dt: number): void {

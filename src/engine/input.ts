@@ -40,7 +40,8 @@ export class Input {
 
   constructor() {
     window.addEventListener('keydown', (e) => {
-      if ((e.target as HTMLElement)?.tagName === 'INPUT') return;
+      const t = e.target as HTMLElement | null;
+      if (t?.tagName === 'INPUT' && t.offsetParent !== null) return;
       this.setDevice('keyboard');
       if (!e.repeat) {
         const b = KEYMAP[e.code];

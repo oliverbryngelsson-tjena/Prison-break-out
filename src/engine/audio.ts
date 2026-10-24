@@ -237,6 +237,39 @@ export class AudioManager {
     return new SirenSound(this);
   }
 
+  private shotBuf: AudioBuffer | null = null;
+  /** Synthesised gunshot: noise crack + low thump + long tail through the reverb send. */
+  gunshot(pos?: THREE.Vector3, volume = 1, distant = false): void {
+    if (!this.ctx) return;
+    const ctx = this.ctx;
+    if (!this.shotBuf) {
+      const len = Math.floor(ctx.sampleRate * 1.2);
+      const b = ctx.createBuffer(1, len, ctx.sampleRate);
+      const d = b.getChannelData(0);
+      let lp = 0;
+      for (let i = 0; i < len; i++) {
+        const t = i / ctx.sampleRate;
+        const env = t < 0.004 ? t / 0.004 : Math.exp(-(t - 0.004) * 18) * 0.85 + Math.exp(-t * 3.2) * 0.15;
+        const n = Math.random() * 2 - 1;
+        lp += (n - lp) * 0.35;
+        const thump = Math.sin(2 * Math.PI * 70 * t * (1 - t)) * Math.exp(-t * 22);
+        d[i] = (lp * 0.8 + n * 0.25 * Math.exp(-t * 60) + thump * 0.9) * env;
+      }
+      this.shotBuf = b;
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = this.shotBuf;
+    src.playbackRate.value = 0.9 + Math.random() * 0.2;
+    const f = ctx.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.value = distant ? 1400 : 6000;
+    src.connect(f);
+    const { out } = this.route(f, { pos, ref: 6, maxDist: 400 });
+    out.gain.value = volume * (distant ? 0.6 : 1);
+    src.start();
+    src.onended = () => out.disconnect();
+  }
+
   /** Short synthesised UI blip (works without any audio files). */
   blip(freq = 880, dur = 0.06, vol = 0.15): void {
     if (!this.ctx) return;
