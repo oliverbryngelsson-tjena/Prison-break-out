@@ -1,0 +1,504 @@
+{
+ "m": {
+  "hipY": 0.897896945476532,
+  "clips": {
+   "walk": {
+    "duration": 1.2,
+    "speed": 1.012,
+    "loop": true,
+    "src": "m_walk_neutral_01"
+   },
+   "walk2": {
+    "duration": 1.067,
+    "speed": 1.348,
+    "loop": true,
+    "src": "m_walk_neutral_02"
+   },
+   "walk_slow": {
+    "duration": 1.467,
+    "speed": 0.821,
+    "loop": true,
+    "src": "m_walk_slow_01"
+   },
+   "walk_fast": {
+    "duration": 1.067,
+    "speed": 1.495,
+    "loop": true,
+    "src": "m_walk_fast_01"
+   },
+   "walk_cool": {
+    "duration": 1.267,
+    "speed": 1.048,
+    "loop": true,
+    "src": "m_walk_cool_01"
+   },
+   "walk_injured": {
+    "duration": 2.533,
+    "speed": 0.713,
+    "loop": true,
+    "src": "m_walk_bruised"
+   },
+   "run": {
+    "duration": 0.733,
+    "speed": 2.88,
+    "loop": true,
+    "src": "m_run_neutral_01"
+   },
+   "run_fast": {
+    "duration": 0.6,
+    "speed": 5.839,
+    "loop": true,
+    "src": "m_run_fast_01"
+   },
+   "run_slow": {
+    "duration": 0.767,
+    "speed": 2.411,
+    "loop": true,
+    "src": "m_run_slow_01"
+   },
+   "run_injured": {
+    "duration": 0.667,
+    "speed": 3.452,
+    "loop": true,
+    "src": "m_run_injured"
+   },
+   "crouch_in": {
+    "duration": 4.5,
+    "speed": 0,
+    "loop": false,
+    "src": "m_crouch_in"
+   },
+   "crouch_out": {
+    "duration": 4.5,
+    "speed": 0,
+    "loop": false,
+    "src": "m_crouch_out"
+   },
+   "crouch_idle": {
+    "duration": 6.867,
+    "speed": 0,
+    "loop": true,
+    "src": "m_crouch_idle"
+   },
+   "crouch_gestic": {
+    "duration": 10.867,
+    "speed": 0,
+    "loop": true,
+    "src": "m_crouch_gestic"
+   },
+   "idle": {
+    "duration": 11,
+    "speed": 0,
+    "loop": true,
+    "src": "m_idle_neutral_01"
+   },
+   "idle2": {
+    "duration": 10.667,
+    "speed": 0,
+    "loop": true,
+    "src": "m_idle_neutral_02"
+   },
+   "idle3": {
+    "duration": 7.267,
+    "speed": 0,
+    "loop": true,
+    "src": "m_idle_neutral_03"
+   },
+   "idle_angry": {
+    "duration": 9.167,
+    "speed": 0,
+    "loop": true,
+    "src": "m_idle_angry_01"
+   },
+   "idle_angry2": {
+    "duration": 10.733,
+    "speed": 0,
+    "loop": true,
+    "src": "m_idle_angry_02"
+   },
+   "idle_nervous": {
+    "duration": 9.367,
+    "speed": 0,
+    "loop": true,
+    "src": "m_idle_nervous_01"
+   },
+   "idle_look": {
+    "duration": 4.633,
+    "speed": 0,
+    "loop": true,
+    "src": "m_idle_look_around_01"
+   },
+   "idle_look2": {
+    "duration": 4.5,
+    "speed": 0,
+    "loop": true,
+    "src": "m_idle_look_around_02"
+   },
+   "idle_breathe": {
+    "duration": 2.733,
+    "speed": 0,
+    "loop": true,
+    "src": "m_idle_breathe_01"
+   },
+   "idle_wait": {
+    "duration": 7.267,
+    "speed": 0,
+    "loop": true,
+    "src": "m_idle_waiting_01"
+   },
+   "idle_scratch": {
+    "duration": 4.967,
+    "speed": 0,
+    "loop": true,
+    "src": "m_idle_scratch_head_01"
+   },
+   "idle_stretch": {
+    "duration": 6.633,
+    "speed": 0,
+    "loop": true,
+    "src": "m_idle_stretch_arms_01"
+   },
+   "idle_shake": {
+    "duration": 3.667,
+    "speed": 0,
+    "loop": true,
+    "src": "m_idle_shake_arms_01"
+   },
+   "idle_dust": {
+    "duration": 5.5,
+    "speed": 0,
+    "loop": true,
+    "src": "m_idle_dust_01"
+   },
+   "idle_yawn": {
+    "duration": 9.233,
+    "speed": 0,
+    "loop": true,
+    "src": "m_idle_yawn_01"
+   },
+   "talk": {
+    "duration": 10.067,
+    "speed": 0,
+    "loop": true,
+    "src": "m_gestic_talk_neutral_01"
+   },
+   "talk2": {
+    "duration": 9.8,
+    "speed": 0,
+    "loop": true,
+    "src": "m_gestic_talk_neutral_02"
+   },
+   "talk_angry": {
+    "duration": 10.2,
+    "speed": 0,
+    "loop": true,
+    "src": "m_gestic_talk_angry_01"
+   },
+   "talk_angry2": {
+    "duration": 7.067,
+    "speed": 0,
+    "loop": true,
+    "src": "m_gestic_talk_angry_02"
+   },
+   "talk_excited": {
+    "duration": 9.867,
+    "speed": 0,
+    "loop": true,
+    "src": "m_gestic_talk_excited_01"
+   },
+   "talk_nervous": {
+    "duration": 9.967,
+    "speed": 0,
+    "loop": true,
+    "src": "m_gestic_talk_nervous_01"
+   },
+   "talk_sad": {
+    "duration": 10.067,
+    "speed": 0,
+    "loop": true,
+    "src": "m_gestic_talk_sad_01"
+   },
+   "talk_cool": {
+    "duration": 8.233,
+    "speed": 0,
+    "loop": true,
+    "src": "m_gestic_talk_cool"
+   },
+   "talk_relaxed": {
+    "duration": 10.067,
+    "speed": 0,
+    "loop": true,
+    "src": "m_gestic_talk_relaxed_01"
+   },
+   "talk_assured": {
+    "duration": 9.067,
+    "speed": 0,
+    "loop": true,
+    "src": "m_gestic_talk_self_assured_01"
+   },
+   "listen": {
+    "duration": 9.5,
+    "speed": 0,
+    "loop": true,
+    "src": "m_gestic_listen_neutral_01"
+   },
+   "listen_angry": {
+    "duration": 9.133,
+    "speed": 0,
+    "loop": true,
+    "src": "m_gestic_listen_angry_01"
+   },
+   "listen_sad": {
+    "duration": 9.5,
+    "speed": 0,
+    "loop": true,
+    "src": "m_gestic_listen_sad_01"
+   },
+   "listen_nervous": {
+    "duration": 7.833,
+    "speed": 0,
+    "loop": true,
+    "src": "m_gestic_listen_nervous_01"
+   },
+   "deny": {
+    "duration": 3,
+    "speed": 0,
+    "loop": true,
+    "src": "m_gestic_listen_deny_01"
+   },
+   "accept": {
+    "duration": 3.7,
+    "speed": 0,
+    "loop": true,
+    "src": "m_gestic_listen_accept_01"
+   },
+   "shrug": {
+    "duration": 1.833,
+    "speed": 0,
+    "loop": true,
+    "src": "m_gestic_shrug_01"
+   },
+   "thoughtful": {
+    "duration": 11,
+    "speed": 0,
+    "loop": true,
+    "src": "m_gestic_thoughtful_01"
+   },
+   "laugh": {
+    "duration": 11,
+    "speed": 0,
+    "loop": true,
+    "src": "m_gestic_laugh_low"
+   },
+   "laugh_loud": {
+    "duration": 10.567,
+    "speed": 0,
+    "loop": true,
+    "src": "m_gestic_laugh_loud"
+   },
+   "knock_door": {
+    "duration": 8,
+    "speed": 0,
+    "loop": true,
+    "src": "m_knock_door"
+   },
+   "listen_door": {
+    "duration": 8.333,
+    "speed": 0,
+    "loop": true,
+    "src": "m_listen_door"
+   },
+   "try_door": {
+    "duration": 6.2,
+    "speed": 0,
+    "loop": true,
+    "src": "m_try_door_inwards"
+   },
+   "docs_check": {
+    "duration": 10.6,
+    "speed": 0,
+    "loop": true,
+    "src": "m_documents_check"
+   },
+   "docs_idle": {
+    "duration": 8.933,
+    "speed": 0,
+    "loop": true,
+    "src": "m_documents_idle"
+   },
+   "phone_talk": {
+    "duration": 9.233,
+    "speed": 0,
+    "loop": true,
+    "src": "m_cell_phone_talk_01"
+   },
+   "phone_listen": {
+    "duration": 7.5,
+    "speed": 0,
+    "loop": true,
+    "src": "m_cell_phone_listen_01"
+   },
+   "phone_text": {
+    "duration": 8.1,
+    "speed": 0,
+    "loop": true,
+    "src": "m_cell_phone_textmessage"
+   },
+   "drink": {
+    "duration": 11,
+    "speed": 0,
+    "loop": true,
+    "src": "m_drink_drinking"
+   },
+   "sit_chair": {
+    "duration": 10.967,
+    "speed": 0,
+    "loop": true,
+    "src": "m_sit_chair_idle_neutral_01"
+   },
+   "sit_chair_nervous": {
+    "duration": 10.367,
+    "speed": 0,
+    "loop": true,
+    "src": "m_sit_chair_idle_nervous_01"
+   },
+   "sit_table": {
+    "duration": 8.267,
+    "speed": 0,
+    "loop": true,
+    "src": "m_sit_table_idle_neutral_01"
+   },
+   "sit_table_relaxed": {
+    "duration": 8.3,
+    "speed": 0,
+    "loop": true,
+    "src": "m_sit_table_idle_relaxed_01"
+   },
+   "work_table": {
+    "duration": 11,
+    "speed": 0,
+    "loop": true,
+    "src": "m_work_table"
+   },
+   "work_mid": {
+    "duration": 11,
+    "speed": 0,
+    "loop": true,
+    "src": "m_work_mid"
+   },
+   "trolley": {
+    "duration": 8.067,
+    "speed": 0,
+    "loop": true,
+    "src": "m_trolley_idle"
+   },
+   "cheer": {
+    "duration": 7.867,
+    "speed": 0,
+    "loop": true,
+    "src": "m_cheer_01"
+   },
+   "clap": {
+    "duration": 7,
+    "speed": 0,
+    "loop": true,
+    "src": "m_claphands_01"
+   },
+   "hold_bag": {
+    "duration": 8.433,
+    "speed": 0,
+    "loop": true,
+    "src": "m_hold_bag_idle"
+   },
+   "newspaper": {
+    "duration": 7.267,
+    "speed": 0,
+    "loop": true,
+    "src": "m_newspaper_hand_idle"
+   },
+   "headphones": {
+    "duration": 7,
+    "speed": 0,
+    "loop": true,
+    "src": "m_headphones_idle"
+   },
+   "wave": {
+    "duration": 2.833,
+    "speed": 0,
+    "loop": true,
+    "src": "m_wave_01"
+   },
+   "turn_left": {
+    "duration": 2.333,
+    "speed": 0,
+    "loop": false,
+    "src": "m_turn_left_90"
+   },
+   "turn_right": {
+    "duration": 2.167,
+    "speed": 0,
+    "loop": false,
+    "src": "m_turn_right_90"
+   }
+  }
+ },
+ "f": {
+  "hipY": 0.919446706771851,
+  "clips": {
+   "idle": {
+    "duration": 10.8,
+    "speed": 0,
+    "loop": true,
+    "src": "f_idle_neutral_01"
+   },
+   "idle_nervous": {
+    "duration": 9.9,
+    "speed": 0,
+    "loop": true,
+    "src": "f_idle_nervous_01"
+   },
+   "walk": {
+    "duration": 1.2,
+    "speed": 1.214,
+    "loop": true,
+    "src": "f_walk_neutral_01"
+   },
+   "run": {
+    "duration": 0.767,
+    "speed": 2.765,
+    "loop": true,
+    "src": "f_run_neutral_01"
+   },
+   "talk": {
+    "duration": 10.2,
+    "speed": 0,
+    "loop": true,
+    "src": "f_gestic_talk_neutral_01"
+   },
+   "talk_angry": {
+    "duration": 9.7,
+    "speed": 0,
+    "loop": true,
+    "src": "f_gestic_talk_angry_01"
+   },
+   "talk_sad": {
+    "duration": 8.233,
+    "speed": 0,
+    "loop": true,
+    "src": "f_gestic_talk_sad_01"
+   },
+   "listen": {
+    "duration": 8.6,
+    "speed": 0,
+    "loop": true,
+    "src": "f_gestic_listen_neutral_01"
+   },
+   "phone_talk": {
+    "duration": 7.6,
+    "speed": 0,
+    "loop": true,
+    "src": "f_cell_phone_talk_01"
+   }
+  }
+ }
+}
