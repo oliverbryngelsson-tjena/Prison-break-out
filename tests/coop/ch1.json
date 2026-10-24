@@ -1,0 +1,294 @@
+[
+ {
+  "on": "AB",
+  "until": "window.__app.game.begun",
+  "timeout": 120000
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "on": "AB",
+  "press": "Enter"
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.begun && !window.__app.game.cutscenes.current",
+  "timeout": 90000
+ },
+ {
+  "on": "A",
+  "check": {
+   "name": "host plays Elias, guest plays Jax",
+   "expr": "window.__app.game.localChar === 'elias'"
+  }
+ },
+ {
+  "on": "B",
+  "check": {
+   "name": "guest plays Jax",
+   "expr": "window.__app.game.localChar === 'jax'"
+  }
+ },
+ {
+  "tpB": [
+   -5.8,
+   0,
+   -28.0,
+   3.1416
+  ]
+ },
+ {
+  "wait": 800
+ },
+ {
+  "on": "B",
+  "press": "KeyE"
+ },
+ {
+  "on": "AB",
+  "until": "!!window.__app.game.chapter.flags.distracting",
+  "timeout": 10000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "Jax's distraction is seen by both players",
+   "expr": "window.__app.game.chapter.flags.distracting === true"
+  }
+ },
+ {
+  "tpA": [
+   -4.55,
+   0,
+   -29.0,
+   1.5708
+  ]
+ },
+ {
+  "wait": 800
+ },
+ {
+  "on": "A",
+  "hold": "KeyE",
+  "ms": 4200
+ },
+ {
+  "on": "AB",
+  "until": "!!window.__app.game.chapter.flags.cageOpen",
+  "timeout": 10000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "cage lock picked (hold interaction) on both",
+   "expr": "window.__app.game.chapter.flags.cageOpen === true"
+  }
+ },
+ {
+  "tpA": [
+   0.2,
+   0,
+   -29.6,
+   3.1416
+  ]
+ },
+ {
+  "wait": 800
+ },
+ {
+  "on": "A",
+  "press": "KeyE"
+ },
+ {
+  "on": "AB",
+  "until": "!!window.__app.game.chapter.flags.tool",
+  "timeout": 10000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "screwdriver taken, synced",
+   "expr": "window.__app.game.chapter.flags.tool === true && window.__app.game.chapter.P.screwdriver.visible === false"
+  }
+ },
+ {
+  "tpA": [
+   3.2,
+   0,
+   -35.6,
+   1.5708
+  ]
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.chapter.flags.phase === 'laundry'",
+  "timeout": 15000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "laundry checkpoint reached by both",
+   "expr": "window.__app.game.chapter.flags.phase === 'laundry'"
+  }
+ },
+ {
+  "on": "AB",
+  "eval": "(() => { const n = window.__app.game.npcs.get('okafor'); if (n) { n.enabled = false; n.body.visible = false; } return 1; })()"
+ },
+ {
+  "tpA": [
+   15.6,
+   0,
+   -28.5,
+   0
+  ],
+  "tpB": [
+   15.6,
+   0,
+   -27.75,
+   0
+  ]
+ },
+ {
+  "wait": 1000
+ },
+ {
+  "on": "AB",
+  "hold": "KeyE",
+  "ms": 3000
+ },
+ {
+  "on": "AB",
+  "until": "!!window.__app.game.chapter.flags.eliasUp",
+  "timeout": 15000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "co-op boost puts Elias on the shelves for both",
+   "expr": "window.__app.game.chapter.flags.eliasUp === true"
+  }
+ },
+ {
+  "wait": 4500
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "Elias is up on the ledge (seen from both)",
+   "expr": "window.__app.game.body('elias').pos.y > 2"
+  }
+ },
+ {
+  "tpB": [
+   15.6,
+   0,
+   -27.75,
+   0
+  ]
+ },
+ {
+  "wait": 800
+ },
+ {
+  "on": "AB",
+  "hold": "KeyE",
+  "ms": 3000
+ },
+ {
+  "on": "AB",
+  "until": "!!window.__app.game.chapter.flags.jaxUp",
+  "timeout": 15000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "co-op pull lifts Jax up for both",
+   "expr": "window.__app.game.chapter.flags.jaxUp === true"
+  }
+ },
+ {
+  "wait": 4000
+ },
+ {
+  "tp": [
+   15.2,
+   0,
+   -16,
+   3.1416
+  ]
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.chapter.flags.phase === 'chase'",
+  "timeout": 15000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "pipe chase reached",
+   "expr": "window.__app.game.chapter.flags.phase === 'chase'"
+  }
+ },
+ {
+  "tpA": [
+   14.9,
+   0,
+   -8.65,
+   -1.5708
+  ]
+ },
+ {
+  "wait": 800
+ },
+ {
+  "on": "A",
+  "press": "KeyE"
+ },
+ {
+  "wait": 4500
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "one player through the vent is not enough to advance",
+   "expr": "window.__app.game.chapter.flags.phase === 'chase'"
+  }
+ },
+ {
+  "tpB": [
+   14.9,
+   0,
+   -8.65,
+   -1.5708
+  ]
+ },
+ {
+  "wait": 800
+ },
+ {
+  "on": "B",
+  "press": "KeyE"
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.chapter.checkpoint === 'count'",
+  "timeout": 30000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "both through the vent: evening count checkpoint",
+   "expr": "window.__app.game.chapter.checkpoint === 'count'"
+  }
+ },
+ {
+  "sync": {
+   "name": "Jax's position on Elias's screen matches Jax's own (network sync)",
+   "a": "window.__app.game.remote.body.pos.toArray()",
+   "b": "window.__app.game.local.body.pos.toArray()",
+   "tol": 0.6
+  }
+ }
+]

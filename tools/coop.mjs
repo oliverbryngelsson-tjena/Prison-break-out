@@ -1,7 +1,8 @@
 // Two-instance co-op script runner: hosts a room at a chapter/checkpoint, joins it from a second
 // browser, starts, then runs scripted steps on either or both players.
 // Usage: node tools/coop.mjs <chapter> <checkpoint> '<steps json>' [baseUrl]
-// Step: { on: 'A'|'B'|'AB', until|wait|eval|hold|press|tp|shot|check ... }
+// Step: { on: 'A'|'B'|'AB', until|wait|eval|hold|press|tp|shot|check|sync ... }
+//   sync: { name, a, b, tol }  (numeric arrays from A's and B's expressions must match)
 //   hold: { key, ms }  (held on all targets at once)    tp: [x,y,z,yaw]
 //   check: { name, expr }  (expr evaluated on each target; must be truthy)
 import { createRequire } from 'node:module';
@@ -25,6 +26,16 @@ async function launch(label, name) {
   page.on('console', (m) => { if (['error'].includes(m.type())) logs.push(`[${label}] ${m.text()}`); });
   page.on('pageerror', (e) => logs.push(`[${label}] pageerror: ${e.message}\n${e.stack}`));
   return { browser, page, logs, label };
+}
+
+/** [x, y, z, yaw]; y = null puts the player on the terrain (levels with a height function). */
+function teleport(t) {
+  const g = window.__app.game, ch = g.chapter;
+  const y = t[1] ?? (ch.y ? ch.y(t[0], t[2]) : ch.terrain ? ch.terrain.height(t[0], t[2]) : 0) + 0.05;
+  g.local.cancelScript?.();
+  g.local.state = 'free';
+  g.local.teleport({ x: t[0], y, z: t[2] }, t[3] ?? 0);
+  g.cam.snapBehind(t[3] ?? 0, g.local.body.pos);
 }
 
 const A = await launch('A', 'Ana');
@@ -57,12 +68,20 @@ try {
       else if (s.press) await Promise.all(targets.map((c) => c.page.keyboard.press(s.press)));
       else if (s.down) await Promise.all(targets.map((c) => c.page.keyboard.down(s.down)));
       else if (s.up) await Promise.all(targets.map((c) => c.page.keyboard.up(s.up)));
-      else if (s.tp) for (const c of targets) await c.page.evaluate((t) => { const g = window.__app.game; g.local.cancelScript?.(); g.local.state = 'free'; g.local.teleport({ x: t[0], y: t[1], z: t[2] }, t[3] ?? 0); g.cam.snapBehind(t[3] ?? 0, g.local.body.pos); }, s.tp);
+      else if (s.tp) for (const c of targets) await c.page.evaluate(teleport, s.tp);
       else if (s.tpA || s.tpB) {
-        if (s.tpA) await A.page.evaluate((t) => { const g = window.__app.game; g.local.state = 'free'; g.local.teleport({ x: t[0], y: t[1], z: t[2] }, t[3] ?? 0); g.cam.snapBehind(t[3] ?? 0, g.local.body.pos); }, s.tpA);
-        if (s.tpB) await B.page.evaluate((t) => { const g = window.__app.game; g.local.state = 'free'; g.local.teleport({ x: t[0], y: t[1], z: t[2] }, t[3] ?? 0); g.cam.snapBehind(t[3] ?? 0, g.local.body.pos); }, s.tpB);
+        if (s.tpA) await A.page.evaluate(teleport, s.tpA);
+        if (s.tpB) await B.page.evaluate(teleport, s.tpB);
       }
       else if (s.shot) for (const c of targets) await Promise.race([c.page.screenshot({ path: `${OUT}/${c.label}_${s.shot}.png` }), new Promise((r) => setTimeout(r, 45000))]);
+      else if (s.sync) {
+        // Cross-instance comparison: numeric arrays from A and B must match within tol.
+        const [va, vb] = await Promise.all([A.page.evaluate(s.sync.a), B.page.evaluate(s.sync.b)]);
+        const d = Math.max(...va.map((x, i) => Math.abs(x - vb[i])));
+        const pass = Number.isFinite(d) && d <= (s.sync.tol ?? 0.5);
+        if (pass) passes++; else fails++;
+        console.log(stamp(), pass ? 'PASS' : 'FAIL', 'AB', s.sync.name, pass ? '' : JSON.stringify({ A: va, B: vb }));
+      }
       else if (s.check) {
         for (const c of targets) {
           const ok = await c.page.evaluate(s.check.expr).catch((e) => `error: ${e.message}`);

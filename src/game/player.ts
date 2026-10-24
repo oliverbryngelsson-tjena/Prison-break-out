@@ -586,8 +586,10 @@ export class RemoteAvatar {
   /** Riding a bike (snapshot bit 4) and the interpolated bike state [lean, pitch, steer, rpm, spin]. */
   onBike = false;
   bike: number[] | null = null;
-  /** Driven by a local script (cutscene) instead of the network. */
+  /** Driven by a local script instead of the network. */
   scripted = false;
+  /** Held by a cutscene: stays script-driven after a script ends until release(). */
+  cutsceneHold = false;
   private lastPoseKey = '';
   variant = 'prison';
   onVariant: ((v: string) => void) | null = null;
@@ -695,6 +697,8 @@ export class RemoteAvatar {
       s.steps = null;
       b.speed = 0;
       b.clearPose(0.25);
+      // Gameplay moves (boosts, climbs) hand the avatar back to the partner's snapshots.
+      if (!this.cutsceneHold) this.scripted = false;
       s.done?.();
       return;
     }
@@ -726,6 +730,7 @@ export class RemoteAvatar {
   /** Back to network control (after a cutscene). */
   release(): void {
     this.scripted = false;
+    this.cutsceneHold = false;
     this.scriptCtl.steps = null;
     this.buf = [];
   }

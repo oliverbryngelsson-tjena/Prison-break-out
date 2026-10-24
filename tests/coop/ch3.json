@@ -1,0 +1,275 @@
+[
+ {
+  "on": "AB",
+  "until": "window.__app.game.begun",
+  "timeout": 120000
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "on": "AB",
+  "press": "Enter"
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.begun && !window.__app.game.cutscenes.current",
+  "timeout": 90000
+ },
+ {
+  "on": "AB",
+  "eval": "(() => { const g = window.__app.game; for (const id of ['cole','price','reyes','hale']) { const n = g.npcs.get(id); if (n) { n.enabled = false; n.body.visible = false; } } return 1; })()"
+ },
+ {
+  "tpA": [
+   8,
+   null,
+   -42,
+   0
+  ]
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.chapter.flags.phase === 'ravine'",
+  "timeout": 20000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "ravine reached: phase synced to both",
+   "expr": "window.__app.game.chapter.flags.phase === 'ravine'"
+  }
+ },
+ {
+  "tpA": [
+   7.3,
+   null,
+   -37.9,
+   0.3
+  ],
+  "tpB": [
+   8.7,
+   null,
+   -37.9,
+   -0.3
+  ]
+ },
+ {
+  "wait": 1000
+ },
+ {
+  "on": "AB",
+  "hold": "KeyE",
+  "ms": 3000
+ },
+ {
+  "on": "AB",
+  "until": "!!window.__app.game.chapter.flags.logDown",
+  "timeout": 15000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "co-op push drops the dead pine across the ravine for both",
+   "expr": "window.__app.game.chapter.flags.logDown === true"
+  }
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "the fallen log is walkable on both",
+   "expr": "window.__app.game.chapter.logCol.enabled === true"
+  }
+ },
+ {
+  "on": "A",
+  "eval": "(() => { const g=window.__app.game; const b=g.chapter.logBase; const far=g.chapter.y(b.x, b.z + 15); const top=(b.y + far) / 2 + 0.5; g.local.teleport({ x: b.x, y: top + 0.3, z: b.z + 7.5 }, 0); window.__logY = top; return [+b.y.toFixed(2), +far.toFixed(2), +g.chapter.y(b.x, b.z + 7.5).toFixed(2)]; })()"
+ },
+ {
+  "wait": 2000
+ },
+ {
+  "on": "A",
+  "check": {
+   "name": "Elias can stand on the log bridge (does not fall into the ravine)",
+   "expr": "window.__app.game.local.body.pos.y > window.__logY - 0.3"
+  }
+ },
+ {
+  "tp": [
+   8,
+   null,
+   -15,
+   0
+  ]
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.chapter.flags.phase === 'north'",
+  "timeout": 20000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "both across: ravine checkpoint saved",
+   "expr": "window.__app.game.chapter.checkpoint === 'ravine'"
+  }
+ },
+ {
+  "tpA": [
+   30,
+   null,
+   40,
+   0.6
+  ],
+  "tpB": [
+   32,
+   null,
+   40,
+   0.6
+  ]
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.cutscenes.played.has('cs3_farm')",
+  "timeout": 30000
+ },
+ {
+  "wait": 1000
+ },
+ {
+  "on": "AB",
+  "press": "Enter"
+ },
+ {
+  "on": "AB",
+  "until": "!window.__app.game.cutscenes.current && window.__app.game.chapter.flags.phase === 'farm'",
+  "timeout": 60000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "farm checkpoint",
+   "expr": "window.__app.game.chapter.checkpoint === 'farm'"
+  }
+ },
+ {
+  "on": "AB",
+  "eval": "(() => { const g = window.__app.game; for (const id of ['walt']) { const n = g.npcs.get(id); if (n) { n.enabled = false; n.body.visible = false; } } return 1; })()"
+ },
+ {
+  "tpA": [
+   36.2,
+   null,
+   59.4,
+   3.1416
+  ],
+  "tpB": [
+   38.8,
+   null,
+   59.4,
+   3.1416
+  ]
+ },
+ {
+  "wait": 1000
+ },
+ {
+  "on": "A",
+  "press": "KeyE"
+ },
+ {
+  "on": "AB",
+  "until": "!!window.__app.game.chapter.flags.clothes_elias",
+  "timeout": 10000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "Elias's clothes taken, seen by both",
+   "expr": "window.__app.game.chapter.flags.clothes_elias === true && window.__app.game.chapter.clothes[1].visible === false"
+  }
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "Jax's set is still on the line",
+   "expr": "!window.__app.game.chapter.flags.clothes_jax && window.__app.game.chapter.clothes[3].visible === true"
+  }
+ },
+ {
+  "on": "B",
+  "press": "KeyE"
+ },
+ {
+  "on": "AB",
+  "until": "!!window.__app.game.chapter.flags.clothes_jax",
+  "timeout": 10000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "both sets taken",
+   "expr": "window.__app.game.chapter.flags.clothes_jax === true && window.__app.game.chapter.clothes[3].visible === false"
+  }
+ },
+ {
+  "tpA": [
+   49,
+   null,
+   77,
+   0
+  ],
+  "tpB": [
+   51,
+   null,
+   77,
+   0
+  ]
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.cutscenes.played.has('cs3_barn')",
+  "timeout": 30000
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "on": "AB",
+  "press": "Enter"
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.chapter.checkpoint === 'road' && !window.__app.game.cutscenes.current",
+  "timeout": 150000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "barn scene ends at the road checkpoint",
+   "expr": "window.__app.game.chapter.checkpoint === 'road'"
+  }
+ },
+ {
+  "wait": 3000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "both now wear the stolen clothes (own and partner)",
+   "expr": "window.__app.game.local.variant === 'civil' && window.__app.game.remote.variant === 'civil'"
+  }
+ },
+ {
+  "sync": {
+   "name": "partner position synced after the outfit change",
+   "a": "window.__app.game.remote.body.pos.toArray()",
+   "b": "window.__app.game.local.body.pos.toArray()",
+   "tol": 0.6
+  }
+ }
+]

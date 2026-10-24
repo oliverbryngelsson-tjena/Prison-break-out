@@ -620,6 +620,7 @@ export class Game implements SessionHandlers, CutsceneHost {
       this.local.state = 'cutscene';
       this.local.body.speed = 0;
       this.remote.scripted = true;
+      this.remote.cutsceneHold = true;
       this.hud.setSkipHint(this.cutscenes.current?.skippable === false ? null : this.input.device === 'touch' ? 'Tap and hold to skip' : 'Press Enter to skip');
     } else {
       if (this.local.state === 'cutscene') this.local.state = 'free';
