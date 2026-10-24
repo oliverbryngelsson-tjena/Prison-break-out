@@ -256,7 +256,7 @@ export class Chapter5 extends Chapter {
       { model: 'tree_fir_b', impostor: true, collider: 0.25, colliderHeight: 4 },
       { model: 'fir_big', impostor: true, collider: 0.35, colliderHeight: 5 },
       { model: 'tree_oak_c', impostor: true, collider: 0.3 },
-      { model: 'shrub_a', near: 40, shadow: false },
+      { model: 'bush_a', near: 40, shadow: false },
       { model: 'boulder_b', near: 60, collider: 0.9, colliderHeight: 1.2 },
     ];
     const field = (x: number, z: number) => x > -90 && x < 60 && z > -210 && z < -110;

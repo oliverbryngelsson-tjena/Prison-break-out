@@ -42,7 +42,7 @@ const MODELS = [
   { id: 'dumpster', src: `${SRC.daggie}/models/v_bin.glb`, fit: { length: 1.95 }, simplify: 0.45, credit: ['LOW POLY - DUMPSTER', 'Colin.Greenall', 'https://sketchfab.com/3d-models/low-poly-dumpster-093e5b05faa947729b1be24c013e563b', L.ccby, DAGGIE] },
   { id: 'oil_barrels', src: `${SRC.daggie}/models/o_barrel.glb`, fit: { height: 0.9 }, simplify: 0.15, credit: ['Dirty oil barrel', 'ahmagh2e', 'https://sketchfab.com/3d-models/dirty-oil-barrel-5mb-b973a95ff3bb478a941ccb06a70b14bb', L.ccby, DAGGIE] },
   { id: 'tire', src: `${SRC.daggie}/models/o_tire.glb`, fit: { length: 0.68 }, simplify: 0.25, credit: ['Old Dirty Tire', 'tahircakir', 'https://sketchfab.com/3d-models/old-dirty-tire-ec06c0af626746e7a44de65436037173', L.ccby, DAGGIE] },
-  { id: 'hay_bale', src: `${SRC.daggie}/models/o_hay.glb`, fit: { length: 1.2 }, simplify: 0.15, credit: ['Hay bale', 'NoodePoodle', 'https://sketchfab.com/3d-models/hay-bale-e01a6a0f9ed843279adfac2427c99679', L.ccby, DAGGIE] },
+  { id: 'hay_bale', src: `${SRC.daggie}/models/o_hay.glb`, fit: { length: 1.2 }, simplify: 0.6, credit: ['Hay bale', 'NoodePoodle', 'https://sketchfab.com/3d-models/hay-bale-e01a6a0f9ed843279adfac2427c99679', L.ccby, DAGGIE] },
   { id: 'crate', src: `${SRC.daggie}/models/p_crate.glb`, fit: { length: 0.82 }, simplify: 0.2, credit: ['Wooden Crate 01', 'Poly Haven', 'https://polyhaven.com/a/wooden_crate_01', L.cc0, DAGGIE] },
   { id: 'container', src: `${SRC.daggie}/models/s_container.glb`, fit: { length: 6.06 }, simplify: 0.35, credit: ['Freight shipping container - Rusted', 'sousinho', 'https://sketchfab.com/3d-models/freight-shipping-container-rusted-2b787d1a02174d0bbca9eac34eb3a486', L.ccby, DAGGIE] },
   { id: 'rust_car', src: `${SRC.daggie}/models/s_rustcar.glb`, fit: { length: 4.4 }, simplify: 0.4, credit: ['Abandoned Car - BMW E30 Sedan', 'roh3d', 'https://sketchfab.com/3d-models/abandoned-car-bmw-e30-sedan-32498418a32d43a78d0847ce4c55fcb0', L.ccby, DAGGIE] },
@@ -64,8 +64,8 @@ const MODELS = [
   { id: 'dead_trunk', src: `${SRC.daggie}/models/p_quiver.glb`, credit: ['Dead Quiver Trunk', 'Poly Haven', 'https://polyhaven.com/a/dead_quiver_trunk', L.cc0, DAGGIE] },
   { id: 'dirtbike', src: `${SRC.moto}/models/Bike/free_honda_crf_450_1k.glb`, keepNodes: true, simplify: 0.3, credit: ['(FREE) Honda CRF 450', 'Jacobdesigns', 'https://skfb.ly/oFqPG', L.ccby, MOTO] },
   { id: 'boulder_d', src: `${SRC.oyl}/boulder_01.glb`, ktx2: true, simplify: 0.5, credit: ['Boulder 01', 'Poly Haven (Rico Cilliers)', 'https://polyhaven.com/a/boulder_01', L.cc0, OYL] },
-  { id: 'shrub_a', src: `${SRC.oyl}/shrub_02_a.glb`, ktx2: true, simplify: 0.5, credit: ['Shrub 02', 'Poly Haven (Rico Cilliers)', 'https://polyhaven.com/a/shrub_02', L.cc0, OYL] },
-  { id: 'shrub_c', src: `${SRC.oyl}/shrub_02_c.glb`, ktx2: true, simplify: 0.5, credit: ['Shrub 02', 'Poly Haven (Rico Cilliers)', 'https://polyhaven.com/a/shrub_02', L.cc0, OYL] },
+  { id: 'shrub_a', src: `${SRC.oyl}/shrub_02_a.glb`, ktx2: true, credit: ['Shrub 02', 'Poly Haven (Rico Cilliers)', 'https://polyhaven.com/a/shrub_02', L.cc0, OYL] },
+  { id: 'shrub_c', src: `${SRC.oyl}/shrub_02_c.glb`, ktx2: true, credit: ['Shrub 02', 'Poly Haven (Rico Cilliers)', 'https://polyhaven.com/a/shrub_02', L.cc0, OYL] },
   { id: 'tree_island', src: `${SRC.oyl}/island_tree_02.glb`, ktx2: true, simplify: 0.25, credit: ['Island Tree 02', 'Poly Haven (Rob Tuytel, Rico Cilliers)', 'https://polyhaven.com/a/island_tree_02', L.cc0, OYL] },
   { id: 'tree_small', src: `${SRC.oyl}/tree_small_02.glb`, ktx2: true, simplify: 0.25, credit: ['Tree Small 02', 'Poly Haven (Rico Cilliers)', 'https://polyhaven.com/a/tree_small_02', L.cc0, OYL] },
   { id: 'fir_sapling_a', src: `${SRC.oyl}/fir_sapling_medium_a.glb`, ktx2: true, simplify: 0.25, credit: ['Fir Sapling Medium', 'Poly Haven (Rob Tuytel, Rico Cilliers)', 'https://polyhaven.com/a/fir_sapling_medium', L.cc0, OYL] },
@@ -112,6 +112,7 @@ const TEXTURES = [
   { id: 'grass_ktx', files: T(SRC.oyl, 'sparse_grass_', { c: 'diff_1k.ktx2', n: 'nor_gl_1k.ktx2' }), credit: ['Sparse Grass', 'Amal Kumar (Poly Haven)', 'https://polyhaven.com/a/sparse_grass', L.cc0, OYL] },
   { id: 'roof_tiles', files: T(SRC.oyl, 'grey_roof_tiles_02_', { c: 'diff_512.ktx2', n: 'nor_gl_512.ktx2' }), credit: ['Grey Roof Tiles 02', 'Rob Tuytel (Poly Haven)', 'https://polyhaven.com/a/grey_roof_tiles_02', L.cc0, OYL] },
   { id: 'bark_oak', files: T(`${SRC.eztree}/bark`, 'oak_', { c: 'color_1k.jpg', n: 'normal_1k.jpg', r: 'roughness_1k.jpg' }), credit: ['Bark Brown 02', 'Poly Haven', 'https://polyhaven.com/a/bark_brown_02', L.cc0, 'npm @dgreenheck/ez-tree (MIT)'] },
+  { id: 'leaves_oak', files: { c: `${SRC.eztree}/leaves/oak_color.png` }, credit: ['Oak leaf sprig texture', 'Daniel Greenheck (ez-tree)', 'https://github.com/dgreenheck/ez-tree', L.mit, 'npm @dgreenheck/ez-tree (MIT)'] },
   { id: 'bark_pine', files: T(`${SRC.eztree}/bark`, 'pine_', { c: 'color_1k.jpg', n: 'normal_1k.jpg', r: 'roughness_1k.jpg' }), credit: ['Pine bark', 'TextureCan', 'https://www.texturecan.com/details/588/', L.cc0, 'npm @dgreenheck/ez-tree (MIT)'] },
 ];
 
@@ -315,7 +316,17 @@ function importAudio() {
   console.log('audio', Object.keys(bank).length, 'groups');
 }
 
+// Characters and animations are built by build-characters.mjs / build-anims.mjs; their credits live here.
+const ROCKETBOX = ['Microsoft Rocketbox Avatar Library', 'Microsoft', 'https://github.com/microsoft/Microsoft-Rocketbox', L.mit, 'github.com/microsoft/Microsoft-Rocketbox'];
+function addStaticCredits() {
+  const list = (dir, re) => (fs.existsSync(path.join(OUT, dir)) ? fs.readdirSync(path.join(OUT, dir)).filter((f) => re.test(f)).map((f) => `${dir}/${f}`) : []);
+  addCredit([ROCKETBOX[0] + ' (avatars, recoloured outfits)', ...ROCKETBOX.slice(1)], list('characters', /\.(glb|webp)$/), 'character');
+  addCredit([ROCKETBOX[0] + ' (motion-capture animations, retimed)', ...ROCKETBOX.slice(1)], list('anims', /\.glb$/), 'animation');
+  addCredit(['Character portraits rendered in-engine from the Rocketbox avatars', ...ROCKETBOX.slice(1)], list('ui', /\.(jpg|png)$/), 'image');
+}
+
 function writeCredits() {
+  addStaticCredits();
   const prev = fs.existsSync(path.join(OUT, 'credits.json')) ? JSON.parse(fs.readFileSync(path.join(OUT, 'credits.json'), 'utf8')) : [];
   const kinds = new Set(credits.map((c) => c.kind));
   const merged = [...prev.filter((c) => !kinds.has(c.kind)), ...credits];

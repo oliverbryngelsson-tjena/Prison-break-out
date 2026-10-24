@@ -746,8 +746,9 @@ export class Game implements SessionHandlers, CutsceneHost {
     // Skip cutscenes
     if (this.cutscenes.current && this.cutscenes.current.skippable !== false && (inp.buttons.skip.pressed || inp.heldFor('interact') > 0.8 || this.touchSkipHeld())) {
       if (!this.cutscenes.skipVotes.has('local')) {
-        this.session.skip(this.cutscenes.current.id);
+        // Set the hint first: offline, the skip applies synchronously and clears it.
         this.hud.setSkipHint(this.session.online && !this.partnerAway ? 'Waiting for your partner to skip…' : 'Skipping…');
+        this.session.skip(this.cutscenes.current.id);
       }
     }
     if (!frozen) {

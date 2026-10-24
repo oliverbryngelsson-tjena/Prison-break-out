@@ -76,8 +76,8 @@
    0.652,
    1.2
   ],
-  "tris": 2510,
-  "kb": 1403
+  "tris": 5694,
+  "kb": 1436
  },
  "crate": {
   "file": "models/crate.glb",
@@ -293,11 +293,11 @@
   "file": "models/shrub_a.glb",
   "size": [
    1.31,
-   1.647,
+   1.651,
    1.663
   ],
-  "tris": 5548,
-  "kb": 493
+  "tris": 5980,
+  "kb": 501
  },
  "shrub_c": {
   "file": "models/shrub_c.glb",
@@ -306,8 +306,8 @@
    1.355,
    2.29
   ],
-  "tris": 5518,
-  "kb": 488
+  "tris": 5988,
+  "kb": 497
  },
  "tree_island": {
   "file": "models/tree_island.glb",

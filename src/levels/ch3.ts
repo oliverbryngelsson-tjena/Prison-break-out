@@ -218,8 +218,8 @@ export class Chapter3 extends Chapter {
       { model: 'fir_big', impostor: true, collider: 0.35, colliderHeight: 5 },
       { model: 'tree_hornbeam_a', impostor: true, collider: 0.2 },
       { model: 'tree_oak_a', impostor: true, collider: 0.3 },
-      { model: 'shrub_a', near: 50, shadow: false },
-      { model: 'shrub_c', near: 50, shadow: false },
+      { model: 'bush_a', near: 60, shadow: false },
+      { model: 'bush_b', near: 60, shadow: false },
       { model: 'boulder_b', near: 70, collider: 0.9, colliderHeight: 1.2 },
       { model: 'boulder_d', near: 60, collider: 0.6, colliderHeight: 1 },
     ];
@@ -273,10 +273,7 @@ export class Chapter3 extends Chapter {
     kit.wall(white, hx + 4.5, hz + 4, hx - 4.5, hz + 4, fy + 0.4, 5.6, 0.25);
     kit.wall(white, hx - 4.5, hz + 4, hx - 4.5, hz - 4, fy + 0.4, 5.6, 0.25, [{ at: 4, width: 1.2, bottom: 1.0, top: 2.2 }]);
     kit.wall(white, hx + 4.5, hz - 4, hx + 4.5, hz + 4, fy + 0.4, 5.6, 0.25, [{ at: 4, width: 1.2, bottom: 1.0, top: 2.2 }]);
-    for (const s of [-1, 1]) kit.box(roof, [hx + s * 2.4, fy + 7.0, hz], [5.4, 0.18, 9.0], 0, false, {});
-    const rL = this.kit.batch;
-    void rL;
-    // tilt roof halves
+    this.gableMat = white;
     this.roofHalves(roof, hx, fy + 6.0, hz, 9.4, 9.0, 2.0);
     // Porch
     kit.box(dark, [hx, fy + 0.35, hz - 5.2], [6, 0.15, 2.2], 0, { surface: 'wood' });
@@ -288,11 +285,12 @@ export class Chapter3 extends Chapter {
     // Barn at (50, 76): 12 x 16, big door on the south side, back room with the phone
     const bx = 50, bz = 80;
     this.barn = { x: bx, z: bz };
-    kit.floor(conc, bx - 6, bz - 8, bx + 6, bz + 8, fy + 0.1, 0.2);
+    kit.floor(await L.pbr('gravel_sand', { scale: 0.35, color: 0x8a7a62 }), bx - 6, bz - 8, bx + 6, bz + 8, fy + 0.1, 0.2, 'gravel');
     kit.wall(planks, bx - 6, bz - 8, bx + 6, bz - 8, fy, 6, 0.2, [{ at: 6, width: 4, bottom: 0, top: 4.2 }]);
     kit.wall(planks, bx + 6, bz + 8, bx - 6, bz + 8, fy, 6, 0.2);
     kit.wall(planks, bx - 6, bz + 8, bx - 6, bz - 8, fy, 6, 0.2, [{ at: 12, width: 1.2, bottom: 0, top: 2.2 }]);
     kit.wall(planks, bx + 6, bz - 8, bx + 6, bz + 8, fy, 6, 0.2);
+    this.gableMat = planks;
     this.roofHalves(corr, bx, fy + 6, bz, 12.6, 16.6, 3.2);
     kit.wall(planks, bx - 6, bz + 3.5, bx + 6, bz + 3.5, fy, 3, 0.15, [{ at: 6, width: 1.2, bottom: 0, top: 2.2 }]);
     kit.bulb(L.emissive(0xffd29a, 3), L.plain(0x333333, 0.6, 0.5), bx, fy + 2.8, bz + 5.8, 0xffcf90, 1.8, 7, 'barn');
@@ -351,6 +349,7 @@ export class Chapter3 extends Chapter {
     }
   }
   private farmY = 0;
+  private gableMat: THREE.Material | null = null;
   private barn = { x: 0, z: 0 };
   private windowMat!: THREE.MeshStandardMaterial;
 
@@ -366,12 +365,15 @@ export class Chapter3 extends Chapter {
       geo.translate(cx + s * half / 2, y + rise / 2, cz);
       this.kit.batch.add(geo, mat);
     }
-    // gable ends
-    const tri = new THREE.BufferGeometry();
-    for (const zz of [cz - wz / 2 + 0.05, cz + wz / 2 - 0.05]) {
-      void zz;
+    // Gable ends: triangles closing the roof at both ends.
+    for (const zz of [cz - wz / 2 + 0.3, cz + wz / 2 - 0.3]) {
+      const tri = new THREE.BufferGeometry();
+      tri.setAttribute('position', new THREE.Float32BufferAttribute([cx - half, y, zz, cx + half, y, zz, cx, y + rise, zz], 3));
+      tri.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, wx, 0, half, rise], 2));
+      tri.setIndex([0, 1, 2, 2, 1, 0]);
+      tri.computeVertexNormals();
+      this.kit.batch.add(tri, this.gableMat ?? mat);
     }
-    void tri;
     this.g.world.physics.addBox({ x: cx, y: y + rise / 2, z: cz }, { x: wx, y: rise, z: wz }, 0, { walkable: false });
   }
 
@@ -390,6 +392,7 @@ export class Chapter3 extends Chapter {
     kit.wall(logs, x + 3, z + 3.5, x - 3, z + 3.5, y + 0.3, 2.6, 0.2);
     kit.wall(logs, x - 3, z + 3.5, x - 3, z - 3.5, y + 0.3, 2.6, 0.2, [{ at: 3.5, width: 1.0, bottom: 1.0, top: 1.8 }]);
     kit.wall(logs, x + 3, z - 3.5, x + 3, z + 3.5, y + 0.3, 2.6, 0.2);
+    this.gableMat = logs;
     this.roofHalves(roof, x, y + 2.9, z, 6.6, 7.6, 1.6);
     // Campfire ring in front of the cabin
     const fx = x + 1, fz = z - 7;
