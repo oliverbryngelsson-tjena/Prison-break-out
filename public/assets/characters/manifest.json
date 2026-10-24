@@ -1,0 +1,240 @@
+{
+ "elias": {
+  "file": "elias.glb",
+  "sex": "m",
+  "role": "lead",
+  "variants": {
+   "civil": {
+    "material": "m106_body",
+    "map": "elias_civil_body.webp"
+   },
+   "prison": {
+    "material": "m106_body",
+    "map": null
+   }
+  },
+  "defaultVariant": "prison",
+  "hipY": 0.895184814929962,
+  "height": 1.812
+ },
+ "jax": {
+  "file": "jax.glb",
+  "sex": "m",
+  "role": "lead",
+  "variants": {
+   "civil": {
+    "material": "m027_body",
+    "map": "jax_civil_body.webp"
+   },
+   "prison": {
+    "material": "m027_body",
+    "map": null
+   }
+  },
+  "defaultVariant": "prison",
+  "hipY": 0.895184814929962,
+  "height": 1.805
+ },
+ "crane": {
+  "file": "crane.glb",
+  "sex": "m",
+  "role": "villain",
+  "variants": {},
+  "hipY": 0.895184814929962,
+  "height": 1.8
+ },
+ "marsh": {
+  "file": "marsh.glb",
+  "sex": "f",
+  "role": "detective",
+  "variants": {},
+  "hipY": 0.923290252685547,
+  "height": 1.743
+ },
+ "mia": {
+  "file": "mia.glb",
+  "sex": "f",
+  "role": "sister",
+  "variants": {},
+  "hipY": 0.923290252685547,
+  "height": 1.735
+ },
+ "mo": {
+  "file": "mo.glb",
+  "sex": "m",
+  "role": "inmate",
+  "variants": {
+   "prison": {
+    "material": "m004_body",
+    "map": null
+   }
+  },
+  "defaultVariant": "prison",
+  "hipY": 0.895184814929962,
+  "height": 1.806
+ },
+ "guard1": {
+  "file": "guard1.glb",
+  "sex": "m",
+  "role": "guard",
+  "variants": {},
+  "hipY": 0.895184814929962,
+  "height": 1.831
+ },
+ "guard2": {
+  "file": "guard2.glb",
+  "sex": "m",
+  "role": "guard",
+  "variants": {},
+  "hipY": 0.895184814929962,
+  "height": 1.808
+ },
+ "cop1": {
+  "file": "cop1.glb",
+  "sex": "m",
+  "role": "police",
+  "variants": {},
+  "hipY": 0.895184814929962,
+  "height": 1.854
+ },
+ "cop2": {
+  "file": "cop2.glb",
+  "sex": "m",
+  "role": "police",
+  "variants": {},
+  "hipY": 0.895184814929962,
+  "height": 1.811
+ },
+ "cop3": {
+  "file": "cop3.glb",
+  "sex": "m",
+  "role": "police",
+  "variants": {},
+  "hipY": 0.895184814929962,
+  "height": 1.817
+ },
+ "swat": {
+  "file": "swat.glb",
+  "sex": "m",
+  "role": "police",
+  "variants": {},
+  "hipY": 0.895184814929962,
+  "height": 1.842
+ },
+ "thug1": {
+  "file": "thug1.glb",
+  "sex": "m",
+  "role": "thug",
+  "variants": {},
+  "hipY": 0.895184814929962,
+  "height": 1.868
+ },
+ "thug2": {
+  "file": "thug2.glb",
+  "sex": "m",
+  "role": "thug",
+  "variants": {},
+  "hipY": 0.895184814929962,
+  "height": 1.812
+ },
+ "thug3": {
+  "file": "thug3.glb",
+  "sex": "m",
+  "role": "thug",
+  "variants": {},
+  "hipY": 0.895184814929962,
+  "height": 1.813
+ },
+ "bodyguard": {
+  "file": "bodyguard.glb",
+  "sex": "m",
+  "role": "thug",
+  "variants": {},
+  "hipY": 0.895184814929962,
+  "height": 1.806
+ },
+ "inmate1": {
+  "file": "inmate1.glb",
+  "sex": "m",
+  "role": "inmate",
+  "variants": {
+   "prison": {
+    "material": "m013_body",
+    "map": null
+   }
+  },
+  "defaultVariant": "prison",
+  "hipY": 0.895184814929962,
+  "height": 1.82
+ },
+ "inmate2": {
+  "file": "inmate2.glb",
+  "sex": "m",
+  "role": "inmate",
+  "variants": {
+   "prison": {
+    "material": "m017_body",
+    "map": null
+   }
+  },
+  "defaultVariant": "prison",
+  "hipY": 0.895184814929962,
+  "height": 1.821
+ },
+ "inmate3": {
+  "file": "inmate3.glb",
+  "sex": "m",
+  "role": "inmate",
+  "variants": {
+   "prison": {
+    "material": "m007_body",
+    "map": null
+   }
+  },
+  "defaultVariant": "prison",
+  "hipY": 0.895184814929962,
+  "height": 1.806
+ },
+ "inmate4": {
+  "file": "inmate4.glb",
+  "sex": "m",
+  "role": "inmate",
+  "variants": {
+   "prison": {
+    "material": "m019_body",
+    "map": null
+   }
+  },
+  "defaultVariant": "prison",
+  "hipY": 0.895184814929962,
+  "height": 1.809
+ },
+ "inmate5": {
+  "file": "inmate5.glb",
+  "sex": "m",
+  "role": "inmate",
+  "variants": {
+   "prison": {
+    "material": "m102_body",
+    "map": null
+   }
+  },
+  "defaultVariant": "prison",
+  "hipY": 0.895184814929962,
+  "height": 1.847
+ },
+ "inmate6": {
+  "file": "inmate6.glb",
+  "sex": "m",
+  "role": "inmate",
+  "variants": {
+   "prison": {
+    "material": "m104_body",
+    "map": null
+   }
+  },
+  "defaultVariant": "prison",
+  "hipY": 0.895184814929962,
+  "height": 1.842
+ }
+}

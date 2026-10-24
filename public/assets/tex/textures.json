@@ -1,0 +1,148 @@
+{
+ "concrete_wall": {
+  "c": "tex/concrete_wall_c.jpg",
+  "n": "tex/concrete_wall_n.jpg",
+  "r": "tex/concrete_wall_r.jpg"
+ },
+ "concrete_grey": {
+  "c": "tex/concrete_grey_c.jpg",
+  "n": "tex/concrete_grey_n.jpg",
+  "r": "tex/concrete_grey_r.jpg"
+ },
+ "metal_plate": {
+  "c": "tex/metal_plate_c.jpg",
+  "n": "tex/metal_plate_n.jpg",
+  "r": "tex/metal_plate_r.jpg"
+ },
+ "steel": {
+  "c": "tex/steel_c.jpg",
+  "n": "tex/steel_n.jpg",
+  "r": "tex/steel_r.jpg"
+ },
+ "plywood": {
+  "c": "tex/plywood_c.jpg",
+  "n": "tex/plywood_n.jpg",
+  "r": "tex/plywood_r.jpg"
+ },
+ "planks": {
+  "c": "tex/planks_c.jpg",
+  "n": "tex/planks_n.jpg",
+  "r": "tex/planks_r.jpg"
+ },
+ "brick_red": {
+  "c": "tex/brick_red_c.jpg",
+  "n": "tex/brick_red_n.jpg",
+  "r": "tex/brick_red_r.jpg"
+ },
+ "stone_wall": {
+  "c": "tex/stone_wall_c.jpg",
+  "n": "tex/stone_wall_n.jpg",
+  "r": "tex/stone_wall_r.jpg"
+ },
+ "asphalt": {
+  "c": "tex/asphalt_c.jpg",
+  "n": "tex/asphalt_n.jpg",
+  "r": "tex/asphalt_r.jpg"
+ },
+ "asphalt_old": {
+  "c": "tex/asphalt_old_c.jpg",
+  "n": "tex/asphalt_old_n.jpg",
+  "r": "tex/asphalt_old_r.jpg"
+ },
+ "concrete_floor": {
+  "c": "tex/concrete_floor_c.jpg",
+  "n": "tex/concrete_floor_n.jpg",
+  "r": "tex/concrete_floor_r.jpg"
+ },
+ "dry_ground": {
+  "c": "tex/dry_ground_c.jpg",
+  "n": "tex/dry_ground_n.jpg",
+  "r": "tex/dry_ground_r.jpg"
+ },
+ "mud": {
+  "c": "tex/mud_c.jpg",
+  "n": "tex/mud_n.jpg"
+ },
+ "mud_dry": {
+  "c": "tex/mud_dry_c.jpg",
+  "n": "tex/mud_dry_n.jpg"
+ },
+ "dirt_red": {
+  "c": "tex/dirt_red_c.jpg",
+  "n": "tex/dirt_red_n.jpg"
+ },
+ "rocky": {
+  "c": "tex/rocky_c.jpg",
+  "n": "tex/rocky_n.jpg"
+ },
+ "grass_sparse": {
+  "c": "tex/grass_sparse_c.jpg",
+  "n": "tex/grass_sparse_n.jpg"
+ },
+ "gravel_sand": {
+  "c": "tex/gravel_sand_c.jpg",
+  "n": "tex/gravel_sand_n.jpg"
+ },
+ "painted_plaster": {
+  "c": "tex/painted_plaster_c.ktx2",
+  "n": "tex/painted_plaster_n.ktx2"
+ },
+ "concrete_048": {
+  "c": "tex/concrete_048_c.ktx2",
+  "n": "tex/concrete_048_n.ktx2"
+ },
+ "gravel": {
+  "c": "tex/gravel_c.ktx2",
+  "n": "tex/gravel_n.ktx2"
+ },
+ "paving": {
+  "c": "tex/paving_c.ktx2",
+  "n": "tex/paving_n.ktx2"
+ },
+ "rock_face": {
+  "c": "tex/rock_face_c.ktx2",
+  "n": "tex/rock_face_n.ktx2"
+ },
+ "brick_wall": {
+  "c": "tex/brick_wall_c.ktx2",
+  "n": "tex/brick_wall_n.ktx2"
+ },
+ "corrugated": {
+  "c": "tex/corrugated_c.ktx2",
+  "n": "tex/corrugated_n.ktx2"
+ },
+ "dark_planks": {
+  "c": "tex/dark_planks_c.ktx2",
+  "n": "tex/dark_planks_n.ktx2"
+ },
+ "forest_floor": {
+  "c": "tex/forest_floor_c.ktx2",
+  "n": "tex/forest_floor_n.ktx2"
+ },
+ "rocks_ground": {
+  "c": "tex/rocks_ground_c.ktx2",
+  "n": "tex/rocks_ground_n.ktx2"
+ },
+ "old_stone": {
+  "c": "tex/old_stone_c.ktx2",
+  "n": "tex/old_stone_n.ktx2"
+ },
+ "grass_ktx": {
+  "c": "tex/grass_ktx_c.ktx2",
+  "n": "tex/grass_ktx_n.ktx2"
+ },
+ "roof_tiles": {
+  "c": "tex/roof_tiles_c.ktx2",
+  "n": "tex/roof_tiles_n.ktx2"
+ },
+ "bark_oak": {
+  "c": "tex/bark_oak_c.jpg",
+  "n": "tex/bark_oak_n.jpg",
+  "r": "tex/bark_oak_r.jpg"
+ },
+ "bark_pine": {
+  "c": "tex/bark_pine_c.jpg",
+  "n": "tex/bark_pine_n.jpg",
+  "r": "tex/bark_pine_r.jpg"
+ }
+}
