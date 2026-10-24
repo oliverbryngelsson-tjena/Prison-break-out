@@ -51,9 +51,17 @@ export interface PrisonHandles {
   searchlight: THREE.SpotLight | null;
   towerLamp: THREE.Object3D;
   cameraProps: THREE.Object3D[];
+  /** Breakout route (Chapter 2): hatch in the chase floor and a storm drain in the no-man's land. */
+  hatch: THREE.Group | null;
+  hatchCol: import('../engine/physics').Box | null;
+  drain: THREE.Group | null;
+  drainCol: import('../engine/physics').Box | null;
 }
 
-export async function buildPrison(world: World, mode: 'day' | 'night'): Promise<PrisonHandles> {
+export const HATCH = { x1: 14.65, z1: -6.35, x2: 15.75, z2: -5.25 };
+export const DRAIN = { x1: 22.0, z1: 21.5, x2: 23.0, z2: 22.5 };
+
+export async function buildPrison(world: World, mode: 'day' | 'night', opts: { breakout?: boolean } = {}): Promise<PrisonHandles> {
   const L = world.mats;
   const night = mode === 'night';
   const kit = new Kit(world);
@@ -355,7 +363,8 @@ export async function buildPrison(world: World, mode: 'day' | 'night'): Promise<
 
   // ================================================================ EAST MAINTENANCE CHASE (behind east cells)
   // x [14.3, 16.0], z [-22, -4.4], height 3.2
-  kit.floor(concreteM, 14.3, -26, 16.1, -4.2, 0, 0.3);
+  if (opts.breakout) kit.floorWithHole(concreteM, 14.3, -26, 16.1, -4.2, HATCH, 0, 0.3);
+  else kit.floor(concreteM, 14.3, -26, 16.1, -4.2, 0, 0.3);
   kit.wall(concreteM, 16.1, -26, 16.1, -4.2, 0, 3.4, 0.25);
   kit.wall(concreteM, 14.3, -4.2, 16.1, -4.2, 0, 3.4, 0.25);
   kit.ceiling(concreteM, 14.3, -26, 16.1, -4.2, 3.3);
@@ -596,7 +605,8 @@ export async function buildPrison(world: World, mode: 'day' | 'night'): Promise<
 
   // ================================================================ YARD (outdoor)
   // x [-22, 24], z [6, 44]
-  kit.floor(groundM, -22, 6, 24, 44, 0, 0.3, 'dirt');
+  if (opts.breakout) kit.floorWithHole(groundM, -22, 6, 24, 44, DRAIN, 0, 0.3, 'dirt');
+  else kit.floor(groundM, -22, 6, 24, 44, 0, 0.3, 'dirt');
   kit.floor(asphaltM, -16, 12, 0, 32, 0.02, 0.05, 'asphalt');
   kit.floor(gravelM, 2, 10, 18, 22, 0.015, 0.05, 'gravel');
   // Court lines
@@ -740,6 +750,41 @@ export async function buildPrison(world: World, mode: 'day' | 'night'): Promise<
   camAt(13.9, 2.7, -22.3, -Math.PI * 0.6);
   camAt(-15.7, 4.2, -41.6, Math.PI * 0.25);
 
+  // ---------------------------------------------------------------- breakout route covers
+  let hatch: THREE.Group | null = null, hatchCol: PrisonHandles['hatchCol'] = null;
+  let drain: THREE.Group | null = null, drainCol: PrisonHandles['drainCol'] = null;
+  if (opts.breakout) {
+    // Hatch: steel plate hinged on its west edge.
+    hatch = new THREE.Group();
+    hatch.position.set(HATCH.x1, 0.01, (HATCH.z1 + HATCH.z2) / 2);
+    const plate = new THREE.Mesh(new THREE.BoxGeometry(HATCH.x2 - HATCH.x1, 0.05, HATCH.z2 - HATCH.z1), metalDoor);
+    plate.position.x = (HATCH.x2 - HATCH.x1) / 2;
+    plate.castShadow = plate.receiveShadow = true;
+    const handle = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.012, 6, 12), steelDark);
+    handle.rotation.x = Math.PI / 2;
+    handle.position.set(HATCH.x2 - HATCH.x1 - 0.18, 0.04, 0);
+    hatch.add(plate, handle);
+    world.root.add(hatch);
+    hatchCol = P.addBox({ x: (HATCH.x1 + HATCH.x2) / 2, y: -0.15, z: (HATCH.z1 + HATCH.z2) / 2 }, { x: HATCH.x2 - HATCH.x1, y: 0.3, z: HATCH.z2 - HATCH.z1 }, 0, { surface: 'metal' });
+    // Drain grate in the east no-man's land.
+    const grateTex = canvasTexture('drainGrate', (c, sz) => {
+      c.clearRect(0, 0, sz, sz);
+      c.fillStyle = '#3b3e40';
+      c.fillRect(0, 0, sz, sz * 0.08); c.fillRect(0, sz * 0.92, sz, sz * 0.08); c.fillRect(0, 0, sz * 0.08, sz); c.fillRect(sz * 0.92, 0, sz * 0.08, sz);
+      for (let x = sz * 0.08; x < sz; x += sz / 9) c.fillRect(x, 0, sz * 0.035, sz);
+    }, 128);
+    const grateMat = new THREE.MeshStandardMaterial({ map: grateTex, alphaTest: 0.5, metalness: 0.7, roughness: 0.6, side: THREE.DoubleSide, color: 0x9a9a98 });
+    drain = new THREE.Group();
+    drain.position.set(DRAIN.x1, 0.02, (DRAIN.z1 + DRAIN.z2) / 2);
+    const gp = new THREE.Mesh(new THREE.BoxGeometry(DRAIN.x2 - DRAIN.x1, 0.04, DRAIN.z2 - DRAIN.z1), grateMat);
+    gp.position.x = (DRAIN.x2 - DRAIN.x1) / 2;
+    drain.add(gp);
+    world.root.add(drain);
+    drainCol = P.addBox({ x: (DRAIN.x1 + DRAIN.x2) / 2, y: -0.15, z: (DRAIN.z1 + DRAIN.z2) / 2 }, { x: DRAIN.x2 - DRAIN.x1, y: 0.3, z: DRAIN.z2 - DRAIN.z1 }, 0, { surface: 'metal' });
+    // Concrete rim
+    for (const [cx, cz, w, d] of [[(DRAIN.x1 + DRAIN.x2) / 2, DRAIN.z1 - 0.06, 1.24, 0.12], [(DRAIN.x1 + DRAIN.x2) / 2, DRAIN.z2 + 0.06, 1.24, 0.12], [DRAIN.x1 - 0.06, (DRAIN.z1 + DRAIN.z2) / 2, 0.12, 1.0], [DRAIN.x2 + 0.06, (DRAIN.z1 + DRAIN.z2) / 2, 0.12, 1.0]] as const) B.box(concreteOut, { x: cx, y: 0.02, z: cz }, { x: w, y: 0.05, z: d }, 0, null);
+  }
+
   // ---------------------------------------------------------------- navigation graph
   const nav = new NavGraph(P);
   const navPts: Array<[number, number, number]> = [
@@ -774,5 +819,6 @@ export async function buildPrison(world: World, mode: 'day' | 'night'): Promise<
     cell: (id: string) => cells.find((c) => c.id === id)!,
     mainGate, mainGateCol, yardDoor, yardDoorCol, workshopDoor, workshopDoorCol, laundryDoor, laundryDoorCol, cageDoor, cageDoorCol,
     shopLaundryDoor, shopLaundryDoorCol, chaseDoor, chaseDoorCol, ventCovers, nav, mats, screwdriver, tvScreen, searchlight, towerLamp, cameraProps,
+    hatch, hatchCol, drain, drainCol,
   };
 }

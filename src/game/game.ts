@@ -411,6 +411,7 @@ export class Game implements SessionHandlers, CutsceneHost {
       case 'coopDone': {
         const group = String(a.group);
         this.coopHolds.delete(group);
+        this.coopSince.delete(group);
         this.interact.coopHeld.delete(group);
         if (this.interact.holding?.coop === group) this.local.endCoopHold();
         this.chapter.onEvent('coop', { group });
@@ -536,8 +537,25 @@ export class Game implements SessionHandlers, CutsceneHost {
   onHold(id: string, on: boolean, _from: 'local' | 'peer'): void {
     const [group, role] = id.split(':');
     this.interact.setCoop(group, role, on);
-    if (!this.authority) return;
-    if (this.interact.coopComplete(group)) this.session.emit('coopDone', { group });
+    const need = this.coopNeed(group);
+    if (this.interact.coopComplete(group)) {
+      // Some co-op actions must be kept up together for a while (holdTime on the items).
+      if (need > 0) { if (!this.coopSince.has(group)) this.coopSince.set(group, this.world.time); }
+      else if (this.authority) this.session.emit('coopDone', { group });
+    } else this.coopSince.delete(group);
+  }
+
+  private coopSince = new Map<string, number>();
+  private coopNeed(group: string): number {
+    let need = 0;
+    for (const d of this.interact.items.values()) if (d.coop === group && d.holdTime) need = Math.max(need, d.holdTime);
+    return need;
+  }
+  /** 0..1 progress of a timed co-op hold. */
+  coopProgress(group: string): number {
+    const t0 = this.coopSince.get(group);
+    if (t0 === undefined) return 0;
+    return Math.min(1, (this.world.time - t0) / Math.max(0.01, this.coopNeed(group)));
   }
 
   onHit(target: string, dmg: number, dir: [number, number], kind: string): void {
@@ -725,6 +743,9 @@ export class Game implements SessionHandlers, CutsceneHost {
       }
       this.chapter.updateDoors(dt);
       for (const u of this.updaters) u(dt);
+      if (this.authority) for (const [g, t0] of this.coopSince) {
+        if (this.world.time - t0 >= this.coopNeed(g)) { this.coopSince.delete(g); this.session.emit('coopDone', { group: g }); }
+      }
     }
     // Players
     this.updateReviveInteract();
@@ -805,7 +826,8 @@ export class Game implements SessionHandlers, CutsceneHost {
         const waiting = roles.filter((r) => !held?.has(r));
         sub = waiting.length ? `Waiting for ${SPEAKERS[this.remoteChar].name}…` : '';
       }
-      hud.setPrompt(this.interact.label(h), h.coop ? 0.5 + 0.5 * Math.sin(performance.now() / 300) * 0.3 : this.interact.holdT / (h.holdTime ?? 1.5), sub, h.icon ?? 'hand');
+      const coopP = h.coop && h.holdTime ? this.coopProgress(h.coop) : -1;
+      hud.setPrompt(this.interact.label(h), coopP >= 0 ? coopP : h.coop ? 0.5 + 0.5 * Math.sin(performance.now() / 300) * 0.3 : Number.isFinite(h.holdTime ?? 1.5) ? this.interact.holdT / (h.holdTime ?? 1.5) : 1, sub, h.icon ?? 'hand');
     } else if (this.local.takedownTarget) hud.setPrompt('Takedown', 0, this.input.device === 'touch' ? 'Tap Hit' : 'Attack', 'fist');
     else if (c && this.local.state === 'free') {
       const key = this.input.device === 'touch' ? '' : this.input.device === 'gamepad' ? 'Ⓨ' : 'E';

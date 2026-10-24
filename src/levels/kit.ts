@@ -79,6 +79,15 @@ export class Kit {
     this.physics.addBox({ x: c[0], y: c[1], z: c[2] }, { x: s[0], y: s[1], z: s[2] }, 0, { surface });
   }
 
+  /** Floor slab with a rectangular hole (hatches, drains). */
+  floorWithHole(mat: THREE.Material, x1: number, z1: number, x2: number, z2: number, hole: { x1: number; z1: number; x2: number; z2: number }, y = 0, thick = 0.2, surface: Surface = 'concrete'): void {
+    const [ax, bx] = [Math.min(x1, x2), Math.max(x1, x2)], [az, bz] = [Math.min(z1, z2), Math.max(z1, z2)];
+    if (hole.z1 > az) this.floor(mat, ax, az, bx, hole.z1, y, thick, surface);
+    if (hole.z2 < bz) this.floor(mat, ax, hole.z2, bx, bz, y, thick, surface);
+    if (hole.x1 > ax) this.floor(mat, ax, hole.z1, hole.x1, hole.z2, y, thick, surface);
+    if (hole.x2 < bx) this.floor(mat, hole.x2, hole.z1, bx, hole.z2, y, thick, surface);
+  }
+
   ceiling(mat: THREE.Material, x1: number, z1: number, x2: number, z2: number, y: number, thick = 0.3): void {
     const c = { x: (x1 + x2) / 2, y: y + thick / 2, z: (z1 + z2) / 2 };
     const s = { x: Math.abs(x2 - x1), y: thick, z: Math.abs(z2 - z1) };
