@@ -32,6 +32,8 @@ for (const s of steps) {
     else if (s.eval) console.log(stamp(), 'eval', s.eval.slice(0, 60), '=>', JSON.stringify(await page.evaluate(s.eval)));
     else if (s.key) { await page.keyboard.down(s.key); await page.waitForTimeout(s.hold ?? 500); await page.keyboard.up(s.key); }
     else if (s.press) await page.keyboard.press(s.press);
+    else if (s.down) await page.keyboard.down(s.down);
+    else if (s.up) await page.keyboard.up(s.up);
   } catch (e) {
     console.log(stamp(), 'STEP FAILED', JSON.stringify(s).slice(0, 100), String(e.message).slice(0, 300));
     break;

@@ -2,22 +2,22 @@
  "bed_iron": {
   "file": "models/bed_iron.glb",
   "size": [
-   2,
-   1.493,
+   1.994,
+   1.48,
    1.315
   ],
-  "tris": 3988,
-  "kb": 393
+  "tris": 2066,
+  "kb": 370
  },
  "toilet": {
   "file": "models/toilet.glb",
   "size": [
-   0.502,
+   0.5,
    0.78,
    0.637
   ],
-  "tris": 10492,
-  "kb": 264
+  "tris": 1256,
+  "kb": 159
  },
  "office_chair": {
   "file": "models/office_chair.glb",
@@ -26,8 +26,8 @@
    1.08,
    0.795
   ],
-  "tris": 9450,
-  "kb": 656
+  "tris": 1886,
+  "kb": 565
  },
  "sofa_old": {
   "file": "models/sofa_old.glb",
@@ -46,18 +46,18 @@
    1.495,
    1.95
   ],
-  "tris": 6292,
-  "kb": 335
+  "tris": 2830,
+  "kb": 297
  },
  "oil_barrels": {
   "file": "models/oil_barrels.glb",
   "size": [
-   0.552,
+   0.55,
    0.9,
-   1.373
+   1.372
   ],
-  "tris": 11400,
-  "kb": 321
+  "tris": 1710,
+  "kb": 224
  },
  "tire": {
   "file": "models/tire.glb",
@@ -66,8 +66,8 @@
    0.68,
    0.68
   ],
-  "tris": 5708,
-  "kb": 317
+  "tris": 1426,
+  "kb": 271
  },
  "hay_bale": {
   "file": "models/hay_bale.glb",
@@ -76,18 +76,18 @@
    0.652,
    1.2
   ],
-  "tris": 9492,
-  "kb": 1466
+  "tris": 2510,
+  "kb": 1403
  },
  "crate": {
   "file": "models/crate.glb",
   "size": [
-   0.82,
-   0.347,
-   0.406
+   0.819,
+   0.345,
+   0.404
   ],
-  "tris": 6576,
-  "kb": 324
+  "tris": 1314,
+  "kb": 276
  },
  "container": {
   "file": "models/container.glb",
@@ -96,18 +96,18 @@
    2.796,
    3.158
   ],
-  "tris": 11098,
-  "kb": 792
+  "tris": 4061,
+  "kb": 736
  },
  "rust_car": {
   "file": "models/rust_car.glb",
   "size": [
    4.4,
    1.317,
-   1.79
+   1.786
   ],
-  "tris": 13062,
-  "kb": 575
+  "tris": 5224,
+  "kb": 482
  },
  "shed": {
   "file": "models/shed.glb",
@@ -126,8 +126,8 @@
    11,
    4.164
   ],
-  "tris": 7524,
-  "kb": 419
+  "tris": 3761,
+  "kb": 382
  },
  "dozer": {
   "file": "models/dozer.glb",
@@ -146,48 +146,48 @@
    5.012,
    2.466
   ],
-  "tris": 31472,
-  "kb": 347
+  "tris": 29438,
+  "kb": 333
  },
  "tractor": {
   "file": "models/tractor.glb",
   "size": [
    3.4,
    2.305,
-   2.315
+   2.313
   ],
-  "tris": 24759,
-  "kb": 740
+  "tris": 7597,
+  "kb": 542
  },
  "wheelbarrow": {
   "file": "models/wheelbarrow.glb",
   "size": [
-   1.45,
+   1.449,
    0.711,
-   0.639
+   0.637
   ],
-  "tris": 7224,
-  "kb": 283
+  "tris": 1805,
+  "kb": 218
  },
  "sedan": {
   "file": "models/sedan.glb",
   "size": [
    5.15,
-   1.453,
-   1.955
+   1.452,
+   1.952
   ],
-  "tris": 19765,
-  "kb": 1727
+  "tris": 11854,
+  "kb": 1654
  },
  "dump_truck": {
   "file": "models/dump_truck.glb",
   "size": [
-   2.896,
+   2.889,
    3.275,
-   8.4
+   8.374
   ],
-  "tris": 15608,
-  "kb": 207
+  "tris": 8981,
+  "kb": 159
  },
  "fir_big": {
   "file": "models/fir_big.glb",
@@ -206,28 +206,28 @@
    0.88,
    1.232
   ],
-  "tris": 3915,
-  "kb": 612
+  "tris": 1957,
+  "kb": 593
  },
  "boulder_b": {
   "file": "models/boulder_b.glb",
   "size": [
-   2.404,
+   2.402,
    1.473,
    3.059
   ],
-  "tris": 3241,
-  "kb": 418
+  "tris": 1620,
+  "kb": 404
  },
  "boulder_c": {
   "file": "models/boulder_c.glb",
   "size": [
-   1.364,
+   1.36,
    0.534,
    0.748
   ],
-  "tris": 4478,
-  "kb": 591
+  "tris": 2238,
+  "kb": 570
  },
  "rock_a": {
   "file": "models/rock_a.glb",
@@ -252,12 +252,12 @@
  "branches": {
   "file": "models/branches.glb",
   "size": [
-   1.06,
-   0.341,
-   1.299
+   1.058,
+   0.34,
+   1.296
   ],
-  "tris": 8398,
-  "kb": 661
+  "tris": 3359,
+  "kb": 616
  },
  "dead_trunk": {
   "file": "models/dead_trunk.glb",
@@ -286,18 +286,18 @@
    0.998,
    1.831
   ],
-  "tris": 2400,
-  "kb": 463
+  "tris": 1344,
+  "kb": 451
  },
  "shrub_a": {
   "file": "models/shrub_a.glb",
   "size": [
    1.31,
-   1.651,
+   1.647,
    1.663
   ],
-  "tris": 5980,
-  "kb": 501
+  "tris": 5548,
+  "kb": 493
  },
  "shrub_c": {
   "file": "models/shrub_c.glb",
@@ -306,48 +306,48 @@
    1.355,
    2.29
   ],
-  "tris": 5988,
-  "kb": 497
+  "tris": 5518,
+  "kb": 488
  },
  "tree_island": {
   "file": "models/tree_island.glb",
   "size": [
    4.008,
    3.401,
-   3.98
+   3.977
   ],
-  "tris": 27981,
-  "kb": 2196
+  "tris": 25091,
+  "kb": 2118
  },
  "tree_small": {
   "file": "models/tree_small.glb",
   "size": [
-   2.824,
-   4.277,
+   2.813,
+   4.276,
    4.355
   ],
-  "tris": 28000,
-  "kb": 2300
+  "tris": 26537,
+  "kb": 2255
  },
  "fir_sapling_a": {
   "file": "models/fir_sapling_a.glb",
   "size": [
-   5.518,
-   8.868,
-   5.965
+   5.508,
+   8.867,
+   5.96
   ],
-  "tris": 23996,
-  "kb": 1662
+  "tris": 18723,
+  "kb": 1481
  },
  "fir_sapling_b": {
   "file": "models/fir_sapling_b.glb",
   "size": [
-   4.294,
+   4.158,
    7.806,
    5.241
   ],
-  "tris": 23994,
-  "kb": 1601
+  "tris": 18485,
+  "kb": 1420
  },
  "tree_oak_a": {
   "file": "models/tree_oak_a.glb",

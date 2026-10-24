@@ -545,6 +545,7 @@ export class PlayerController {
     if (this.state === 'bike') f |= 16;
     if (this.blocking) f |= 32;
     if (b.hidden) f |= 64;
+    if (b.concealed) f |= 128;
     const snap: PlayerSnap = {
       tm: time,
       p: [+b.pos.x.toFixed(3), +b.pos.y.toFixed(3), +b.pos.z.toFixed(3)],
@@ -580,6 +581,9 @@ export class RemoteAvatar {
   lastSnapAt = -1;
   downed = false;
   blocking = false;
+  /** Riding a bike (snapshot bit 4) and the interpolated bike state [lean, pitch, steer, rpm, spin]. */
+  onBike = false;
+  bike: [number, number, number, number, number] | null = null;
   /** Driven by a local script (cutscene) instead of the network. */
   scripted = false;
   private lastPoseKey = '';
@@ -642,8 +646,16 @@ export class RemoteAvatar {
       b.crouched = !!(a.f & 1);
       b.grounded = !!(a.f & 4);
       b.hidden = !!(a.f & 64);
+      b.concealed = !!(a.f & 128);
       this.downed = !!(a.f & 8);
       this.blocking = !!(a.f & 32);
+      this.onBike = !!(a.f & 16);
+      if (a.b && c.b) {
+        const lerp = (i: number) => a.b![i] + (c.b![i] - a.b![i]) * k;
+        let ds = c.b[4] - a.b[4];
+        if (ds < -Math.PI) ds += Math.PI * 2;
+        this.bike = [lerp(0), lerp(1), lerp(2), lerp(3), a.b[4] + ds * k];
+      } else this.bike = a.b ?? null;
       if (a.hp !== undefined) b.hp = a.hp;
       if (a.v && a.v !== this.variant) { this.variant = a.v; this.onVariant?.(a.v); }
       // Poses

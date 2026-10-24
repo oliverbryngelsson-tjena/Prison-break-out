@@ -390,7 +390,8 @@ export class Npc implements Combatant {
       const pb = p.body;
       let aw = this.awareness[p.char];
       let seen = false;
-      if (!p.ignore && !pb.hidden && pb.alive) {
+      const closeBy = pb.pos.distanceTo(b.pos) < 2.2;
+      if (!p.ignore && !pb.hidden && pb.alive && (!pb.concealed || closeBy)) {
         const to = new THREE.Vector3().subVectors(pb.pos, b.pos);
         to.y = 0;
         const d = to.length();

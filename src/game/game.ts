@@ -95,6 +95,10 @@ export class Game implements SessionHandlers, CutsceneHost {
   private reviveId = '__revive';
   /** Hook for chapter-specific per-frame logic that needs the game loop (bikes etc.). */
   readonly updaters = new Set<(dt: number) => void>();
+  /** Loading screen status callback. */
+  onLoadStatus: ((s: string) => void) | null = null;
+  /** Local bike state for snapshots [lean, pitch, steer, rpm, spin] (set by BikeSystem). */
+  bikeSnap: [number, number, number, number, number] | null = null;
   /** Optional camera target override (bikes). */
   camTarget: (() => { pos: THREE.Vector3; yaw: number; speed: number; mode: 'follow' | 'bike' }) | null = null;
   debug: Record<string, unknown> = {};
@@ -182,8 +186,17 @@ export class Game implements SessionHandlers, CutsceneHost {
     this.placeAtCheckpoint(cp);
     this.deps.renderer.setView(this.world.scene, this.cam.camera);
     this.state = 'waiting';
-    // Warm up shaders to avoid hitches on first sight.
-    try { this.deps.renderer.gl.compile(this.world.scene, this.cam.camera); } catch { /* ignore */ }
+    // Compile every shader now (in the background where supported) and wait for it, so the GPU
+    // isn't stalling on compiles in the first seconds of play.
+    this.onLoadStatus?.('Preparing shaders');
+    try {
+      await Promise.race([
+        this.deps.renderer.gl.compileAsync(this.world.scene, this.cam.camera),
+        new Promise((r) => setTimeout(r, 25000)),
+      ]);
+    } catch { /* ignore */ }
+    // Upload textures and draw once so the first visible frame is cheap.
+    try { this.deps.renderer.render(0.016); } catch { /* ignore */ }
     this.session.loaded(chapterNum, cp);
     if (!this.session.online) this.begin(cp);
   }
@@ -775,7 +788,12 @@ export class Game implements SessionHandlers, CutsceneHost {
       this.hud.setFade(Math.max(0, this.hud.fade - dt * 1.5));
     }
     // Network snapshots
-    this.session.update(dt, () => (this.begun ? this.local.snapshot(this.session.time) : null), () => [...this.npcs.values()].map((n) => n.snapshot()));
+    this.session.update(dt, () => {
+      if (!this.begun) return null;
+      const s = this.local.snapshot(this.session.time);
+      if (this.bikeSnap) s.b = this.bikeSnap;
+      return s;
+    }, () => [...this.npcs.values()].map((n) => n.snapshot()));
     // Camera
     const ct = this.camTarget?.();
     if (ct) {

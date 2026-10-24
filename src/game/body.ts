@@ -24,6 +24,13 @@ export class Body implements Actor {
   height = 1.78;
   alive = true;
   hidden = false;
+  /** In cover (crouched in tall grass/bushes): undetectable except at very close range. */
+  concealed = false;
+  /** Extra whole-body tilt (riding a bike): roll about the forward axis, pitch about the side axis. */
+  roll = 0;
+  pitch = 0;
+  /** Called right before the model is posed each frame (e.g. to attach the rider to a bike). */
+  preVisual: (() => void) | null = null;
   crouched = false;
   solid = true;
   grounded = true;
@@ -120,9 +127,10 @@ export class Body implements Actor {
 
   /** Syncs the visual model with the body and advances animation. */
   updateVisual(dt: number, animDt = dt): void {
+    this.preVisual?.();
     const r = this.model.root;
     r.position.copy(this.pos);
-    r.rotation.set(0, this.yaw, 0);
+    r.rotation.set(-this.pitch, this.yaw, this.roll, 'YXZ');
     r.visible = this.visible && !this.hidden;
     this.model.setLocomotion(this.speed, this.crouched);
     if (r.visible) this.model.update(animDt);
