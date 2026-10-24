@@ -1,7 +1,7 @@
 // Development asset viewer: renders characters with animations for visual checks.
 // URL params: ?chars=elias:prison,jax:civil&anim=walk&cam=front|side|close
 import * as THREE from 'three';
-import { CharacterLibrary, type CharacterModel } from '../src/engine/characters';
+import { CharacterLibrary, solveTwoBone, type CharacterModel } from '../src/engine/characters';
 
 const params = new URLSearchParams(location.search);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -48,6 +48,26 @@ const speed = parseFloat(params.get('speed') || '0');
     c.root.position.x = x;
     x += 0.9;
     scene.add(c.root);
+    if (params.get('ik')) {
+      c.postHooks.push((m) => {
+        m.root.updateMatrixWorld(true);
+        const chest = m.bone('Bip01_Spine2')!.getWorldPosition(new THREE.Vector3());
+        const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(m.root.quaternion);
+        const right = new THREE.Vector3(-1, 0, 0).applyQuaternion(m.root.quaternion);
+        const ext = parseFloat(params.get('ik')!);
+        // right hand punches forward, left hand guards the chin
+        const tR = chest.clone().addScaledVector(fwd, 0.25 + 0.4 * ext).addScaledVector(right, 0.18 - 0.12 * ext).add(new THREE.Vector3(0, 0.22, 0));
+        const tL = chest.clone().addScaledVector(fwd, 0.3).addScaledVector(right, -0.12).add(new THREE.Vector3(0, 0.3, 0));
+        solveTwoBone(m.bone('Bip01_R_UpperArm')!, m.bone('Bip01_R_Forearm')!, m.bone('Bip01_R_Hand')!, tR, new THREE.Vector3(0, -1, 0).addScaledVector(right, 0.8));
+        solveTwoBone(m.bone('Bip01_L_UpperArm')!, m.bone('Bip01_L_Forearm')!, m.bone('Bip01_L_Hand')!, tL, new THREE.Vector3(0, -1, 0).addScaledVector(right, -0.8));
+        const axis = params.get('fax') || 'z';
+        const amt = parseFloat(params.get('fang') || '1.2');
+        for (const side of ['L', 'R']) for (const f of ['1', '2', '3', '4']) for (const seg of ['', '1', '2']) {
+          const b = m.bone(`Bip01_${side}_Finger${f}${seg}`);
+          if (b) (b as any)['rotate' + axis.toUpperCase()](amt * (seg === '' ? 0.8 : 1));
+        }
+      });
+    }
     if (speed > 0) c.setLocomotion(speed);
     else if (anim !== 'idle') c.play(anim, { fade: 0 });
     chars.push(c);
@@ -56,6 +76,7 @@ const speed = parseFloat(params.get('speed') || '0');
   const n = spec.length;
   if (cam === 'front') { camera.position.set(0, 1.3, 2.2 + n * 0.9); camera.lookAt(0, 1.0, 0); }
   if (cam === 'side') { camera.position.set(5 + n, 1.2, 0); camera.lookAt(0, 0.9, 0); }
+  if (cam === 'side34') { camera.position.set(2.2, 1.6, 2.2); camera.lookAt(0, 1.2, 0); }
   if (cam === 'close') { camera.position.set(chars[0].root.position.x, 1.62, 0.75); camera.lookAt(chars[0].root.position.x, 1.6, 0); }
   if (cam === 'back') { camera.position.set(0, 1.3, -(2.2 + n * 0.9)); camera.lookAt(0, 1.0, 0); }
   const t0 = parseFloat(params.get('t') || '0.5');

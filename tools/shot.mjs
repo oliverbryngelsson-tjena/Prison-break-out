@@ -19,5 +19,6 @@ try {
 }
 await page.waitForTimeout(+wait);
 await page.screenshot({ path: out });
-console.log(logs.slice(-30).join('\n'));
+const uniq = [...new Set(logs)];
+console.log(uniq.slice(0, 40).join('\n'));
 await browser.close();

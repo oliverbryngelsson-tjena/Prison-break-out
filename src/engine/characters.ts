@@ -122,7 +122,7 @@ export class CharacterModel {
   private hip: THREE.Object3D;
   private actionCache = new Map<string, THREE.AnimationAction>();
   private locoSet: LocoSet = LOCO_NORMAL;
-  private phase = 0;
+  phase = 0;
   private speed = 0;
   private crouch = 0;
   private crouchTarget = 0;
@@ -205,6 +205,8 @@ export class CharacterModel {
     this.actionCache.set(key, a);
     return a;
   }
+
+  get locoSpeed(): number { return this.speed; }
 
   setLocoSet(set: LocoSet): void {
     this.locoSet = set;

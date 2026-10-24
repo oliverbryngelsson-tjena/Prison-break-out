@@ -3,7 +3,7 @@ import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js';
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
+import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 
 export const ASSET_BASE = (import.meta.env?.BASE_URL ?? './') + 'assets/';
 
@@ -114,7 +114,7 @@ export function loadJSON<T>(path: string): Promise<T> {
 }
 
 export function loadEnvironment(path: string): Promise<THREE.DataTexture> {
-  const loader = path.endsWith('.exr') ? new EXRLoader(loadingManager) : new RGBELoader(loadingManager);
+  const loader = path.endsWith('.exr') ? new EXRLoader(loadingManager) : new HDRLoader(loadingManager);
   return loader.loadAsync(url(path)).then((t) => {
     t.mapping = THREE.EquirectangularReflectionMapping;
     return t;

@@ -104,6 +104,10 @@ export interface PlayerSnap {
   b?: [number, number, number, number, number];
   /** look target for head (world) */
   lk?: [number, number, number];
+  /** pose parameters (world points / scalars) for the active pose */
+  pc?: { p?: Record<string, [number, number, number]>; k?: Record<string, number> };
+  /** outfit variant */
+  v?: string;
 }
 
 export interface NpcSnap {
@@ -113,8 +117,8 @@ export interface NpcSnap {
   s: number;
   /** behaviour state */
   st: string;
-  /** suspicion/alert 0..1 per player */
-  al?: number;
+  /** awareness 0..1 of [elias, jax] */
+  aw?: [number, number];
   a?: string;
   at?: number;
   hp?: number;
@@ -133,7 +137,9 @@ export type GameMsg =
   | { k: 'skip'; id: string }
   | { k: 'chat'; text: string }
   | { k: 'loaded'; chapter: number; checkpoint: string }
-  | { k: 'hit'; target: string; dmg: number; dir: [number, number]; kind: string };
+  | { k: 'hit'; target: string; dmg: number; dir: [number, number]; kind: string }
+  /** App-level commands outside a running chapter (e.g. host continues to the next chapter). */
+  | { k: 'app'; cmd: 'next' | 'menu'; chapter?: number };
 
 export function isClientMsg(x: unknown): x is ClientMsg {
   return !!x && typeof x === 'object' && typeof (x as { t?: unknown }).t === 'string';

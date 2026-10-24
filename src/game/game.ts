@@ -1,0 +1,860 @@
+// The running game: owns the world, both player characters, NPCs, story events and the frame loop.
+import * as THREE from 'three';
+import type { CharacterId, NpcSnap, PlayerSnap, Progress } from '../../shared/protocol';
+import type { Renderer } from '../engine/renderer';
+import type { Input } from '../engine/input';
+import type { AudioManager } from '../engine/audio';
+import { CameraRig } from '../engine/camera';
+import { MaterialLib } from '../engine/materials';
+import { CharacterLibrary } from '../engine/characters';
+import { loadTexture } from '../engine/assets';
+import type { NetClient } from '../net/client';
+import type { Hud } from '../ui/hud';
+import type { TouchControls } from '../ui/touch';
+import { World } from './world';
+import { Session, type SessionHandlers } from './session';
+import { Body } from './body';
+import { PlayerController, RemoteAvatar, type Combatant, type PlayerCtx } from './player';
+import { InteractionSystem, type InteractDef } from './interact';
+import { DialogueRunner, type Line, type SpeakerInfo } from './dialogue';
+import { CutsceneRunner, type CutsceneHost } from './cutscene';
+import { Npc, type NpcHooks, type Perceivable } from './npc';
+import type { NavGraph } from './nav';
+import type { Settings } from './settings';
+import { writeSave } from './settings';
+import { createChapter } from '../levels';
+import type { Chapter } from '../levels/chapter';
+
+export interface GameDeps {
+  renderer: Renderer;
+  input: Input;
+  audio: AudioManager;
+  hud: Hud;
+  touch: TouchControls;
+  settings: Settings;
+  net: NetClient | null;
+  onExit: (reason: 'quit' | 'partnerLeft' | 'error' | 'finished', detail?: string) => void;
+  onChapterComplete: (next: number | null) => void;
+}
+
+export const SPEAKERS: Record<string, Omit<SpeakerInfo, 'body'>> = {
+  elias: { name: 'Elias', color: '#e8c27a', voice: { pitch: 0.82, rate: 0.95, prefer: /daniel|george|male|david|arthur|guy/i } },
+  jax: { name: 'Jax', color: '#7fc8ff', voice: { pitch: 1.05, rate: 1.08, prefer: /alex|fred|aaron|male|mark|tom/i } },
+  crane: { name: 'Victor Crane', color: '#d46a5a', voice: { pitch: 0.7, rate: 0.9, prefer: /male|daniel|google uk english male/i } },
+  marsh: { name: 'Det. Lena Marsh', color: '#c9a3e8', voice: { pitch: 1.0, rate: 1.0, prefer: /female|samantha|karen|victoria|zira/i } },
+  mo: { name: 'Old Mo', color: '#b9d68a', voice: { pitch: 0.65, rate: 0.85, prefer: /male/i } },
+  guard: { name: 'Guard', color: '#a8b0b8', voice: { pitch: 0.9, rate: 1.0, prefer: /male/i } },
+  inmate: { name: 'Inmate', color: '#d8a070', voice: { pitch: 0.95, rate: 1.05, prefer: /male/i } },
+  cop: { name: 'Officer', color: '#8fb0ff', voice: { pitch: 0.9, rate: 1.05, prefer: /male/i } },
+  radio: { name: 'Radio', color: '#9fe0a0', voice: { pitch: 1.0, rate: 1.1, prefer: /male/i } },
+  thug: { name: 'Crane\'s man', color: '#e09090', voice: { pitch: 0.85, rate: 1.0, prefer: /male/i } },
+  mia: { name: 'Mia', color: '#f0a0c8', voice: { pitch: 1.2, rate: 1.0, prefer: /female|samantha|karen/i } },
+  narrator: { name: '', color: '#ddd' },
+};
+
+type GameState = 'loading' | 'waiting' | 'playing' | 'failed' | 'paused' | 'ended';
+
+const surfaceSound: Record<string, string> = {
+  concrete: 'step_concrete', tile: 'step_concrete', asphalt: 'step_concrete', metal: 'step_metal', wood: 'step_wood',
+  grass: 'step_grass', dirt: 'step_grass', leaves: 'step_grass', gravel: 'step_gravel', mud: 'step_mud', water: 'step_wet', carpet: 'step_carpet',
+};
+
+export class Game implements SessionHandlers, CutsceneHost {
+  world!: World;
+  readonly cam: CameraRig;
+  session: Session;
+  local!: PlayerController;
+  remote!: RemoteAvatar;
+  chapter!: Chapter;
+  readonly npcs = new Map<string, Npc>();
+  nav: NavGraph | null = null;
+  readonly interact = new InteractionSystem();
+  readonly dialogue = new DialogueRunner();
+  readonly cutscenes: CutsceneRunner;
+  readonly mats = new MaterialLib();
+  readonly chars = new CharacterLibrary();
+  objective = { text: '', marker: null as THREE.Vector3 | null };
+  state: GameState = 'loading';
+  flags = { jump: false, sprint: true, combat: false, crouch: true };
+  localChar: CharacterId;
+  remoteChar: CharacterId;
+  peerLoaded = false;
+  begun = false;
+  playTime = 0;
+  private checkpointFlags: Record<string, boolean | number | string> = {};
+  private coopHolds = new Map<string, Set<string>>();
+  private failTimer = -1;
+  private pendingCutscene: { id: string; at: number } | null = null;
+  private pendingDialogue: { lines: Line[]; at: number } | null = null;
+  private barkCooldown = new Map<string, number>();
+  inCutscene = false;
+  /** Partner presence (network). */
+  partnerAway = false;
+  private partnerAwaySince = 0;
+  private unsubs: Array<() => void> = [];
+  private reviveId = '__revive';
+  /** Hook for chapter-specific per-frame logic that needs the game loop (bikes etc.). */
+  readonly updaters = new Set<(dt: number) => void>();
+  /** Optional camera target override (bikes). */
+  camTarget: (() => { pos: THREE.Vector3; yaw: number; speed: number; mode: 'follow' | 'bike' }) | null = null;
+  debug: Record<string, unknown> = {};
+  readonly deps: GameDeps;
+
+  constructor(deps: GameDeps, localChar: CharacterId) {
+    this.deps = deps;
+    this.localChar = localChar;
+    this.remoteChar = localChar === 'elias' ? 'jax' : 'elias';
+    this.cam = new CameraRig(window.innerWidth / window.innerHeight);
+    this.session = new Session(deps.net, this.localChar, this.remoteChar);
+    this.session.handlers = this;
+    this.cutscenes = new CutsceneRunner(this);
+    this.cutscenes.clock = () => this.session.sharedNow();
+    this.dialogue.speakers = (id) => this.speaker(id);
+    this.dialogue.onSubtitle = (sp, text, radio) => {
+      if (deps.settings.subtitles) deps.hud.setSubtitle(sp, text, radio);
+      deps.audio.setDucking(!!text);
+    };
+    this.dialogue.tts = deps.settings.tts;
+    if (deps.net) {
+      this.unsubs.push(deps.net.on('peer', (ev) => this.onPeerEvent(ev)));
+      this.unsubs.push(deps.net.on('status', (s) => {
+        if (s === 'reconnecting') deps.hud.setBanner('Connection lost — reconnecting…', 'warn');
+        else if (s === 'online') { deps.hud.setBanner(null); }
+      }));
+    }
+  }
+
+  get audio(): AudioManager { return this.deps.audio; }
+  get hud(): Hud { return this.deps.hud; }
+  get input(): Input { return this.deps.input; }
+  get authority(): boolean { return this.session.authority; }
+
+  speaker(id: string): SpeakerInfo {
+    const base = SPEAKERS[id] ?? SPEAKERS[id.replace(/\d+$/, '')] ?? { name: id, color: '#ddd' };
+    let body: Body | null = null;
+    if (id === this.localChar) body = this.local?.body ?? null;
+    else if (id === this.remoteChar) body = this.remote?.body ?? null;
+    else body = this.npcs.get(id)?.body ?? null;
+    const npc = this.npcs.get(id);
+    const name = npc?.def.name ?? base.name;
+    return { ...base, name, body };
+  }
+
+  bodies(): Record<CharacterId, Body> {
+    return { [this.localChar]: this.local.body, [this.remoteChar]: this.remote.body } as Record<CharacterId, Body>;
+  }
+
+  body(c: CharacterId): Body {
+    return c === this.localChar ? this.local.body : this.remote.body;
+  }
+
+  isLocal(c: CharacterId): boolean {
+    return c === this.localChar;
+  }
+
+  // ------------------------------------------------------------------ loading
+  async load(chapterNum: number, checkpoint: string | null, savedFlags?: Record<string, boolean | number | string>): Promise<void> {
+    this.state = 'loading';
+    const r = this.deps.renderer;
+    this.world = new World(this.mats, this.chars, this.audio, r.q);
+    await this.world.init();
+    this.world.particles.setViewport(window.innerHeight);
+    this.chapter = createChapter(chapterNum);
+    this.chapter.attach(this);
+    this.flags = { ...this.chapter.flagsDefault };
+    await this.chapter.build();
+    const cp = checkpoint && this.chapter.checkpoints[checkpoint] ? checkpoint : Object.keys(this.chapter.checkpoints)[0];
+    const outfit = this.chapter.checkpoints[cp].outfit ?? this.chapter.outfit;
+    // Player characters
+    const [lm, rm] = await Promise.all([this.chars.create(this.localChar, outfit), this.chars.create(this.remoteChar, outfit)]);
+    const lb = new Body(this.localChar, 'player', 'prisoner', lm, this.world);
+    const rb = new Body(this.remoteChar, 'player', 'prisoner', rm, this.world);
+    lb.onStep = rb.onStep = (b, s, loud) => this.footstep(b, s, loud);
+    this.local = new PlayerController(this.localChar, lb, this.playerCtx());
+    this.local.variant = outfit;
+    this.remote = new RemoteAvatar(this.remoteChar, rb);
+    this.remote.variant = outfit;
+    this.remote.onVariant = (v) => void this.applyOutfit(this.remoteChar, v);
+    // NPCs
+    await Promise.all(this.chapter.npcDefs.map((d) => this.spawnNpc(d)));
+    if (savedFlags) this.chapter.flags = { ...savedFlags };
+    this.chapter.checkpoint = cp;
+    this.placeAtCheckpoint(cp);
+    this.deps.renderer.setView(this.world.scene, this.cam.camera);
+    this.state = 'waiting';
+    // Warm up shaders to avoid hitches on first sight.
+    try { this.deps.renderer.gl.compile(this.world.scene, this.cam.camera); } catch { /* ignore */ }
+    this.session.loaded(chapterNum, cp);
+    if (!this.session.online) this.begin(cp);
+  }
+
+  async spawnNpc(d: import('./npc').NpcDef): Promise<Npc> {
+    const model = await this.chars.create(d.char, d.variant);
+    const npc = new Npc(d, model, this.world, this.npcHooks());
+    npc.body.onStep = (b, s, loud) => this.footstep(b, s, loud * 0.7);
+    this.npcs.set(d.id, npc);
+    return npc;
+  }
+
+  removeNpc(id: string): void {
+    const n = this.npcs.get(id);
+    if (n) { n.dispose(); this.npcs.delete(id); this.hud.removeMarker('npc:' + id); }
+  }
+
+  private placeAtCheckpoint(cp: string): void {
+    const def = this.chapter.checkpoints[cp];
+    const sl = def.spawn[this.localChar], sr = def.spawn[this.remoteChar];
+    this.local.teleport(new THREE.Vector3(...sl.pos), sl.yaw);
+    this.remote.teleport(new THREE.Vector3(...sr.pos), sr.yaw);
+    this.cam.snapBehind(sl.yaw, new THREE.Vector3(...sl.pos));
+  }
+
+  /** Both clients loaded: start at checkpoint. */
+  private begin(cp: string): void {
+    if (this.begun) return;
+    this.begun = true;
+    this.state = 'playing';
+    this.checkpointFlags = { ...this.chapter.flags };
+    this.chapter.checkpoint = cp;
+    this.chapter.setupCheckpoint(cp);
+    const def = this.chapter.checkpoints[cp];
+    this.placeAtCheckpoint(cp);
+    if (def.objective) this.setObjectiveLocal(def.objective, null);
+    this.audio.playMusic(this.chapter.music, 3);
+    this.hud.showTitle(`Chapter ${this.chapter.num}`, this.chapter.title);
+    this.hud.setFade(0);
+    if (this.authority && def.intro && !this.cutscenes.played.has(def.intro)) this.chapter.cutscene(def.intro);
+  }
+
+  onPeerLoaded(chapter: number, checkpoint: string): void {
+    if (this.state === 'loading' || chapter !== this.chapter?.num) return;
+    this.peerLoaded = true;
+    if (!this.authority) return;
+    if (!this.begun) {
+      this.session.emit('begin', { checkpoint: this.chapter.checkpoint || checkpoint });
+    } else {
+      // Peer re-joined mid-game: send everything.
+      this.session.sendFull();
+    }
+  }
+
+  private playerCtx(): PlayerCtx {
+    return {
+      world: this.world,
+      session: this.session,
+      audio: this.audio,
+      input: this.input,
+      cam: this.cam,
+      interact: this.interact,
+      combatants: () => this.combatants(),
+      onAttack: (id, dmg, dir, kind) => this.localAttack(id, dmg, dir, kind),
+      onInteract: (def, phase) => this.onLocalInteract(def, phase),
+      onDowned: () => this.session.request('downed', { who: this.localChar }),
+      flags: this.flags,
+    };
+  }
+
+  private hooksObj: NpcHooks | null = null;
+
+  private npcHooks(): NpcHooks {
+    if (this.hooksObj) return this.hooksObj;
+    return (this.hooksObj = {
+      nav: null,
+      players: () => this.perceivables(),
+      onCaught: (npc, who) => { if (this.state === 'playing') this.session.emit('caught', { who, by: npc.id }); },
+      onSpotted: (npc, who) => { this.chapter.onEvent('spotted', { npc: npc.id, who }); },
+      onAttackPlayer: (npc, who, dmg, kind) => {
+        const dir: [number, number] = [Math.sin(npc.body.yaw), Math.cos(npc.body.yaw)];
+        if (who === this.localChar) this.local.takeHit(dmg, npc.body.yaw, kind);
+        else this.session.hit(who, dmg, dir, kind);
+      },
+      onKO: (npc) => { this.chapter.onEvent('ko', { npc: npc.id }); },
+      bark: (npc, kind) => this.npcBark(npc, kind),
+      lightAt: (p) => this.chapter.lightAt(p),
+      suspicion: (who, p, npc) => this.chapter.suspicion(who, p, npc.id),
+    });
+  }
+
+  /** Called by chapters after building the nav graph. */
+  setNav(nav: NavGraph): void {
+    this.nav = nav;
+    this.npcHooks().nav = nav;
+  }
+
+  private perceivables(): Perceivable[] {
+    const ignore = this.inCutscene || this.state !== 'playing';
+    return [
+      { char: this.localChar, body: this.local.body, ignore: ignore || this.local.state === 'downed' || this.local.state === 'cutscene', light: this.chapter.lightAt(this.local.body.pos) },
+      { char: this.remoteChar, body: this.remote.body, ignore: ignore || this.remote.downed || this.partnerAway, light: this.chapter.lightAt(this.remote.body.pos) },
+    ];
+  }
+
+  private combatants(): Combatant[] {
+    const out: Combatant[] = [...this.npcs.values()];
+    if (this.chapter.flags.pvp) {
+      const rb = this.remote.body;
+      out.push({ id: this.remoteChar, body: rb, hostile: true, unaware: false, stunned: false, alive: !this.remote.downed });
+    }
+    return out;
+  }
+
+  private localAttack(id: string, dmg: number, dir: [number, number], kind: 'punch' | 'heavy' | 'takedown'): void {
+    if (id === this.remoteChar) {
+      this.session.hit(id, dmg, dir, kind);
+      this.audio.play(kind === 'heavy' ? 'punch_heavy' : 'punch', { pos: this.remote.body.chest(), volume: 0.8, jitter: 0.1 });
+      this.cam.addShake(0.12);
+      return;
+    }
+    this.session.request('npcHit', { id, dmg, dir, kind, by: this.localChar });
+    if (kind !== 'takedown') {
+      const npc = this.npcs.get(id);
+      if (npc) {
+        this.audio.play(kind === 'heavy' ? 'punch_heavy' : 'punch', { pos: npc.body.chest(), volume: 0.85, jitter: 0.1 });
+        this.cam.addShake(kind === 'heavy' ? 0.18 : 0.1);
+      }
+    }
+  }
+
+  private onLocalInteract(def: InteractDef, phase: 'press' | 'holdStart' | 'holdEnd' | 'complete'): void {
+    if (def.coop) {
+      if (phase === 'holdStart') this.session.hold(`${def.coop}:${def.role ?? this.localChar}`, true);
+      if (phase === 'holdEnd') this.session.hold(`${def.coop}:${def.role ?? this.localChar}`, false);
+    }
+    if (def.id === this.reviveId && phase === 'complete') this.session.request('revive', { who: this.remoteChar, by: this.localChar });
+  }
+
+  private footstep(b: Body, s: string, loud: number): void {
+    const name = surfaceSound[s] ?? 'step_concrete';
+    const dist = b.pos.distanceTo(this.cam.camera.position);
+    if (dist > 30) return;
+    this.audio.play(name, { pos: b.pos.clone().setY(b.pos.y + 0.05), volume: (0.25 + 0.5 * loud) * (b.crouched ? 0.35 : 1), jitter: 0.08, ref: 1.5, maxDist: 30 });
+  }
+
+  private npcBark(npc: Npc, kind: 'suspicious' | 'alert' | 'lost' | 'hit' | 'search' | 'attack'): void {
+    if (!this.authority) return;
+    const now = this.world.time;
+    const last = this.barkCooldown.get(npc.id) ?? -99;
+    if (now - last < (kind === 'alert' ? 2 : 4)) return;
+    this.barkCooldown.set(npc.id, now);
+    const lines: Record<string, string[]> = {
+      suspicious: ['Hm? Who\'s there?', 'What was that?', 'Somebody there?', 'I heard something…'],
+      alert: npc.def.role === 'guard' ? ['Hey! You! Stop right there!', 'Inmate out of bounds!', 'Don\'t move!'] : npc.def.role === 'police' ? ['Police! Get on the ground!', 'Suspect spotted!'] : ['There they are!', 'Get them!', 'You\'re dead!'],
+      lost: ['Must have been nothing.', 'Damn rats.', 'Lost them…'],
+      search: ['Where did you go?', 'Come out, come out…', 'I know you\'re here.'],
+      hit: ['Argh!', 'Son of a—', 'Ugh!'],
+      attack: ['Come here!', 'Take this!', ''],
+    };
+    const opts = lines[kind];
+    const text = opts[Math.floor(Math.random() * opts.length)];
+    if (text) this.session.emit('bark', { id: npc.id, text, kind });
+  }
+
+  // ------------------------------------------------------------------ events
+  applyEvent(type: string, args: unknown): void {
+    // Still loading: drop it — a full-state sync follows once we announce we're loaded.
+    if (this.state === 'loading' || !this.chapter) return;
+    const a = (args ?? {}) as Record<string, unknown>;
+    switch (type) {
+      case 'begin':
+        this.begin(String(a.checkpoint));
+        return;
+      case 'flag':
+        this.chapter.flags[String(a.k)] = a.v as boolean | number | string;
+        this.chapter.onEvent('flag', a);
+        return;
+      case 'objective':
+        this.setObjectiveLocal(String(a.text ?? ''), (a.marker as [number, number, number] | null) ?? null);
+        return;
+      case 'checkpoint': {
+        this.chapter.checkpoint = String(a.id);
+        this.checkpointFlags = { ...this.chapter.flags };
+        this.hud.notify('Checkpoint reached');
+        this.saveProgress();
+        return;
+      }
+      case 'cutscene':
+        this.startCutscene(String(a.id), Number(a.at));
+        return;
+      case 'csSkip':
+        if (this.cutscenes.current?.id === a.id) this.cutscenes.finish();
+        this.pendingCutscene = null;
+        return;
+      case 'dlg': {
+        const lines = (a.lines as Line[] | undefined) ?? this.chapter.dialogues[String(a.id)];
+        if (!lines) { console.warn('no dialogue', a.id); return; }
+        const at = Number(a.at ?? 0);
+        const offset = at ? (this.session.sharedNow() - at) / 1000 : 0;
+        if (offset < 0) this.pendingDialogue = { lines, at };
+        else this.dialogue.play(lines, undefined, offset);
+        return;
+      }
+      case 'bark': {
+        if (this.dialogue.active || this.inCutscene) return;
+        const npc = this.npcs.get(String(a.id));
+        if (!npc || npc.body.pos.distanceTo(this.local.body.pos) > 22) return;
+        this.dialogue.play([{ who: String(a.id), text: String(a.text), dur: 1.8 }]);
+        return;
+      }
+      case 'door': {
+        const d = this.chapter.doors.get(String(a.id));
+        if (d) d.target = a.open ? 1 : 0;
+        return;
+      }
+      case 'trigger':
+        this.chapter.onTrigger(String(a.id), a.who as CharacterId | 'both');
+        return;
+      case 'use':
+        this.chapter.onUse(String(a.id), a.who as CharacterId);
+        return;
+      case 'coopDone': {
+        const group = String(a.group);
+        this.coopHolds.delete(group);
+        this.interact.coopHeld.delete(group);
+        if (this.interact.holding?.coop === group) this.local.endCoopHold();
+        this.chapter.onEvent('coop', { group });
+        return;
+      }
+      case 'caught':
+        this.fail(a.who === this.localChar ? 'You were caught.' : `${SPEAKERS[String(a.who)]?.name ?? 'Your partner'} was caught.`);
+        return;
+      case 'fail':
+        this.fail(String(a.reason ?? 'Mission failed.'));
+        return;
+      case 'restart':
+        this.restartAt(String(a.checkpoint));
+        return;
+      case 'npcHit': {
+        const npc = this.npcs.get(String(a.id));
+        if (!npc) return;
+        const kind = String(a.kind);
+        if (this.authority) npc.hit(Number(a.dmg), a.dir as [number, number], kind);
+        if (kind === 'takedown') {
+          if (a.by === this.localChar) {
+            const neck = npc.body.head().add(new THREE.Vector3(0, -0.15, 0));
+            const behind = npc.body.pos.clone().addScaledVector(npc.body.forward(), -0.55);
+            this.local.runScript([{ to: behind, dur: 0.25, yaw: npc.body.yaw }, { to: behind, dur: 2.3, yaw: npc.body.yaw, pose: 'choke', poseCtx: { points: { neck } } }]);
+          }
+          this.audio.play('grunt', { pos: npc.body.head(), volume: 0.6 });
+          setTimeout(() => this.audio.play('body_fall', { pos: npc.body.pos, volume: 0.8 }), 2100);
+        } else if (a.by !== this.localChar) {
+          this.audio.play(kind === 'heavy' ? 'punch_heavy' : 'punch', { pos: npc.body.chest(), volume: 0.8, jitter: 0.1 });
+        }
+        return;
+      }
+      case 'downed':
+        if (a.who === this.remoteChar) this.hud.notify(`${SPEAKERS[this.remoteChar].name} is down! Help them up.`, 3);
+        if (this.authority && this.local.state === 'downed' && this.remote.downed) this.session.emit('fail', { reason: 'You both went down.' });
+        if (this.authority && a.who === this.localChar && this.partnerAway) this.session.emit('fail', { reason: 'You went down.' });
+        if (this.authority && a.who === this.remoteChar && this.local.state === 'downed') this.session.emit('fail', { reason: 'You both went down.' });
+        return;
+      case 'revive':
+        if (a.who === this.localChar) this.local.revive();
+        return;
+      case 'outfit':
+        void this.applyOutfit(a.who as CharacterId, String(a.v));
+        return;
+      case 'chapterEnd':
+        this.endChapter((a.next as number | null) ?? null);
+        return;
+      default:
+        if (!this.chapter.onEvent(type, args)) console.warn('unhandled event', type);
+    }
+  }
+
+  validate(type: string, args: unknown, from: 'local' | 'peer'): boolean {
+    const a = (args ?? {}) as Record<string, unknown>;
+    if (type === 'npcHit') {
+      const npc = this.npcs.get(String(a.id));
+      if (!npc || !npc.alive) return false;
+      const attacker = this.body(a.by as CharacterId);
+      if (attacker.pos.distanceTo(npc.body.pos) > 3) return false;
+      if (a.kind === 'takedown' && !(npc.unaware || npc.stunned)) return false;
+      if (a.kind === 'takedown' && npc.def.noTakedown) return false;
+    }
+    if (type === 'cutscene' || type === 'begin' || type === 'restart' || type === 'chapterEnd') return from === 'local';
+    return this.chapter.validate(type, args, from);
+  }
+
+  fullState(): unknown {
+    return {
+      chapter: this.chapter.num,
+      ch: this.chapter.serialize(),
+      checkpointFlags: this.checkpointFlags,
+      objective: { text: this.objective.text, marker: this.objective.marker?.toArray() ?? null },
+      npcs: [...this.npcs.values()].map((n) => n.snapshot()),
+      played: [...this.cutscenes.played],
+      begun: this.begun,
+      playTime: this.playTime,
+      authorityPos: this.local.body.pos.toArray(),
+      cutscene: this.cutscenes.current ? { id: this.cutscenes.current.id, elapsed: this.cutscenes.elapsed } : null,
+    };
+  }
+
+  applyFull(state: unknown): void {
+    const s = state as ReturnType<Game['fullState']> & Record<string, unknown>;
+    if (this.state === 'loading' || !s || s.chapter !== this.chapter.num) return;
+    const wasBegun = this.begun;
+    this.chapter.deserialize(s.ch as Record<string, unknown>);
+    this.checkpointFlags = (s.checkpointFlags as Game['checkpointFlags']) ?? {};
+    for (const id of (s.played as string[]) ?? []) this.cutscenes.played.add(id);
+    const obj = s.objective as { text: string; marker: number[] | null };
+    this.setObjectiveLocal(obj.text, obj.marker as [number, number, number] | null);
+    if (!wasBegun && s.begun) {
+      this.begun = true;
+      this.state = 'playing';
+      this.audio.playMusic(this.chapter.music, 3);
+      this.chapter.setupCheckpoint(this.chapter.checkpoint);
+      // We (re)joined late: appear next to our partner.
+      const ap = new THREE.Vector3(...(s.authorityPos as [number, number, number]));
+      this.local.teleport(ap.clone().add(new THREE.Vector3(1, 0, 0.5)), 0);
+      this.chapter.deserialize(s.ch as Record<string, unknown>);
+    }
+    for (const d of this.chapter.doors.values()) { d.t = d.target; this.chapter.applyDoor(d); }
+    const tm = this.session.time;
+    for (const ns of s.npcs as NpcSnap[]) this.npcs.get(ns.id)?.pushSnap(ns, tm, tm);
+    // Rejoined during a cutscene: pick it up where the partner is.
+    const cs = s.cutscene as { id: string; elapsed: number } | null;
+    if (cs && !this.cutscenes.current && this.chapter.cutscenes[cs.id]) {
+      this.cutscenes.play(this.chapter.cutscenes[cs.id], cs.elapsed, this.session.sharedNow() - cs.elapsed * 1000);
+    }
+    this.chapter.onEvent('synced', {});
+  }
+
+  onPeerSnap(s: PlayerSnap): void {
+    if (this.state === 'loading' || !this.remote) return;
+    this.remote.push(s, this.session.time);
+  }
+
+  onNpcSnaps(tm: number, n: NpcSnap[]): void {
+    if (this.state === 'loading') return;
+    const now = this.session.time;
+    for (const s of n) this.npcs.get(s.id)?.pushSnap(s, tm, now);
+  }
+
+  onHold(id: string, on: boolean, _from: 'local' | 'peer'): void {
+    const [group, role] = id.split(':');
+    this.interact.setCoop(group, role, on);
+    if (!this.authority) return;
+    if (this.interact.coopComplete(group)) this.session.emit('coopDone', { group });
+  }
+
+  onHit(target: string, dmg: number, dir: [number, number], kind: string): void {
+    if (target !== this.localChar) return;
+    this.local.takeHit(dmg, Math.atan2(dir[0], dir[1]), kind);
+    this.chapter.onEvent('playerHit', { who: this.localChar, dmg, kind });
+  }
+
+  onSkip(id: string, from: 'local' | 'peer'): void {
+    this.cutscenes.skipVotes.add(from);
+    if (this.authority && this.cutscenes.current?.id === id && (this.cutscenes.skipVotes.size >= 2 || this.partnerAway || !this.session.online)) {
+      this.session.emit('csSkip', { id });
+    }
+  }
+
+  private onPeerEvent(ev: 'disconnected' | 'reconnected' | 'left'): void {
+    if (ev === 'disconnected') {
+      this.partnerAway = true;
+      this.partnerAwaySince = performance.now();
+    } else if (ev === 'reconnected') {
+      this.partnerAway = false;
+      this.hud.setBanner(null);
+      this.hud.notify('Partner reconnected');
+    } else if (ev === 'left') {
+      this.partnerAway = true;
+      this.hud.setBanner('Your partner left the game.', 'danger');
+      setTimeout(() => this.deps.onExit('partnerLeft'), 3500);
+    }
+  }
+
+  // ------------------------------------------------------------------ cutscene host
+  playShot(s: import('../engine/camera').Shot): void { this.cam.playShot(s); }
+  endCamera(): void {
+    this.cam.endCinematic(0.8);
+    this.cam.snapBehind(this.local.body.yaw);
+  }
+  sayLines(lines: Line[]): void { this.dialogue.play(lines); }
+  stopDialogue(): void { this.dialogue.stop(); }
+  setLetterbox(on: boolean): void { this.hud.setLetterbox(on); }
+  setFade(v: number): void { this.hud.setFade(v); }
+  setCutsceneMode(on: boolean): void {
+    this.inCutscene = on;
+    this.hud.setGameplayVisible(!on);
+    this.deps.touch.setMode(on ? 'hidden' : 'foot');
+    if (on) {
+      this.local.state = 'cutscene';
+      this.local.body.speed = 0;
+      this.remote.scripted = true;
+      this.hud.setSkipHint(this.cutscenes.current?.skippable === false ? null : this.input.device === 'touch' ? 'Tap and hold to skip' : 'Press Enter to skip');
+    } else {
+      if (this.local.state === 'cutscene') this.local.state = 'free';
+      this.remote.release();
+      this.hud.setSkipHint(null);
+    }
+  }
+  music(name: string): void { this.audio.playMusic(name, 2); }
+
+  private startCutscene(id: string, at: number): void {
+    const def = this.chapter.cutscenes[id];
+    if (!def) { console.warn('no cutscene', id); return; }
+    const offset = (this.session.sharedNow() - at) / 1000;
+    if (offset < 0) this.pendingCutscene = { id, at };
+    else this.cutscenes.play(def, offset, at);
+  }
+
+  private setObjectiveLocal(text: string, marker: [number, number, number] | null): void {
+    this.objective.text = text;
+    this.objective.marker = marker ? new THREE.Vector3(...marker) : null;
+    this.hud.setObjective(text);
+    if (text) this.audio.play('ui_rise', { bus: 'ui', volume: 0.35 });
+  }
+
+  // ------------------------------------------------------------------ fail / restart / progress
+  private fail(reason: string): void {
+    if (this.state === 'failed') return;
+    this.state = 'failed';
+    this.hud.setBanner(reason, 'danger');
+    this.audio.play('sting', { bus: 'ui', volume: 0.6 });
+    this.failTimer = 0;
+    this.local.state = 'busy';
+  }
+
+  private restartAt(cp: string): void {
+    this.chapter.flags = { ...this.checkpointFlags };
+    this.chapter.checkpoint = cp;
+    for (const t of this.chapter.triggers) t.fired = false;
+    for (const n of this.npcs.values()) n.reset();
+    this.local.body.hp = this.local.body.maxHp;
+    this.local.body.clearPose(0);
+    this.local.state = 'free';
+    this.local.body.hidden = false;
+    this.dialogue.stop();
+    if (this.cutscenes.current) this.cutscenes.finish();
+    this.chapter.setupCheckpoint(cp);
+    for (const d of this.chapter.doors.values()) { d.t = d.target; this.chapter.applyDoor(d); }
+    this.placeAtCheckpoint(cp);
+    const def = this.chapter.checkpoints[cp];
+    if (def.objective) this.setObjectiveLocal(def.objective, null);
+    this.hud.setBanner(null);
+    this.state = 'playing';
+    this.failTimer = -1;
+    this.chapter.onEvent('restarted', { checkpoint: cp });
+  }
+
+  saveProgress(): void {
+    const p: Progress = { chapter: this.chapter.num, checkpoint: this.chapter.checkpoint, flags: this.chapter.flags, savedAt: Date.now(), playTime: Math.round(this.playTime) };
+    writeSave(p);
+    if (this.authority) this.deps.net?.save(p);
+  }
+
+  private endChapter(next: number | null): void {
+    this.state = 'ended';
+    if (next) {
+      const p: Progress = { chapter: next, checkpoint: '', flags: {}, savedAt: Date.now(), playTime: Math.round(this.playTime) };
+      writeSave(p);
+      if (this.authority) this.deps.net?.save(p);
+    }
+    this.deps.onChapterComplete(next);
+  }
+
+  async applyOutfit(who: CharacterId, variant: string): Promise<void> {
+    const body = this.body(who);
+    const entry = this.chars.manifest[who];
+    const v = entry?.variants?.[variant];
+    if (!v) return;
+    const mats = Array.isArray(body.model.mesh.material) ? body.model.mesh.material : [body.model.mesh.material];
+    for (const m of mats as THREE.MeshStandardMaterial[]) {
+      if (m.name !== v.material) continue;
+      if (!m.userData.origMap) m.userData.origMap = m.map;
+      const tex = v.map ? await loadTexture('characters/' + v.map, { flipY: false }) : (m.userData.origMap as THREE.Texture);
+      const clone = m.clone();
+      clone.map = tex;
+      clone.userData.origMap = m.userData.origMap;
+      clone.needsUpdate = true;
+      const all = (Array.isArray(body.model.mesh.material) ? body.model.mesh.material : [body.model.mesh.material]).map((x) => (x === m ? clone : x));
+      body.model.mesh.material = Array.isArray(body.model.mesh.material) ? all : all[0];
+    }
+    if (who === this.localChar) this.local.variant = variant;
+  }
+
+  // ------------------------------------------------------------------ frame
+  update(dt: number): void {
+    if (this.state === 'loading') return;
+    const inp = this.input;
+    inp.update(dt);
+    // Keep announcing that we're loaded until the authority starts the chapter
+    // (the partner may still be loading and miss the first message).
+    if (!this.begun && this.session.online) {
+      this.loadedTimer -= dt;
+      if (this.loadedTimer <= 0) {
+        this.loadedTimer = 1.5;
+        this.session.loaded(this.chapter.num, this.chapter.checkpoint);
+      }
+    }
+    if (this.state === 'playing' || this.state === 'failed') this.playTime += dt;
+    // Pending synced starts
+    if (this.pendingCutscene && this.session.sharedNow() >= this.pendingCutscene.at) {
+      const pc = this.pendingCutscene;
+      this.pendingCutscene = null;
+      this.startCutscene(pc.id, pc.at);
+    }
+    if (this.pendingDialogue && this.session.sharedNow() >= this.pendingDialogue.at) {
+      this.dialogue.play(this.pendingDialogue.lines);
+      this.pendingDialogue = null;
+    }
+    // Partner absence freezes the simulation (co-op cannot continue alone).
+    const frozen = this.partnerAway && this.session.online;
+    if (frozen) {
+      const secs = Math.max(0, 120 - (performance.now() - this.partnerAwaySince) / 1000);
+      this.hud.setBanner(`Partner disconnected — waiting for them to reconnect (${Math.ceil(secs)}s)`, 'warn');
+    }
+    // Skip cutscenes
+    if (this.cutscenes.current && this.cutscenes.current.skippable !== false && (inp.buttons.skip.pressed || inp.heldFor('interact') > 0.8 || this.touchSkipHeld())) {
+      if (!this.cutscenes.skipVotes.has('local')) {
+        this.session.skip(this.cutscenes.current.id);
+        this.hud.setSkipHint(this.session.online && !this.partnerAway ? 'Waiting for your partner to skip…' : 'Skipping…');
+      }
+    }
+    if (!frozen) {
+      this.cutscenes.update(dt);
+      this.dialogue.update(dt);
+      if (this.state === 'playing' || this.state === 'failed') {
+        this.chapter.checkTriggers();
+        this.chapter.update(dt);
+      }
+      this.chapter.updateDoors(dt);
+      for (const u of this.updaters) u(dt);
+    }
+    // Players
+    this.updateReviveInteract();
+    if (this.state !== 'waiting') this.local.update(frozen ? 0 : dt);
+    else this.local.body.updateVisual(dt);
+    this.remote.update(dt, this.session.time);
+    // NPCs
+    const camPos = this.cam.camera.position;
+    const lod = this.deps.renderer.q.animLodDistance;
+    for (const n of this.npcs.values()) {
+      const far = n.body.pos.distanceTo(camPos) > lod;
+      if (this.authority) { if (!frozen) n.updateAuthority(dt); }
+      else n.updateProxy(dt, this.session.time);
+      n.body.visible = n.body.pos.distanceTo(camPos) < this.deps.renderer.q.characterDistance;
+      void far;
+    }
+    this.world.update(frozen ? 0 : dt);
+    // Fail timer
+    if (this.failTimer >= 0) {
+      this.failTimer += dt;
+      this.hud.setFade(Math.min(1, Math.max(0, (this.failTimer - 1) / 1.2)));
+      if (this.authority && this.failTimer > 2.8 && this.state === 'failed') {
+        this.failTimer = -2;
+        this.session.emit('restart', { checkpoint: this.chapter.checkpoint });
+      }
+    } else if (this.failTimer === -1 && !this.cutscenes.current && this.hud.fade > 0 && this.state === 'playing') {
+      this.hud.setFade(Math.max(0, this.hud.fade - dt * 1.5));
+    }
+    // Network snapshots
+    this.session.update(dt, () => (this.begun ? this.local.snapshot(this.session.time) : null), () => [...this.npcs.values()].map((n) => n.snapshot()));
+    // Camera
+    const ct = this.camTarget?.();
+    if (ct) {
+      if (this.cam.mode !== 'cinematic') this.cam.mode = ct.mode;
+      this.cam.update(dt, inp.look, ct.pos, ct.yaw, true, this.world.physics, ct.speed);
+    } else {
+      const lb = this.local.body;
+      if (this.cam.mode === 'bike') this.cam.mode = 'follow';
+      this.cam.height = this.local.crawlMode ? 0.7 : lb.crouched ? 1.15 : 1.55;
+      this.cam.distance = this.local.crawlMode ? 2.0 : this.local.inCombat ? 3.8 : 3.4;
+      this.cam.update(dt, inp.look, lb.pos, lb.yaw, lb.speed > 0.5, this.world.physics);
+    }
+    this.cam.autoFollow = this.deps.settings.autoCamera;
+    this.world.updateShadowFocus(this.local.body.pos);
+    this.audio.updateListener(this.cam.camera);
+    this.updateHud(dt);
+    inp.look.set(0, 0);
+  }
+
+  private touchSkipHeld(): boolean {
+    return this.input.device === 'touch' && this.input.virtual.look.lengthSq() === 0 && this.skipTouch > 0.9;
+  }
+  skipTouch = 0;
+
+  private updateReviveInteract(): void {
+    if (this.remote.downed && !this.interact.items.has(this.reviveId)) {
+      this.interact.add({
+        id: this.reviveId, pos: this.remote.body.pos.clone(), label: `Help ${SPEAKERS[this.remoteChar].name} up`, mode: 'hold', holdTime: 2.2,
+        pose: 'revive', icon: 'coop', priority: 5, who: this.localChar, radius: 1.6,
+      });
+    } else if (!this.remote.downed && this.interact.items.has(this.reviveId)) this.interact.remove(this.reviveId);
+    const rv = this.interact.items.get(this.reviveId);
+    if (rv) rv.pos.copy(this.remote.body.pos);
+  }
+
+  private updateHud(dt: number): void {
+    const hud = this.hud;
+    const touch = this.deps.touch;
+    // Prompt
+    const h = this.interact.holding;
+    const c = this.interact.current;
+    if (this.inCutscene || this.state !== 'playing') hud.setPrompt(null);
+    else if (h) {
+      let sub = '';
+      if (h.coop) {
+        const held = this.interact.coopHeld.get(h.coop);
+        const roles = this.interact.coopRoles(h.coop);
+        const waiting = roles.filter((r) => !held?.has(r));
+        sub = waiting.length ? `Waiting for ${SPEAKERS[this.remoteChar].name}…` : '';
+      }
+      hud.setPrompt(this.interact.label(h), h.coop ? 0.5 + 0.5 * Math.sin(performance.now() / 300) * 0.3 : this.interact.holdT / (h.holdTime ?? 1.5), sub, h.icon ?? 'hand');
+    } else if (this.local.takedownTarget) hud.setPrompt('Takedown', 0, this.input.device === 'touch' ? 'Tap Hit' : 'Attack', 'fist');
+    else if (c && this.local.state === 'free') {
+      const key = this.input.device === 'touch' ? '' : this.input.device === 'gamepad' ? 'Ⓨ' : 'E';
+      const partnerHolding = c.coop ? this.interact.coopHeld.get(c.coop)?.size ?? 0 : 0;
+      hud.setPrompt(this.interact.label(c), 0, (key ? `[${key}] ` : '') + ((c.mode ?? 'press') === 'hold' ? 'Hold' : 'Press') + (partnerHolding ? ` — ${SPEAKERS[this.remoteChar].name} is ready` : ''), c.icon ?? 'hand');
+    } else hud.setPrompt(null);
+    touch.setLabel('interact', c && !this.inCutscene ? shortLabel(this.interact.label(c)) : null, !!c);
+    touch.setLabel('attack', this.local.takedownTarget ? 'Takedown' : null, !!this.local.takedownTarget);
+    touch.setActive('crouch', this.local.body.crouched);
+    touch.setFlags(this.flags);
+    hud.setHealth(this.local.body.hp);
+    const peer = this.deps.net?.peer;
+    hud.setPartner(peer?.name ?? SPEAKERS[this.remoteChar].name, this.remoteChar, this.partnerAway ? 'away' : this.remote.stale ? 'lag' : 'ok', peer?.ping ?? Math.round(this.deps.net?.rtt ?? 0), this.remote.body.hp);
+    // Markers (created once)
+    if (!this.markersMade) {
+      this.markersMade = true;
+      hud.addMarker({ id: 'partner', kind: 'partner', label: SPEAKERS[this.remoteChar].name, pos: () => this.remote.body.head().add(new THREE.Vector3(0, 0.45, 0)), visible: () => !this.inCutscene && this.remote.body.pos.distanceTo(this.local.body.pos) > 2.5 });
+      hud.addMarker({ id: 'objective', kind: 'objective', label: '', pos: () => this.objective.marker, visible: () => !this.inCutscene });
+    }
+    for (const n of this.npcs.values()) {
+      if ((n.def.role === 'guard' || n.def.role === 'police' || n.def.role === 'thug') && !this.npcMarkers.has(n.id)) {
+        this.npcMarkers.add(n.id);
+        hud.addMarker({ id: 'npc:' + n.id, kind: 'guard', pos: () => n.body.head().add(new THREE.Vector3(0, 0.35, 0)), value: () => (n.alive && !this.inCutscene ? n.awareness[this.localChar] : 0) });
+      }
+    }
+    const r = this.deps.renderer.stats();
+    hud.showStats = this.deps.settings.showFps;
+    hud.update(dt, this.cam.camera, `${r.fps} fps · ${r.ms} ms · ${r.calls} calls · ${(r.tris / 1000).toFixed(0)}k tris · scale ${r.scale} · ${r.quality}${r.heapMB ? ` · ${r.heapMB} MB` : ''} · rtt ${Math.round(this.deps.net?.rtt ?? 0)} ms`);
+  }
+  private markersMade = false;
+  private loadedTimer = 1.5;
+  private npcMarkers = new Set<string>();
+
+  dispose(): void {
+    for (const u of this.unsubs) u();
+    this.session.dispose();
+    this.dialogue.stop();
+    this.hud.clearMarkers();
+    this.hud.setLetterbox(false);
+    this.hud.setBanner(null);
+    this.hud.setPrompt(null);
+    this.hud.setSubtitle(null, '');
+    for (const n of this.npcs.values()) n.dispose();
+    this.npcs.clear();
+    this.chapter?.dispose();
+    this.world?.dispose();
+    this.audio.stopMusic(1.5);
+  }
+}
+
+function shortLabel(s: string): string {
+  const w = s.split(' ');
+  return w.length > 2 ? w.slice(0, 2).join(' ') : s;
+}

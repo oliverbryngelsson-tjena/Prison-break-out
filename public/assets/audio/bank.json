@@ -1,0 +1,372 @@
+{
+ "step_concrete": [
+  "step_concrete_1.mp3",
+  "step_concrete_2.mp3",
+  "step_concrete_3.mp3",
+  "step_concrete_4.mp3",
+  "step_concrete_5.mp3"
+ ],
+ "step_grass": [
+  "step_grass_1.mp3",
+  "step_grass_2.mp3",
+  "step_grass_3.mp3",
+  "step_grass_4.mp3",
+  "step_grass_5.mp3"
+ ],
+ "step_wood": [
+  "step_wood_1.mp3",
+  "step_wood_2.mp3",
+  "step_wood_3.mp3",
+  "step_wood_4.mp3",
+  "step_wood_5.mp3"
+ ],
+ "step_gravel": [
+  "step_gravel_1.mp3",
+  "step_gravel_2.mp3",
+  "step_gravel_3.mp3",
+  "step_gravel_4.mp3",
+  "step_gravel_5.mp3"
+ ],
+ "step_carpet": [
+  "step_carpet_1.mp3",
+  "step_carpet_2.mp3",
+  "step_carpet_3.mp3",
+  "step_carpet_4.mp3",
+  "step_carpet_5.mp3"
+ ],
+ "step_metal": [
+  "step_metal_1.mp3",
+  "step_metal_2.mp3",
+  "step_metal_3.mp3",
+  "step_metal_4.mp3",
+  "step_metal_5.mp3"
+ ],
+ "step_wet": [
+  "step_wet_1.mp3",
+  "step_wet_2.mp3",
+  "step_wet_3.mp3"
+ ],
+ "step_mud": [
+  "step_mud_1.mp3",
+  "step_mud_2.mp3",
+  "step_mud_3.mp3",
+  "step_mud_4.mp3",
+  "step_mud_5.mp3",
+  "step_mud_6.mp3",
+  "step_mud_7.mp3",
+  "step_mud_8.mp3"
+ ],
+ "punch": [
+  "punch_1.mp3",
+  "punch_2.mp3",
+  "punch_3.mp3",
+  "punch_4.mp3",
+  "punch_5.mp3"
+ ],
+ "punch_heavy": [
+  "punch_heavy_1.mp3",
+  "punch_heavy_2.mp3",
+  "punch_heavy_3.mp3",
+  "punch_heavy_4.mp3",
+  "punch_heavy_5.mp3"
+ ],
+ "hit_soft": [
+  "hit_soft_1.mp3",
+  "hit_soft_2.mp3",
+  "hit_soft_3.mp3",
+  "hit_soft_4.mp3",
+  "hit_soft_5.mp3"
+ ],
+ "body_fall": [
+  "body_fall_1.mp3",
+  "body_fall_2.mp3",
+  "body_fall_3.mp3"
+ ],
+ "grunt": [
+  "grunt_1.mp3",
+  "grunt_2.mp3",
+  "grunt_3.mp3",
+  "grunt_4.mp3",
+  "grunt_5.mp3",
+  "grunt_6.mp3",
+  "grunt_7.mp3",
+  "grunt_8.mp3"
+ ],
+ "whoosh": [
+  "whoosh_1.mp3",
+  "whoosh_2.mp3",
+  "whoosh_3.mp3"
+ ],
+ "whoosh_big": [
+  "whoosh_big_1.mp3",
+  "whoosh_big_2.mp3"
+ ],
+ "door_open": [
+  "door_open_1.mp3",
+  "door_open_2.mp3"
+ ],
+ "door_close": [
+  "door_close_1.mp3",
+  "door_close_2.mp3",
+  "door_close_3.mp3",
+  "door_close_4.mp3",
+  "door_close_5.mp3"
+ ],
+ "door_slam": [
+  "door_slam_1.mp3",
+  "door_slam_2.mp3",
+  "door_slam_3.mp3"
+ ],
+ "door_wood": [
+  "door_wood_1.mp3",
+  "door_wood_2.mp3",
+  "door_wood_3.mp3",
+  "door_wood_4.mp3",
+  "door_wood_5.mp3"
+ ],
+ "metal_slam": [
+  "metal_slam_1.mp3",
+  "metal_slam_2.mp3",
+  "metal_slam_3.mp3",
+  "metal_slam_4.mp3"
+ ],
+ "creak": [
+  "creak_1.mp3",
+  "creak_2.mp3",
+  "creak_3.mp3"
+ ],
+ "keys": [
+  "keys_1.mp3",
+  "keys_2.mp3",
+  "keys_3.mp3",
+  "keys_4.mp3",
+  "keys_5.mp3",
+  "keys_6.mp3",
+  "keys_7.mp3"
+ ],
+ "lock_open": [
+  "lock_open_1.mp3",
+  "lock_open_2.mp3",
+  "lock_open_3.mp3",
+  "lock_open_4.mp3"
+ ],
+ "tools": [
+  "tools_1.mp3",
+  "tools_2.mp3",
+  "tools_3.mp3",
+  "tools_4.mp3",
+  "tools_5.mp3",
+  "tools_6.mp3",
+  "tools_7.mp3",
+  "tools_8.mp3",
+  "tools_9.mp3",
+  "tools_10.mp3",
+  "tools_11.mp3",
+  "tools_12.mp3"
+ ],
+ "metal_hit": [
+  "metal_hit_1.mp3",
+  "metal_hit_2.mp3",
+  "metal_hit_3.mp3",
+  "metal_hit_4.mp3",
+  "metal_hit_5.mp3",
+  "metal_hit_6.mp3"
+ ],
+ "metal_heavy": [
+  "metal_heavy_1.mp3",
+  "metal_heavy_2.mp3",
+  "metal_heavy_3.mp3",
+  "metal_heavy_4.mp3",
+  "metal_heavy_5.mp3"
+ ],
+ "metal_sheet": [
+  "metal_sheet_1.mp3",
+  "metal_sheet_2.mp3",
+  "metal_sheet_3.mp3",
+  "metal_sheet_4.mp3",
+  "metal_sheet_5.mp3",
+  "metal_sheet_6.mp3"
+ ],
+ "vent_crawl": [
+  "vent_crawl_1.mp3",
+  "vent_crawl_2.mp3",
+  "vent_crawl_3.mp3",
+  "vent_crawl_4.mp3",
+  "vent_crawl_5.mp3"
+ ],
+ "metal_fall": [
+  "metal_fall_1.mp3",
+  "metal_fall_2.mp3",
+  "metal_fall_3.mp3",
+  "metal_fall_4.mp3",
+  "metal_fall_5.mp3"
+ ],
+ "wood_hit": [
+  "wood_hit_1.mp3",
+  "wood_hit_2.mp3",
+  "wood_hit_3.mp3",
+  "wood_hit_4.mp3",
+  "wood_hit_5.mp3",
+  "wood_hit_6.mp3",
+  "wood_hit_7.mp3",
+  "wood_hit_8.mp3",
+  "wood_hit_9.mp3"
+ ],
+ "wood_break": [
+  "wood_break_1.mp3",
+  "wood_break_2.mp3",
+  "wood_break_3.mp3"
+ ],
+ "glass_break": [
+  "glass_break_1.mp3",
+  "glass_break_2.mp3",
+  "glass_break_3.mp3"
+ ],
+ "switch": [
+  "switch_1.mp3",
+  "switch_2.mp3",
+  "switch_3.mp3",
+  "switch_4.mp3"
+ ],
+ "paper": [
+  "paper_1.mp3",
+  "paper_2.mp3",
+  "paper_3.mp3",
+  "paper_4.mp3"
+ ],
+ "dishes": [
+  "dishes_1.mp3",
+  "dishes_2.mp3",
+  "dishes_3.mp3",
+  "dishes_4.mp3"
+ ],
+ "toilet": [
+  "toilet_1.mp3",
+  "toilet_2.mp3"
+ ],
+ "chain": [
+  "chain_1.mp3",
+  "chain_2.mp3",
+  "chain_3.mp3"
+ ],
+ "splash": [
+  "splash_1.mp3",
+  "splash_2.mp3"
+ ],
+ "dog_bark": [
+  "dog_bark_1.mp3",
+  "dog_bark_2.mp3"
+ ],
+ "thunder": [
+  "thunder.mp3"
+ ],
+ "bell": [
+  "bell_1.mp3",
+  "bell_2.mp3",
+  "bell_3.mp3"
+ ],
+ "gunshot": [
+  "gunshot_1.mp3",
+  "gunshot_2.mp3"
+ ],
+ "car_crash": [
+  "car_crash_1.mp3",
+  "car_crash_2.mp3",
+  "car_crash_3.mp3"
+ ],
+ "big_crash": [
+  "big_crash_1.mp3",
+  "big_crash_2.mp3",
+  "big_crash_3.mp3"
+ ],
+ "tire_hit": [
+  "tire_hit.mp3"
+ ],
+ "land": [
+  "land_1.mp3",
+  "land_2.mp3"
+ ],
+ "crowd_cheer": [
+  "crowd_cheer_1.mp3",
+  "crowd_cheer_2.mp3",
+  "crowd_cheer_3.mp3"
+ ],
+ "ui_tick": [
+  "ui_tick_1.mp3",
+  "ui_tick_2.mp3"
+ ],
+ "ui_hit": [
+  "ui_hit_1.mp3",
+  "ui_hit_2.mp3",
+  "ui_hit_3.mp3"
+ ],
+ "ui_rise": [
+  "ui_rise.mp3"
+ ],
+ "sting": [
+  "sting_1.mp3",
+  "sting_2.mp3",
+  "sting_3.mp3"
+ ],
+ "alarm_loop": [
+  "alarm_loop.mp3"
+ ],
+ "buzzer": [
+  "buzzer.mp3"
+ ],
+ "rain_loop": [
+  "rain_loop.mp3"
+ ],
+ "amb_hvac": [
+  "amb_hvac.mp3"
+ ],
+ "amb_fan": [
+  "amb_fan.mp3"
+ ],
+ "amb_night": [
+  "amb_night.mp3"
+ ],
+ "amb_warehouse": [
+  "amb_warehouse.mp3"
+ ],
+ "amb_factory": [
+  "amb_factory.mp3"
+ ],
+ "amb_wind": [
+  "amb_wind_1.mp3",
+  "amb_wind_2.mp3"
+ ],
+ "amb_road": [
+  "amb_road.mp3"
+ ],
+ "amb_water": [
+  "amb_water.mp3"
+ ],
+ "engine_loop": [
+  "engine_loop.mp3"
+ ],
+ "music_theme": [
+  "music_theme.mp3"
+ ],
+ "music_explore": [
+  "music_explore.mp3"
+ ],
+ "music_sad": [
+  "music_sad.mp3"
+ ],
+ "music_tension": [
+  "music_tension.mp3"
+ ],
+ "music_stealth": [
+  "music_stealth.mp3"
+ ],
+ "music_action": [
+  "music_action.mp3"
+ ],
+ "music_chase": [
+  "music_chase.mp3"
+ ],
+ "music_night": [
+  "music_night.mp3"
+ ]
+}

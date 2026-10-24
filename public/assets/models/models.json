@@ -1,0 +1,412 @@
+{
+ "bed_iron": {
+  "file": "models/bed_iron.glb",
+  "size": [
+   2,
+   1.493,
+   1.315
+  ],
+  "tris": 3988,
+  "kb": 393
+ },
+ "toilet": {
+  "file": "models/toilet.glb",
+  "size": [
+   0.502,
+   0.78,
+   0.637
+  ],
+  "tris": 10492,
+  "kb": 264
+ },
+ "office_chair": {
+  "file": "models/office_chair.glb",
+  "size": [
+   0.835,
+   1.08,
+   0.795
+  ],
+  "tris": 9450,
+  "kb": 656
+ },
+ "sofa_old": {
+  "file": "models/sofa_old.glb",
+  "size": [
+   2,
+   0.892,
+   1.012
+  ],
+  "tris": 7964,
+  "kb": 420
+ },
+ "dumpster": {
+  "file": "models/dumpster.glb",
+  "size": [
+   1.183,
+   1.495,
+   1.95
+  ],
+  "tris": 6292,
+  "kb": 335
+ },
+ "oil_barrels": {
+  "file": "models/oil_barrels.glb",
+  "size": [
+   0.552,
+   0.9,
+   1.373
+  ],
+  "tris": 11400,
+  "kb": 321
+ },
+ "tire": {
+  "file": "models/tire.glb",
+  "size": [
+   0.252,
+   0.68,
+   0.68
+  ],
+  "tris": 5708,
+  "kb": 317
+ },
+ "hay_bale": {
+  "file": "models/hay_bale.glb",
+  "size": [
+   0.657,
+   0.652,
+   1.2
+  ],
+  "tris": 9492,
+  "kb": 1466
+ },
+ "crate": {
+  "file": "models/crate.glb",
+  "size": [
+   0.82,
+   0.347,
+   0.406
+  ],
+  "tris": 6576,
+  "kb": 324
+ },
+ "container": {
+  "file": "models/container.glb",
+  "size": [
+   6.06,
+   2.796,
+   3.158
+  ],
+  "tris": 11098,
+  "kb": 792
+ },
+ "rust_car": {
+  "file": "models/rust_car.glb",
+  "size": [
+   4.4,
+   1.317,
+   1.79
+  ],
+  "tris": 13062,
+  "kb": 575
+ },
+ "shed": {
+  "file": "models/shed.glb",
+  "size": [
+   4.2,
+   2.317,
+   2.829
+  ],
+  "tris": 2086,
+  "kb": 1759
+ },
+ "water_tower": {
+  "file": "models/water_tower.glb",
+  "size": [
+   3.602,
+   11,
+   4.164
+  ],
+  "tris": 7524,
+  "kb": 419
+ },
+ "dozer": {
+  "file": "models/dozer.glb",
+  "size": [
+   5.4,
+   3.71,
+   4.056
+  ],
+  "tris": 4134,
+  "kb": 140
+ },
+ "excavator": {
+  "file": "models/excavator.glb",
+  "size": [
+   9.5,
+   5.012,
+   2.466
+  ],
+  "tris": 31472,
+  "kb": 347
+ },
+ "tractor": {
+  "file": "models/tractor.glb",
+  "size": [
+   3.4,
+   2.305,
+   2.315
+  ],
+  "tris": 24759,
+  "kb": 740
+ },
+ "wheelbarrow": {
+  "file": "models/wheelbarrow.glb",
+  "size": [
+   1.45,
+   0.711,
+   0.639
+  ],
+  "tris": 7224,
+  "kb": 283
+ },
+ "sedan": {
+  "file": "models/sedan.glb",
+  "size": [
+   5.15,
+   1.453,
+   1.955
+  ],
+  "tris": 19765,
+  "kb": 1727
+ },
+ "dump_truck": {
+  "file": "models/dump_truck.glb",
+  "size": [
+   2.896,
+   3.275,
+   8.4
+  ],
+  "tris": 15608,
+  "kb": 207
+ },
+ "fir_big": {
+  "file": "models/fir_big.glb",
+  "size": [
+   8.412,
+   13,
+   7.894
+  ],
+  "tris": 7784,
+  "kb": 825
+ },
+ "boulder_a": {
+  "file": "models/boulder_a.glb",
+  "size": [
+   2.524,
+   0.88,
+   1.232
+  ],
+  "tris": 3915,
+  "kb": 612
+ },
+ "boulder_b": {
+  "file": "models/boulder_b.glb",
+  "size": [
+   2.404,
+   1.473,
+   3.059
+  ],
+  "tris": 3241,
+  "kb": 418
+ },
+ "boulder_c": {
+  "file": "models/boulder_c.glb",
+  "size": [
+   1.364,
+   0.534,
+   0.748
+  ],
+  "tris": 4478,
+  "kb": 591
+ },
+ "rock_a": {
+  "file": "models/rock_a.glb",
+  "size": [
+   0.169,
+   0.144,
+   0.32
+  ],
+  "tris": 3710,
+  "kb": 296
+ },
+ "rock_b": {
+  "file": "models/rock_b.glb",
+  "size": [
+   0.074,
+   0.033,
+   0.145
+  ],
+  "tris": 3104,
+  "kb": 266
+ },
+ "branches": {
+  "file": "models/branches.glb",
+  "size": [
+   1.06,
+   0.341,
+   1.299
+  ],
+  "tris": 8398,
+  "kb": 661
+ },
+ "dead_trunk": {
+  "file": "models/dead_trunk.glb",
+  "size": [
+   0.305,
+   1.993,
+   0.268
+  ],
+  "tris": 4486,
+  "kb": 316
+ },
+ "dirtbike": {
+  "file": "models/dirtbike.glb",
+  "size": [
+   0.97,
+   2.583,
+   2.473
+  ],
+  "tris": 79012,
+  "kb": 1184
+ },
+ "boulder_d": {
+  "file": "models/boulder_d.glb",
+  "size": [
+   1.281,
+   0.998,
+   1.831
+  ],
+  "tris": 2400,
+  "kb": 463
+ },
+ "shrub_a": {
+  "file": "models/shrub_a.glb",
+  "size": [
+   1.31,
+   1.651,
+   1.663
+  ],
+  "tris": 5980,
+  "kb": 501
+ },
+ "shrub_c": {
+  "file": "models/shrub_c.glb",
+  "size": [
+   1.746,
+   1.355,
+   2.29
+  ],
+  "tris": 5988,
+  "kb": 497
+ },
+ "tree_island": {
+  "file": "models/tree_island.glb",
+  "size": [
+   4.008,
+   3.401,
+   3.98
+  ],
+  "tris": 27981,
+  "kb": 2196
+ },
+ "tree_small": {
+  "file": "models/tree_small.glb",
+  "size": [
+   2.824,
+   4.277,
+   4.355
+  ],
+  "tris": 28000,
+  "kb": 2300
+ },
+ "fir_sapling_a": {
+  "file": "models/fir_sapling_a.glb",
+  "size": [
+   5.518,
+   8.868,
+   5.965
+  ],
+  "tris": 23996,
+  "kb": 1662
+ },
+ "fir_sapling_b": {
+  "file": "models/fir_sapling_b.glb",
+  "size": [
+   4.294,
+   7.806,
+   5.241
+  ],
+  "tris": 23994,
+  "kb": 1601
+ },
+ "tree_oak_a": {
+  "file": "models/tree_oak_a.glb",
+  "size": [
+   4.131,
+   3.69,
+   4.027
+  ],
+  "tris": 6692,
+  "kb": 260
+ },
+ "tree_oak_c": {
+  "file": "models/tree_oak_c.glb",
+  "size": [
+   3.973,
+   3.679,
+   4.387
+  ],
+  "tris": 6692,
+  "kb": 259
+ },
+ "tree_hornbeam_a": {
+  "file": "models/tree_hornbeam_a.glb",
+  "size": [
+   2.289,
+   3.87,
+   2.041
+  ],
+  "tris": 5800,
+  "kb": 177
+ },
+ "tree_hornbeam_c": {
+  "file": "models/tree_hornbeam_c.glb",
+  "size": [
+   2.309,
+   3.88,
+   1.899
+  ],
+  "tris": 5800,
+  "kb": 177
+ },
+ "tree_fir_a": {
+  "file": "models/tree_fir_a.glb",
+  "size": [
+   3.752,
+   6.91,
+   3.757
+  ],
+  "tris": 4792,
+  "kb": 243
+ },
+ "tree_fir_b": {
+  "file": "models/tree_fir_b.glb",
+  "size": [
+   3.331,
+   6.754,
+   3.6
+  ],
+  "tris": 4792,
+  "kb": 243
+ }
+}
