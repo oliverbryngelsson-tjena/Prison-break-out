@@ -36,6 +36,8 @@ export class Input {
   private mouseDelta = new THREE.Vector2();
   private keyTaps = new Set<ButtonName>();
   pointerLocked = false;
+  /** Recent key events (debugging). */
+  readonly keyLog: string[] = [];
   private canvas: HTMLElement | null = null;
 
   constructor() {
@@ -47,11 +49,13 @@ export class Input {
         const b = KEYMAP[e.code];
         if (b) this.keyTaps.add(b);
       }
+      this.keyLog.push(`${Math.round(performance.now())}:${e.code}:${e.repeat ? 'r' : 'd'}`);
+      if (this.keyLog.length > 20) this.keyLog.shift();
       this.keys.add(e.code);
       if (['Space', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault();
     });
-    window.addEventListener('keyup', (e) => this.keys.delete(e.code));
-    window.addEventListener('blur', () => { this.keys.clear(); this.mouseButtons.clear(); });
+    window.addEventListener('keyup', (e) => { this.keys.delete(e.code); this.keyLog.push(`${Math.round(performance.now())}:${e.code}:u`); });
+    window.addEventListener('blur', () => { this.keys.clear(); this.mouseButtons.clear(); this.keyLog.push(`${Math.round(performance.now())}:blur`); });
     window.addEventListener('mousemove', (e) => {
       if (this.pointerLocked) this.mouseDelta.x += e.movementX, this.mouseDelta.y += e.movementY;
     });

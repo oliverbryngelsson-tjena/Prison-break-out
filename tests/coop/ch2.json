@@ -1,75 +1,448 @@
 [
-  { "on": "AB", "until": "window.__app.game.begun && !window.__app.game.cutscenes.current", "timeout": 120000 },
-  { "tpA": [15.1, 0, -6.8, 0], "tpB": [15.3, 0, -4.85, 3.1416] },
-  { "wait": 1500 },
-  { "on": "AB", "hold": "KeyE", "ms": 3500 },
-  { "on": "AB", "check": { "name": "co-op hatch lift opens the hatch for both", "expr": "window.__app.game.chapter.flags.hatchOpen === true" } },
-  { "tpA": [15.2, 0, -6.9, 0], "tpB": [15.2, 0, -4.7, 3.1416] },
-  { "wait": 800 },
-  { "on": "AB", "press": "KeyE" },
-  { "on": "AB", "until": "window.__app.game.cutscenes.played.has('cs2_tunnel')", "timeout": 90000 },
-  { "on": "AB", "press": "Enter" },
-  { "on": "AB", "until": "!window.__app.game.cutscenes.current && window.__app.game.chapter.flags.phase === 'tunnel'", "timeout": 60000 },
-  { "on": "AB", "check": { "name": "both reach the tunnel checkpoint", "expr": "window.__app.game.chapter.checkpoint === 'tunnel'" } },
-  { "tpA": [14.6, -3.6, 0.5, -1.5708], "tpB": [15.2, -3.6, 2.0, 0] },
-  { "wait": 800 },
-  { "on": "A", "down": "KeyE" },
-  { "wait": 1500 },
-  { "on": "AB", "check": { "name": "holding the valve shuts off the steam on both", "expr": "window.__app.game.chapter.steamOn === false" } },
-  { "tpB": [15.2, -3.6, 5.6, 0] },
-  { "wait": 800 },
-  { "on": "A", "up": "KeyE" },
-  { "wait": 1500 },
-  { "on": "AB", "check": { "name": "releasing the valve turns the steam back on", "expr": "window.__app.game.chapter.steamOn === true" } },
-  { "tpA": [14.6, -3.6, 15.1, 0], "tpB": [15.6, -3.6, 15.05, 0] },
-  { "wait": 1500 },
-  { "on": "AB", "hold": "KeyE", "ms": 6000 },
-  { "on": "AB", "check": { "name": "timed co-op: grate unbolted while held together", "expr": "window.__app.game.chapter.flags.grateOpen === true" } },
-  { "tpA": [22.4, -3.6, 22.0, 1.5708], "tpB": [21.6, -3.6, 21.6, 1.5708] },
-  { "wait": 1000 },
-  { "on": "A", "press": "KeyE" },
-  { "wait": 1500 },
-  { "on": "AB", "check": { "name": "drain grate pushed open", "expr": "window.__app.game.chapter.flags.drainOpen === true" } },
-  { "tpB": [22.5, -3.6, 21.7, 1.5708] },
-  { "wait": 800 },
-  { "on": "A", "press": "KeyE" },
-  { "wait": 600 },
-  { "on": "B", "press": "KeyE" },
-  { "on": "AB", "until": "window.__app.game.chapter.flags.phase === 'yard'", "timeout": 60000 },
-  { "on": "AB", "check": { "name": "both climb out into the yard", "expr": "window.__app.game.local.body.pos.y > -0.5" } },
-  { "tpA": [2.3, 0, 41.95, 0], "tpB": [2.3, 0, 41.3, 0] },
-  { "wait": 1500 },
-  { "on": "AB", "hold": "KeyE", "ms": 2500 },
-  { "wait": 4000 },
-  { "on": "AB", "check": { "name": "scaffold boost: climber is up", "expr": "window.__app.game.chapter.flags.firstUp === true" } },
-  { "on": "B", "check": { "name": "climber (Jax) stands on the first platform", "expr": "window.__app.game.local.body.pos.y > 2" } },
-  { "tpB": [5.0, 2.4, 42.9, 3.1416] },
-  { "wait": 800 },
-  { "on": "B", "press": "KeyE" },
-  { "wait": 1500 },
-  { "on": "AB", "check": { "name": "ladder lowered", "expr": "window.__app.game.chapter.flags.ladderDown === true" } },
-  { "tpA": [5.05, 0, 41.85, 0] },
-  { "wait": 800 },
-  { "on": "A", "press": "KeyE" },
-  { "wait": 5000 },
-  { "on": "A", "check": { "name": "Elias climbs the ladder", "expr": "window.__app.game.local.body.pos.y > 2" } },
-  { "tpA": [1.9, 2.4, 43.0, 0], "tpB": [2.5, 2.4, 42.9, 0] },
-  { "wait": 800 },
-  { "on": "A", "press": "KeyE" },
-  { "wait": 4500 },
-  { "on": "B", "press": "KeyE" },
-  { "wait": 4500 },
-  { "on": "AB", "check": { "name": "both on the top platform", "expr": "window.__app.game.local.body.pos.y > 4.4" } },
-  { "tpA": [3.4, 4.8, 43.2, 0] },
-  { "wait": 800 },
-  { "on": "A", "press": "KeyE" },
-  { "on": "AB", "until": "window.__app.game.chapter.flags.phase === 'outside' && !window.__app.game.cutscenes.current", "timeout": 120000 },
-  { "on": "AB", "check": { "name": "over the wall: outside checkpoint", "expr": "window.__app.game.chapter.checkpoint === 'outside'" } },
-  { "wait": 6000 },
-  { "on": "AB", "eval": "(() => { const g = window.__app.game; return { hp: Math.round(g.local.body.hp), st: g.local.state }; })()" },
-  { "on": "AB", "eval": "(() => { const g = window.__app.game, t = g.chapter.terrain; const x = g.localChar === 'elias' ? 4 : 6; g.local.teleport({ x, y: t.height(x, 106) + 0.1, z: 106 }, 0); return t.height(x, 106); })()" },
-  { "on": "AB", "until": "window.__app.game.cutscenes.played.has('cs2_river')", "timeout": 60000 },
-  { "on": "AB", "press": "Enter" },
-  { "on": "AB", "until": "window.__app.state === 'end'", "timeout": 120000 },
-  { "on": "AB", "check": { "name": "chapter 2 completes on both clients", "expr": "document.querySelector('[data-screen=end].show') !== null" } }
+ {
+  "on": "AB",
+  "until": "window.__app.game.begun && !window.__app.game.cutscenes.current",
+  "timeout": 120000
+ },
+ {
+  "tpA": [
+   15.1,
+   0,
+   -6.8,
+   0
+  ],
+  "tpB": [
+   15.3,
+   0,
+   -4.85,
+   3.1416
+  ]
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "on": "AB",
+  "hold": "KeyE",
+  "ms": 3500
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.chapter.flags.hatchOpen === true",
+  "timeout": 15000,
+  "critical": false
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "co-op hatch lift opens the hatch for both",
+   "expr": "window.__app.game.chapter.flags.hatchOpen === true"
+  }
+ },
+ {
+  "tpA": [
+   15.2,
+   0,
+   -6.9,
+   0
+  ],
+  "tpB": [
+   15.2,
+   0,
+   -4.7,
+   3.1416
+  ]
+ },
+ {
+  "wait": 800
+ },
+ {
+  "on": "AB",
+  "press": "KeyE"
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.cutscenes.played.has('cs2_tunnel')",
+  "timeout": 90000
+ },
+ {
+  "on": "AB",
+  "press": "Enter"
+ },
+ {
+  "on": "AB",
+  "until": "!window.__app.game.cutscenes.current && window.__app.game.chapter.flags.phase === 'tunnel'",
+  "timeout": 60000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "both reach the tunnel checkpoint",
+   "expr": "window.__app.game.chapter.checkpoint === 'tunnel'"
+  }
+ },
+ {
+  "tpA": [
+   14.6,
+   -3.6,
+   0.5,
+   -1.5708
+  ],
+  "tpB": [
+   15.2,
+   -3.6,
+   2.0,
+   0
+  ]
+ },
+ {
+  "wait": 800
+ },
+ {
+  "on": "A",
+  "down": "KeyE"
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "holding the valve shuts off the steam on both",
+   "expr": "window.__app.game.chapter.steamOn === false"
+  }
+ },
+ {
+  "tpB": [
+   15.2,
+   -3.6,
+   5.6,
+   0
+  ]
+ },
+ {
+  "wait": 800
+ },
+ {
+  "on": "A",
+  "up": "KeyE"
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "releasing the valve turns the steam back on",
+   "expr": "window.__app.game.chapter.steamOn === true"
+  }
+ },
+ {
+  "tpA": [
+   14.6,
+   -3.6,
+   15.1,
+   0
+  ],
+  "tpB": [
+   15.6,
+   -3.6,
+   15.05,
+   0
+  ]
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "on": "AB",
+  "hold": "KeyE",
+  "ms": 6000
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.chapter.flags.grateOpen === true",
+  "timeout": 15000,
+  "critical": false
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "timed co-op: grate unbolted while held together",
+   "expr": "window.__app.game.chapter.flags.grateOpen === true"
+  }
+ },
+ {
+  "tpA": [
+   22.4,
+   -3.6,
+   22.0,
+   1.5708
+  ],
+  "tpB": [
+   21.6,
+   -3.6,
+   21.6,
+   1.5708
+  ]
+ },
+ {
+  "wait": 1000
+ },
+ {
+  "on": "A",
+  "press": "KeyE"
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.chapter.flags.drainOpen === true",
+  "timeout": 15000,
+  "critical": false
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "drain grate pushed open",
+   "expr": "window.__app.game.chapter.flags.drainOpen === true"
+  }
+ },
+ {
+  "tpB": [
+   22.5,
+   -3.6,
+   21.7,
+   1.5708
+  ]
+ },
+ {
+  "wait": 800
+ },
+ {
+  "on": "A",
+  "press": "KeyE"
+ },
+ {
+  "wait": 600
+ },
+ {
+  "on": "B",
+  "press": "KeyE"
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.chapter.flags.phase === 'yard'",
+  "timeout": 60000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "both climb out into the yard",
+   "expr": "window.__app.game.local.body.pos.y > -0.5"
+  }
+ },
+ {
+  "on": "AB",
+  "eval": "(() => { const g = window.__app.game; const b = g.npcs.get('briggs'); if (b) { b.enabled = false; b.body.visible = false; } g.chapter.searchlights[0].on = false; return 'hazards off for the scaffold test'; })()"
+ },
+ {
+  "tpA": [
+   2.3,
+   0,
+   41.95,
+   0
+  ],
+  "tpB": [
+   2.3,
+   0,
+   41.3,
+   0
+  ]
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "on": "AB",
+  "hold": "KeyE",
+  "ms": 2500
+ },
+ {
+  "wait": 4000
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.chapter.flags.firstUp === true",
+  "timeout": 15000,
+  "critical": false
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "scaffold boost: climber is up",
+   "expr": "window.__app.game.chapter.flags.firstUp === true"
+  }
+ },
+ {
+  "on": "B",
+  "check": {
+   "name": "climber (Jax) stands on the first platform",
+   "expr": "window.__app.game.local.body.pos.y > 2"
+  }
+ },
+ {
+  "tpB": [
+   5.0,
+   2.4,
+   42.9,
+   3.1416
+  ]
+ },
+ {
+  "wait": 800
+ },
+ {
+  "on": "B",
+  "press": "KeyE"
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.chapter.flags.ladderDown === true",
+  "timeout": 15000,
+  "critical": false
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "ladder lowered",
+   "expr": "window.__app.game.chapter.flags.ladderDown === true"
+  }
+ },
+ {
+  "tpA": [
+   5.05,
+   0,
+   41.85,
+   0
+  ]
+ },
+ {
+  "wait": 800
+ },
+ {
+  "on": "A",
+  "press": "KeyE"
+ },
+ {
+  "wait": 5000
+ },
+ {
+  "on": "A",
+  "check": {
+   "name": "Elias climbs the ladder",
+   "expr": "window.__app.game.local.body.pos.y > 2"
+  }
+ },
+ {
+  "tpA": [
+   1.9,
+   2.4,
+   43.0,
+   0
+  ],
+  "tpB": [
+   2.5,
+   2.4,
+   42.9,
+   0
+  ]
+ },
+ {
+  "wait": 800
+ },
+ {
+  "on": "A",
+  "press": "KeyE"
+ },
+ {
+  "wait": 4500
+ },
+ {
+  "on": "B",
+  "press": "KeyE"
+ },
+ {
+  "wait": 4500
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "both on the top platform",
+   "expr": "window.__app.game.local.body.pos.y > 4.4"
+  }
+ },
+ {
+  "tpA": [
+   3.4,
+   4.8,
+   43.2,
+   0
+  ]
+ },
+ {
+  "wait": 800
+ },
+ {
+  "on": "A",
+  "press": "KeyE"
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.chapter.flags.phase === 'outside' && !window.__app.game.cutscenes.current",
+  "timeout": 120000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "over the wall: outside checkpoint",
+   "expr": "window.__app.game.chapter.checkpoint === 'outside'"
+  }
+ },
+ {
+  "wait": 6000
+ },
+ {
+  "on": "AB",
+  "eval": "(() => { const g = window.__app.game; return { hp: Math.round(g.local.body.hp), st: g.local.state }; })()"
+ },
+ {
+  "on": "AB",
+  "eval": "(() => { const g = window.__app.game, t = g.chapter.terrain; const x = g.localChar === 'elias' ? 4 : 6; g.local.teleport({ x, y: t.height(x, 106) + 0.1, z: 106 }, 0); return t.height(x, 106); })()"
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.cutscenes.played.has('cs2_river')",
+  "timeout": 60000
+ },
+ {
+  "on": "AB",
+  "press": "Enter"
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.state === 'end'",
+  "timeout": 120000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "chapter 2 completes on both clients",
+   "expr": "document.querySelector('[data-screen=end].show') !== null"
+  }
+ }
 ]

@@ -51,7 +51,7 @@ export class App {
   private startingGame = false;
   private soloDev = false;
   /** Test harness option (?render=N): draw only every Nth frame so logic runs at full speed under software GL. */
-  private renderEvery = Math.max(1, Number(new URLSearchParams(location.search).get('render')) || 1);
+  private renderEvery = (() => { const v = new URLSearchParams(location.search).get('render'); return v === null ? 1 : Math.max(0, Number(v) || 0); })();
   private frameNo = 0;
   /** Test/debug hook. */
   readonly debug: Record<string, unknown> = {};
@@ -379,6 +379,7 @@ export class App {
     }, character);
     this.game = game;
     this.debug.game = game;
+    game.onLoadStatus = (st) => this.menus.setLoading(chapter, title, 0.97, st);
     try {
       await game.load(chapter, checkpoint || null, Object.keys(flags).length ? flags : undefined);
     } catch (e) {
@@ -515,12 +516,13 @@ export class App {
     const now = performance.now();
     const dt = Math.min(0.1, Math.max(0.0005, (now - this.last) / 1000));
     this.last = now;
+    this.debug.frames = ((this.debug.frames as number) ?? 0) + 1;
     try {
       if (this.game && this.game.state !== 'loading') {
         if (this.state === 'game' && !this.paused && this.input.buttons.pause.pressed && !this.game.inCutscene) this.setPaused(true);
         else if (this.paused && this.input.buttons.pause.pressed) this.setPaused(false);
         this.game.update(dt);
-        if (++this.frameNo % this.renderEvery === 0) this.renderer.render(dt);
+        if (this.renderEvery > 0 && ++this.frameNo % this.renderEvery === 0) this.renderer.render(dt);
       } else if (this.menuScene) {
         this.menuScene.update(dt);
         this.renderer.render(dt);

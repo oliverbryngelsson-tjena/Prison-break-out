@@ -74,7 +74,7 @@ try {
     } catch (e) {
       fails++;
       console.log(stamp(), 'STEP FAILED', JSON.stringify(s).slice(0, 120), String(e.message).slice(0, 200));
-      for (const c of targets) console.log('  ', c.label, JSON.stringify(await c.page.evaluate(() => { const g = window.__app.game; return g ? { st: g.state, pos: g.local.body.pos.toArray().map((x) => +x.toFixed(2)), ls: g.local.state, flags: g.chapter.flags, cs: g.cutscenes.current?.id, err: window.__app.debug.lastError?.slice(0, 200) } : window.__app.state; }).catch(() => 'n/a')).slice(0, 500));
+      for (const c of targets) console.log('  ', c.label, JSON.stringify(await c.page.evaluate(() => { const g = window.__app.game; return g ? { st: g.state, pos: g.local.body.pos.toArray().map((x) => +x.toFixed(2)), ls: g.local.state, flags: g.chapter.flags, cs: g.cutscenes.current?.id, frames: window.__app.debug.frames, keys: window.__app.input.keyLog.slice(-6), cur: g.interact.current?.id, auth: g.authority, err: window.__app.debug.lastError?.slice(0, 200) } : window.__app.state; }).catch(() => 'n/a')).slice(0, 500));
       if (s.critical !== false) break;
     }
   }
