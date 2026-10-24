@@ -251,6 +251,21 @@ export class Chapter3 extends Chapter {
     }
     this.foliage = new Foliage(w, g.deps.renderer.gl);
     await this.foliage.add(items, [...trees, ...bushes]);
+    // Forest floor: dead trunks, fallen branches, small boulders and a few hornbeams.
+    const debrisItems: FoliageItem[] = [
+      { model: 'dead_trunk', near: 45, collider: 0.18, colliderHeight: 2 },
+      { model: 'branches', near: 30, shadow: false },
+      { model: 'boulder_a', near: 60, collider: 0.8, colliderHeight: 0.9 },
+      { model: 'boulder_c', near: 45, shadow: false },
+      { model: 'tree_hornbeam_c', impostor: true, collider: 0.2 },
+    ];
+    const debris = scatter({
+      x0: -176, z0: -170, x1: 186, z1: 192, spacing: 11, seed: 71, height: (x, z) => this.y(x, z),
+      density: (x, z) => (clear(x, z) ? 0 : 0.45),
+      pick: (r) => (r < 0.22 ? 0 : r < 0.6 ? 1 : r < 0.74 ? 2 : r < 0.88 ? 3 : 4),
+      scale: (item, r) => (item === 4 ? 1.1 + r * 0.5 : 0.8 + r * 0.5),
+    });
+    await this.foliage.add(debrisItems, debris);
   }
 
   // ------------------------------------------------------------------ farm
@@ -314,6 +329,9 @@ export class Chapter3 extends Chapter {
     w.physics.addBox({ x: 62, y: fy + 5, z: 86 }, { x: 3.4, y: 10, z: 3.4 }, 0.4, {});
     const barrow = await w.model('wheelbarrow');
     kit.place(barrow, [44, fy, 68], 1.2);
+    const shed = await w.model('shed');
+    kit.place(shed, [32, fy, 86.5], Math.PI);
+    w.physics.addBox({ x: 32, y: fy + 1.15, z: 86.5 }, { x: 4.2, y: 2.3, z: 2.8 }, 0, { surface: 'wood' });
     // Fence around the yard (posts + rails) with gaps
     const fence = (pts: Array<[number, number]>) => {
       for (let i = 0; i < pts.length - 1; i++) {

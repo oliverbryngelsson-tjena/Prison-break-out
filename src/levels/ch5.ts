@@ -84,10 +84,10 @@ export class Chapter5 extends Chapter {
     const g = this.g;
     const w = g.world;
     await w.setEnvironment({
-      hdr: 'env/sunset.hdr', envIntensity: 0.18, background: 0x0b0f17,
-      fog: { color: 0x0e131b, density: 0.008 },
-      hemi: { sky: 0x34445e, ground: 0x0e0c0a, intensity: 0.4 },
-      sun: { color: 0x9fb4e0, intensity: 0.7, dir: [-0.4, 0.75, -0.5], shadows: true },
+      hdr: 'env/sunset.hdr', envIntensity: 0.24, background: 0x111826,
+      fog: { color: 0x131a26, density: 0.007 },
+      hemi: { sky: 0x4a5c7c, ground: 0x15120e, intensity: 0.75 },
+      sun: { color: 0xa9bde6, intensity: 1.05, dir: [-0.4, 0.75, -0.5], shadows: true },
       grade: { saturation: 0.85, contrast: 1.08, lift: [0.0, 0.008, 0.018], gain: [1.0, 1.0, 1.04], shadowTint: [0.9, 0.96, 1.12], highlightTint: [1.06, 1.0, 0.92], exposure: 1.15, bloom: 1.0, vignette: 0.55 },
       reverb: 0.1,
     });
@@ -114,7 +114,7 @@ export class Chapter5 extends Chapter {
     await this.buildProps();
     this.kit.finish();
     this.bikes = new BikeSystem(g);
-    await this.bikes.init();
+    await this.bikes.init({ headlights: true });
     this.bikes.ctrl.onCrash = (why) => this.onLocalCrash(why);
     this.bikes.ctrl.onLand = (impact) => { if (impact > 6) { g.audio.play('land', { pos: this.bikes.ctrl.pos, volume: Math.min(1, impact / 14) }); g.cam.addShake(Math.min(0.4, impact / 30)); } };
     for (let i = 0; i < 3; i++) {

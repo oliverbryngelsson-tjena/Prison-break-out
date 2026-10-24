@@ -190,498 +190,6 @@
   "files": []
  },
  {
-  "kind": "model",
-  "title": "Hospital Bed",
-  "author": "loxfear",
-  "link": "https://sketchfab.com/3d-models/hospital-bed-f8c13a19e84343e7b644c19f7b9488d3",
-  "license": "CC-BY-4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/bed_iron.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Toilet",
-  "author": "hippostance",
-  "link": "https://sketchfab.com/3d-models/toilet-132a8ee2af3a40d39d270fbed3d3666c",
-  "license": "CC-BY-4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/toilet.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Office Chair",
-  "author": "nokillnando",
-  "link": "https://sketchfab.com/3d-models/office-chair-b228a29fa84544c2be501c295653ffe7",
-  "license": "CC-BY-4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/office_chair.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Old Couch",
-  "author": "oisougabo",
-  "link": "https://sketchfab.com/3d-models/old-couch-443d9bb95e944afe8ebc4ff489e2886c",
-  "license": "CC-BY-4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/sofa_old.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "LOW POLY - DUMPSTER",
-  "author": "Colin.Greenall",
-  "link": "https://sketchfab.com/3d-models/low-poly-dumpster-093e5b05faa947729b1be24c013e563b",
-  "license": "CC-BY-4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/dumpster.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Dirty oil barrel",
-  "author": "ahmagh2e",
-  "link": "https://sketchfab.com/3d-models/dirty-oil-barrel-5mb-b973a95ff3bb478a941ccb06a70b14bb",
-  "license": "CC-BY-4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/oil_barrels.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Old Dirty Tire",
-  "author": "tahircakir",
-  "link": "https://sketchfab.com/3d-models/old-dirty-tire-ec06c0af626746e7a44de65436037173",
-  "license": "CC-BY-4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/tire.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Hay bale",
-  "author": "NoodePoodle",
-  "link": "https://sketchfab.com/3d-models/hay-bale-e01a6a0f9ed843279adfac2427c99679",
-  "license": "CC-BY-4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/hay_bale.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Wooden Crate 01",
-  "author": "Poly Haven",
-  "link": "https://polyhaven.com/a/wooden_crate_01",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/crate.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Freight shipping container - Rusted",
-  "author": "sousinho",
-  "link": "https://sketchfab.com/3d-models/freight-shipping-container-rusted-2b787d1a02174d0bbca9eac34eb3a486",
-  "license": "CC-BY-4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/container.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Abandoned Car - BMW E30 Sedan",
-  "author": "roh3d",
-  "link": "https://sketchfab.com/3d-models/abandoned-car-bmw-e30-sedan-32498418a32d43a78d0847ce4c55fcb0",
-  "license": "CC-BY-4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/rust_car.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Worn Shed PBR Game-Ready",
-  "author": "donnichols",
-  "link": "https://sketchfab.com/3d-models/worn-shed-pbr-game-ready-be6edd62e55a4f9a99da940fc164a5b9",
-  "license": "CC-BY-4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/shed.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Water Tower",
-  "author": "ahmagh2e",
-  "link": "https://sketchfab.com/3d-models/water-tower-4e98f8c8fe4e4e9fae250a026974fe99",
-  "license": "CC-BY-4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/water_tower.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Bulldozer Photogrammetry",
-  "author": "bertanbaday",
-  "link": "https://sketchfab.com/3d-models/bulldozer-photogrammetry-baa53594134f4a4f99d96ce4ba25492e",
-  "license": "CC-BY-4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/dozer.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Excavator",
-  "author": "rhymone",
-  "link": "https://sketchfab.com/3d-models/excavator-84cd8adb9d104010b10f3fa89e5f6a70",
-  "license": "CC-BY-4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/excavator.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Tractor",
-  "author": "le0tard",
-  "link": "https://sketchfab.com/3d-models/tractor-278fc1e0516c401eba358d3aa2e55635",
-  "license": "CC-BY-4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/tractor.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Wheelbarrow",
-  "author": "i.aleksey.yakovlev",
-  "link": "https://sketchfab.com/3d-models/wheelbarrow-c0dcebcb0d4b47bd98df534334f4caf6",
-  "license": "CC-BY-4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/wheelbarrow.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Negotiator '80 - Low poly model",
-  "author": "DanielZhabotinsky",
-  "link": "https://sketchfab.com/3d-models/negotiator-80-low-poly-model-892b2684fb37442299bfad9222cf331c",
-  "license": "CC-BY-4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/sedan.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Shacman F3000 Dump Truck",
-  "author": "benjamintang2012",
-  "link": "https://sketchfab.com/3d-models/shacman-f3000-dump-truck-010b0518d3f946b98e2ae3bddf52fbd8",
-  "license": "CC-BY-4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/dump_truck.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Fir tree",
-  "author": "intice184",
-  "link": "https://sketchfab.com/3d-models/fir-tree-0965de5def1342cd8b8b1a0fa5643e27",
-  "license": "CC-BY-4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/fir_big.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Namaqualand Boulder 02",
-  "author": "Poly Haven",
-  "link": "https://polyhaven.com/a/namaqualand_boulder_02",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/boulder_a.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Namaqualand Boulder 03",
-  "author": "Poly Haven",
-  "link": "https://polyhaven.com/a/namaqualand_boulder_03",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/boulder_b.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Namaqualand Boulder 05",
-  "author": "Poly Haven",
-  "link": "https://polyhaven.com/a/namaqualand_boulder_05",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/boulder_c.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Rock 07",
-  "author": "Poly Haven",
-  "link": "https://polyhaven.com/a/rock_07",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/rock_a.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Rock 09",
-  "author": "Poly Haven",
-  "link": "https://polyhaven.com/a/rock_09",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/rock_b.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Dry Branches Medium 01",
-  "author": "Poly Haven",
-  "link": "https://polyhaven.com/a/dry_branches_medium_01",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/branches.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Dead Quiver Trunk",
-  "author": "Poly Haven",
-  "link": "https://polyhaven.com/a/dead_quiver_trunk",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/dead_trunk.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "(FREE) Honda CRF 450",
-  "author": "Jacobdesigns",
-  "link": "https://skfb.ly/oFqPG",
-  "license": "CC-BY-4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "via": "github.com/gazlappy/motocross-bobness (redistributed copy)",
-  "files": [
-   "models/dirtbike.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Boulder 01",
-  "author": "Poly Haven (Rico Cilliers)",
-  "link": "https://polyhaven.com/a/boulder_01",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/openzigs/onyourleft (redistributed copy)",
-  "files": [
-   "models/boulder_d.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Shrub 02",
-  "author": "Poly Haven (Rico Cilliers)",
-  "link": "https://polyhaven.com/a/shrub_02",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/openzigs/onyourleft (redistributed copy)",
-  "files": [
-   "models/shrub_a.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Shrub 02",
-  "author": "Poly Haven (Rico Cilliers)",
-  "link": "https://polyhaven.com/a/shrub_02",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/openzigs/onyourleft (redistributed copy)",
-  "files": [
-   "models/shrub_c.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Island Tree 02",
-  "author": "Poly Haven (Rob Tuytel, Rico Cilliers)",
-  "link": "https://polyhaven.com/a/island_tree_02",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/openzigs/onyourleft (redistributed copy)",
-  "files": [
-   "models/tree_island.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Tree Small 02",
-  "author": "Poly Haven (Rico Cilliers)",
-  "link": "https://polyhaven.com/a/tree_small_02",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/openzigs/onyourleft (redistributed copy)",
-  "files": [
-   "models/tree_small.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Fir Sapling Medium",
-  "author": "Poly Haven (Rob Tuytel, Rico Cilliers)",
-  "link": "https://polyhaven.com/a/fir_sapling_medium",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/openzigs/onyourleft (redistributed copy)",
-  "files": [
-   "models/fir_sapling_a.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Fir Sapling Medium",
-  "author": "Poly Haven (Rob Tuytel, Rico Cilliers)",
-  "link": "https://polyhaven.com/a/fir_sapling_medium",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/openzigs/onyourleft (redistributed copy)",
-  "files": [
-   "models/fir_sapling_b.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Generated oak a tree (EZ-Tree, ambientCG/Poly Haven textures)",
-  "author": "onyourleft contributors; textures ambientCG / Poly Haven",
-  "link": "https://github.com/openzigs/onyourleft",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/openzigs/onyourleft (redistributed copy)",
-  "files": [
-   "models/tree_oak_a.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Generated oak c tree (EZ-Tree, ambientCG/Poly Haven textures)",
-  "author": "onyourleft contributors; textures ambientCG / Poly Haven",
-  "link": "https://github.com/openzigs/onyourleft",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/openzigs/onyourleft (redistributed copy)",
-  "files": [
-   "models/tree_oak_c.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Generated hornbeam a tree (EZ-Tree, ambientCG/Poly Haven textures)",
-  "author": "onyourleft contributors; textures ambientCG / Poly Haven",
-  "link": "https://github.com/openzigs/onyourleft",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/openzigs/onyourleft (redistributed copy)",
-  "files": [
-   "models/tree_hornbeam_a.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Generated hornbeam c tree (EZ-Tree, ambientCG/Poly Haven textures)",
-  "author": "onyourleft contributors; textures ambientCG / Poly Haven",
-  "link": "https://github.com/openzigs/onyourleft",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/openzigs/onyourleft (redistributed copy)",
-  "files": [
-   "models/tree_hornbeam_c.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Generated fir a tree (EZ-Tree, ambientCG/Poly Haven textures)",
-  "author": "onyourleft contributors; textures ambientCG / Poly Haven",
-  "link": "https://github.com/openzigs/onyourleft",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/openzigs/onyourleft (redistributed copy)",
-  "files": [
-   "models/tree_fir_a.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Generated fir b tree (EZ-Tree, ambientCG/Poly Haven textures)",
-  "author": "onyourleft contributors; textures ambientCG / Poly Haven",
-  "link": "https://github.com/openzigs/onyourleft",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/openzigs/onyourleft (redistributed copy)",
-  "files": [
-   "models/tree_fir_b.glb"
-  ]
- },
- {
   "kind": "texture",
   "title": "Concrete Wall 008",
   "author": "Dario Barresi, Charlotte Baglioni (Poly Haven)",
@@ -1134,6 +642,414 @@
    "tex/bark_pine_c.jpg",
    "tex/bark_pine_n.jpg",
    "tex/bark_pine_r.jpg"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Hospital Bed",
+  "author": "loxfear",
+  "link": "https://sketchfab.com/3d-models/hospital-bed-f8c13a19e84343e7b644c19f7b9488d3",
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/bed_iron.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Toilet",
+  "author": "hippostance",
+  "link": "https://sketchfab.com/3d-models/toilet-132a8ee2af3a40d39d270fbed3d3666c",
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/toilet.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Office Chair",
+  "author": "nokillnando",
+  "link": "https://sketchfab.com/3d-models/office-chair-b228a29fa84544c2be501c295653ffe7",
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/office_chair.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Old Couch",
+  "author": "oisougabo",
+  "link": "https://sketchfab.com/3d-models/old-couch-443d9bb95e944afe8ebc4ff489e2886c",
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/sofa_old.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "LOW POLY - DUMPSTER",
+  "author": "Colin.Greenall",
+  "link": "https://sketchfab.com/3d-models/low-poly-dumpster-093e5b05faa947729b1be24c013e563b",
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/dumpster.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Dirty oil barrel",
+  "author": "ahmagh2e",
+  "link": "https://sketchfab.com/3d-models/dirty-oil-barrel-5mb-b973a95ff3bb478a941ccb06a70b14bb",
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/oil_barrels.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Old Dirty Tire",
+  "author": "tahircakir",
+  "link": "https://sketchfab.com/3d-models/old-dirty-tire-ec06c0af626746e7a44de65436037173",
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/tire.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Wooden Crate 01",
+  "author": "Poly Haven",
+  "link": "https://polyhaven.com/a/wooden_crate_01",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/crate.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Freight shipping container - Rusted",
+  "author": "sousinho",
+  "link": "https://sketchfab.com/3d-models/freight-shipping-container-rusted-2b787d1a02174d0bbca9eac34eb3a486",
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/container.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Abandoned Car - BMW E30 Sedan",
+  "author": "roh3d",
+  "link": "https://sketchfab.com/3d-models/abandoned-car-bmw-e30-sedan-32498418a32d43a78d0847ce4c55fcb0",
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/rust_car.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Worn Shed PBR Game-Ready",
+  "author": "donnichols",
+  "link": "https://sketchfab.com/3d-models/worn-shed-pbr-game-ready-be6edd62e55a4f9a99da940fc164a5b9",
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/shed.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Water Tower",
+  "author": "ahmagh2e",
+  "link": "https://sketchfab.com/3d-models/water-tower-4e98f8c8fe4e4e9fae250a026974fe99",
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/water_tower.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Bulldozer Photogrammetry",
+  "author": "bertanbaday",
+  "link": "https://sketchfab.com/3d-models/bulldozer-photogrammetry-baa53594134f4a4f99d96ce4ba25492e",
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/dozer.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Excavator",
+  "author": "rhymone",
+  "link": "https://sketchfab.com/3d-models/excavator-84cd8adb9d104010b10f3fa89e5f6a70",
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/excavator.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Tractor",
+  "author": "le0tard",
+  "link": "https://sketchfab.com/3d-models/tractor-278fc1e0516c401eba358d3aa2e55635",
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/tractor.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Wheelbarrow",
+  "author": "i.aleksey.yakovlev",
+  "link": "https://sketchfab.com/3d-models/wheelbarrow-c0dcebcb0d4b47bd98df534334f4caf6",
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/wheelbarrow.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Negotiator '80 - Low poly model",
+  "author": "DanielZhabotinsky",
+  "link": "https://sketchfab.com/3d-models/negotiator-80-low-poly-model-892b2684fb37442299bfad9222cf331c",
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/sedan.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Shacman F3000 Dump Truck",
+  "author": "benjamintang2012",
+  "link": "https://sketchfab.com/3d-models/shacman-f3000-dump-truck-010b0518d3f946b98e2ae3bddf52fbd8",
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/dump_truck.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Fir tree",
+  "author": "intice184",
+  "link": "https://sketchfab.com/3d-models/fir-tree-0965de5def1342cd8b8b1a0fa5643e27",
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/fir_big.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Namaqualand Boulder 02",
+  "author": "Poly Haven",
+  "link": "https://polyhaven.com/a/namaqualand_boulder_02",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/boulder_a.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Namaqualand Boulder 03",
+  "author": "Poly Haven",
+  "link": "https://polyhaven.com/a/namaqualand_boulder_03",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/boulder_b.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Namaqualand Boulder 05",
+  "author": "Poly Haven",
+  "link": "https://polyhaven.com/a/namaqualand_boulder_05",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/boulder_c.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Dry Branches Medium 01",
+  "author": "Poly Haven",
+  "link": "https://polyhaven.com/a/dry_branches_medium_01",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/branches.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Dead Quiver Trunk",
+  "author": "Poly Haven",
+  "link": "https://polyhaven.com/a/dead_quiver_trunk",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "models/dead_trunk.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "(FREE) Honda CRF 450",
+  "author": "Jacobdesigns",
+  "link": "https://skfb.ly/oFqPG",
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "via": "github.com/gazlappy/motocross-bobness (redistributed copy)",
+  "files": [
+   "models/dirtbike.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Boulder 01",
+  "author": "Poly Haven (Rico Cilliers)",
+  "link": "https://polyhaven.com/a/boulder_01",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "models/boulder_d.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Shrub 02",
+  "author": "Poly Haven (Rico Cilliers)",
+  "link": "https://polyhaven.com/a/shrub_02",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "models/shrub_a.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Shrub 02",
+  "author": "Poly Haven (Rico Cilliers)",
+  "link": "https://polyhaven.com/a/shrub_02",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "models/shrub_c.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Generated oak a tree (EZ-Tree, ambientCG/Poly Haven textures)",
+  "author": "onyourleft contributors; textures ambientCG / Poly Haven",
+  "link": "https://github.com/openzigs/onyourleft",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "models/tree_oak_a.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Generated oak c tree (EZ-Tree, ambientCG/Poly Haven textures)",
+  "author": "onyourleft contributors; textures ambientCG / Poly Haven",
+  "link": "https://github.com/openzigs/onyourleft",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "models/tree_oak_c.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Generated hornbeam a tree (EZ-Tree, ambientCG/Poly Haven textures)",
+  "author": "onyourleft contributors; textures ambientCG / Poly Haven",
+  "link": "https://github.com/openzigs/onyourleft",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "models/tree_hornbeam_a.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Generated hornbeam c tree (EZ-Tree, ambientCG/Poly Haven textures)",
+  "author": "onyourleft contributors; textures ambientCG / Poly Haven",
+  "link": "https://github.com/openzigs/onyourleft",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "models/tree_hornbeam_c.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Generated fir a tree (EZ-Tree, ambientCG/Poly Haven textures)",
+  "author": "onyourleft contributors; textures ambientCG / Poly Haven",
+  "link": "https://github.com/openzigs/onyourleft",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "models/tree_fir_a.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Generated fir b tree (EZ-Tree, ambientCG/Poly Haven textures)",
+  "author": "onyourleft contributors; textures ambientCG / Poly Haven",
+  "link": "https://github.com/openzigs/onyourleft",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "models/tree_fir_b.glb"
   ]
  },
  {
