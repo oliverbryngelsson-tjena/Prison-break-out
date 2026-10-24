@@ -894,8 +894,8 @@ export class Game implements SessionHandlers, CutsceneHost {
     this.hud.setSubtitle(null, '');
     for (const n of this.npcs.values()) n.dispose();
     this.npcs.clear();
-    this.chapter?.dispose();
-    this.world?.dispose();
+    try { this.chapter?.dispose(); } catch (e) { console.warn('chapter dispose', e); }
+    try { this.world?.dispose(); } catch (e) { console.warn('world dispose', e); }
     this.audio.stopMusic(1.5);
   }
 }

@@ -96,6 +96,7 @@ export class Chapter5 extends Chapter {
     this.track = densify(CTRL, 4);
     let acc = 0;
     this.trackS = this.track.map((p, i) => (i ? (acc += p.distanceTo(this.track[i - 1])) : 0));
+    this.buildGrid();
     this.computeTrackHeights();
     await this.buildTerrain();
     for (const p of this.track) p.y = this.terrain.height(p.x, p.z);
@@ -179,13 +180,31 @@ export class Chapter5 extends Chapter {
     return h;
   }
 
+  private grid = new Map<number, number[]>();
+  private static readonly GC = 16;
+  private gridKey(cx: number, cz: number): number { return (cx + 1000) * 4096 + (cz + 1000); }
+  private buildGrid(): void {
+    this.grid.clear();
+    this.track.forEach((p, i) => {
+      const k = this.gridKey(Math.floor(p.x / Chapter5.GC), Math.floor(p.z / Chapter5.GC));
+      let l = this.grid.get(k);
+      if (!l) { l = []; this.grid.set(k, l); }
+      l.push(i);
+    });
+  }
+  /** Nearest dense track point within ~32 m (d = Infinity beyond that). */
   private nearestTrack(x: number, z: number): { d: number; i: number } {
-    // Coarse grid search over the dense track (cached per call region).
+    if (!this.grid.size) this.buildGrid();
+    const cx = Math.floor(x / Chapter5.GC), cz = Math.floor(z / Chapter5.GC);
     let best = Infinity, bi = 0;
-    for (let i = 0; i < this.track.length; i++) {
-      const p = this.track[i];
-      const d = (p.x - x) * (p.x - x) + (p.z - z) * (p.z - z);
-      if (d < best) { best = d; bi = i; }
+    for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) {
+      const l = this.grid.get(this.gridKey(cx + dx, cz + dz));
+      if (!l) continue;
+      for (const i of l) {
+        const p = this.track[i];
+        const d = (p.x - x) * (p.x - x) + (p.z - z) * (p.z - z);
+        if (d < best) { best = d; bi = i; }
+      }
     }
     return { d: Math.sqrt(best), i: bi };
   }
@@ -505,7 +524,10 @@ export class Chapter5 extends Chapter {
     if (!this.authority) return;
     // Checkpoints reached by both riders
     const both = Math.min(myS, otherS);
+    const order = ['start', 'cp_farm', 'cp_river', 'cp_highway', 'cp_climb'];
+    const curIdx = order.indexOf(this.checkpoint);
     for (const id of ['cp_farm', 'cp_river', 'cp_highway', 'cp_climb']) {
+      if (order.indexOf(id) <= curIdx) continue;
       if (both > this.cpS[id] + 3 && !this.flags[`cp_${id}`]) {
         g.session.emit('flag', { k: `cp_${id}`, v: true });
         g.session.emit('progress', { cp: id });

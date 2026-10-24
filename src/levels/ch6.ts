@@ -37,7 +37,7 @@ export class Chapter6 extends Chapter {
 
   readonly checkpoints: Record<string, CheckpointDef> = {
     dawn: { spawn: { elias: { pos: [HOUSE.x - 1.2, CREST_Y, HOUSE.z + 0.5], yaw: Math.PI / 2 }, jax: { pos: [HOUSE.x + 8, CREST_Y, HOUSE.z - 1.5], yaw: Math.PI / 2 } }, objective: '', intro: 'cs6_dawn', outfit: 'civil' },
-    run: { spawn: { elias: { pos: [HOUSE.x - 3, CREST_Y, 1], yaw: -Math.PI / 2 }, jax: { pos: [HOUSE.x - 1, CREST_Y, -1], yaw: -Math.PI / 2 } }, objective: 'Run for the west tower!', outfit: 'civil' },
+    run: { spawn: { elias: { pos: [HOUSE.x - 6.5, CREST_Y, 0.5], yaw: -Math.PI / 2 }, jax: { pos: [HOUSE.x - 5, CREST_Y, -2.2], yaw: -Math.PI / 2 } }, objective: 'Run for the west tower!', outfit: 'civil' },
     hall: { spawn: { elias: { pos: [HALL.x - 4, HALL.y, HALL.z], yaw: Math.PI / 2 }, jax: { pos: [HALL.x + 4, HALL.y, HALL.z], yaw: -Math.PI / 2 } }, objective: '', intro: 'cs6_hall', outfit: 'civil' },
   };
 

@@ -413,7 +413,7 @@ export class App {
 
   private disposeGame(): void {
     if (!this.game) return;
-    this.game.dispose();
+    try { this.game.dispose(); } catch (e) { console.error('dispose failed', e); }
     this.game = null;
     this.hud.setVisible(false);
     this.touch.setMode('hidden');

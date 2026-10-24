@@ -274,9 +274,6 @@ export class BikeSystem {
 
   async init(): Promise<void> {
     for (const c of ['elias', 'jax'] as CharacterId[]) this.visuals.set(c, await BikeVisual.create(this.game.world));
-    // Remote rider: pose the body on the bike right before it is drawn.
-    const remote = this.game.remote;
-    remote.body.preVisual = () => this.syncRemote();
     this.game.updaters.add((dt) => this.update(dt));
   }
 
@@ -319,6 +316,8 @@ export class BikeSystem {
   update(dt: number): void {
     const g = this.game;
     if (!this.enabled) return;
+    // Remote rider: pose the body on the bike right before it is drawn (players exist after the level is built).
+    if (g.remote && !g.remote.body.preVisual) g.remote.body.preVisual = () => this.syncRemote();
     if (this.mounted && g.local.state === 'bike') {
       const c = this.ctrl;
       const ctl = g.inCutscene ? { throttle: 0, brake: 0, steer: 0 } : this.input();
@@ -396,7 +395,7 @@ export class BikeSystem {
     for (const v of this.visuals.values()) v.dispose();
     for (const e of this.engines.values()) e.stop();
     this.engines.clear();
-    this.game.remote.body.preVisual = null;
+    if (this.game.remote) this.game.remote.body.preVisual = null;
     this.game.bikeSnap = null;
   }
 }
