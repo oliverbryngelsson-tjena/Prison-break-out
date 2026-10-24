@@ -122,7 +122,7 @@ export class Chapter6 extends Chapter {
     ];
     const pl = scatter({
       x0: -218, z0: -218, x1: 218, z1: 218, spacing: 8, seed: 66, height: (x, z) => this.terrain.height(x, z),
-      density: (x, z) => (Math.abs(x) < DAM_X1 + 8 && Math.abs(z) < 16 ? 0 : z > 6 && this.terrain.height(x, z) < RES_Y + 0.5 ? 0 : Math.abs(x) < 24 && z < 0 ? 0 : 0.5),
+      density: (x, z) => (Math.abs(x) < DAM_X1 + 8 && Math.abs(z) < 16 ? 0 : z > 6 && this.terrain.height(x, z) < RES_Y + 0.5 ? 0 : Math.abs(x) < 24 && z < 0 ? 0 : Math.abs(x - HALL.x) < 22 && Math.abs(z - HALL.z) < 16 ? 0 : 0.5),
       pick: (r) => (r < 0.45 ? 0 : r < 0.85 ? 1 : 2),
       scale: (item, r) => (item === 2 ? 0.6 + r * 0.4 : 1 + r * 0.6),
     });
@@ -177,7 +177,17 @@ export class Chapter6 extends Chapter {
     kit.wall(conc, tx - 4, tz + 4, tx - 4, tz - 4, CREST_Y, 8, 0.4);
     kit.wall(conc, tx + 4, tz - 4, tx + 4, tz + 4, CREST_Y, 8, 0.4, [{ at: 4, width: 1.6, bottom: 0, top: 2.6 }]);
     kit.ceiling(conc, tx - 4.2, tz - 4.2, tx + 4.2, tz + 4.2, CREST_Y + 8, 0.4);
-    kit.textSign(['HARLAN DAM', 'SERVICE STAIRS'], [tx + 4.22, CREST_Y + 3.4, tz], 1.6, Math.PI / 2, '#2a3a2e');
+    // Plinth, string courses, corner piers, roof parapet, window slits and a lit door canopy.
+    kit.box(old, [tx, CREST_Y + 0.45, tz], [8.7, 0.9, 8.7], 0, false);
+    for (const hh of [3.0, 5.7]) kit.box(old, [tx, CREST_Y + hh, tz], [8.6, 0.22, 8.6], 0, false);
+    for (const [cx, cz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) kit.box(old, [tx + cx * 4.05, CREST_Y + 4.2, tz + cz * 4.05], [0.7, 8.4, 0.7], 0, false);
+    for (const [cx, cz, lx, lz] of [[0, -4.15, 8.6, 0.3], [0, 4.15, 8.6, 0.3], [-4.15, 0, 0.3, 8.6], [4.15, 0, 0.3, 8.6]]) kit.box(old, [tx + cx, CREST_Y + 8.55, tz + cz], [lx, 0.7, lz], 0, false);
+    const glass = L.plain(0x1c2228, 0.2, 0.6);
+    for (const dz of [-2, 2]) for (const hh of [4.4, 7.0]) kit.box(glass, [tx + 4.22, CREST_Y + hh, tz + dz], [0.05, 1.1, 0.45], 0, false);
+    for (const dx of [-2, 2]) kit.box(glass, [tx + dx, CREST_Y + 7.0, tz - 4.22], [0.45, 1.1, 0.05], 0, false);
+    kit.box(steel, [tx + 4.75, CREST_Y + 2.85, tz], [1.1, 0.12, 2.4], 0, false);
+    kit.bulb(L.emissive(0xffd9a8, 2.5), steel, tx + 4.35, CREST_Y + 2.65, tz, 0xffd9a8, 2, 7);
+    kit.textSign(['HARLAN DAM', 'SERVICE STAIRS'], [tx + 4.22, CREST_Y + 3.6, tz + 2.2], 1.4, Math.PI / 2, '#2a3a2e');
     // Spillway gates and rusty machinery on the crest
     for (const x of [10, 22, 34]) {
       kit.box(rust, [x, CREST_Y + 2.2, 5.8], [8, 4.4, 1], 0, false);
@@ -192,7 +202,7 @@ export class Chapter6 extends Chapter {
     const w = this.g.world, kit = this.kit, L = w.mats;
     const [conc, floorM, steel, green, rust] = await Promise.all([
       L.pbr('concrete_grey', { scale: 0.3, color: 0x9a968c }),
-      L.pbr('concrete_floor', { scale: 0.3 }),
+      L.pbr('concrete_floor', { scale: 0.3, color: 0x8c8880 }),
       L.pbr('steel', { scale: 1, color: 0x5a5e62, metalness: 0.6, roughness: 0.5 }),
       L.pbr('painted_plaster', { scale: 0.5, color: 0x4e6a5a }),
       L.pbr('metal_plate', { scale: 0.6, color: 0x8a5a3a, metalness: 0.3, roughness: 0.8 }),
@@ -226,7 +236,7 @@ export class Chapter6 extends Chapter {
     for (const [dx, dz] of [[-11, -5], [11, -5], [-11, 2], [11, 2]] as const) kit.box(steel, [x + dx, y + 0.8, z + dz], [1.2, 1.6, 0.6], 0, {});
     const barrels = await w.model('oil_barrels');
     for (const [dx, dz, yaw] of [[-6, -5.5, 0.3], [5, -6.2, 1.1]] as const) { kit.place(barrels, [x + dx, y, z + dz], yaw); w.physics.addBox({ x: x + dx, y: y + 0.45, z: z + dz }, { x: 1.1, y: 0.9, z: 1.4 }, yaw, {}); }
-    for (const dx of [-9, -3, 3, 9]) kit.fixture(L.emissive(0xeef4ff, 3), steel, x + dx, y + H - 0.4, z - 2, 0, 0xdde8ff, 4, 14, 1.6, 'hall');
+    for (const dx of [-9, -3, 3, 9]) kit.fixture(L.emissive(0xeef4ff, 3), steel, x + dx, y + H - 0.4, z - 2, 0, 0xdde8ff, 2.4, 14, 1.6, 'hall');
     // Dawn light shafts through the high windows
     for (const at of [4, 10, 16, 22]) kit.shaft([x - W / 2 + at, y + 8, z - D / 2 + 0.3], new THREE.Vector3(-0.25, -0.75, 1).normalize(), 2.2, 12, 0xffd8b0, 0.07);
     // The gun on the floor (dropped in the struggle)
@@ -269,7 +279,7 @@ export class Chapter6 extends Chapter {
         { dur: 3.4, shot: () => shot(v3(hx - 2.4, CREST_Y + 1.4, hz + 0.2), v3(hx - 1.6, CREST_Y + 0.45, hz + 1.3), 3.4, { fov: 30 }),
           run: () => { walkChar(g, 'elias', [v3(hx - 1.6, CREST_Y, hz + 0.6)], 0.8, () => poseChar(g, 'elias', 'pick_low')); g.audio.play('ui_tick', { pos: this.phone.position, volume: 0.6, delay: 1.2 }); },
           lines: [{ who: 'narrator', text: 'Jax\'s jacket. A phone buzzing in the pocket.', dur: 3 }] },
-        { shot: () => shot(v3(hx - 1.5, CREST_Y + 1.6, hz + 0.75), v3(hx - 1.6, CREST_Y + 1.2, hz + 1.05), 11, { fov: 26 }),
+        { shot: () => shot(v3(hx - 2.25, CREST_Y + 1.8, hz + 1.0), v3(hx - 1.1, CREST_Y + 1.25, hz + 0.55), 11, { fov: 30 }),
           run: () => { this.phone.visible = false; poseChar(g, 'elias', 'talk_phone'); },
           lines: [
             { who: 'narrator', text: 'L. MARSH — 4:12 AM: "Where are you? You were supposed to check in."', dur: 3.6 },
