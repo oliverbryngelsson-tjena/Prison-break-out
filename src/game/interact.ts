@@ -86,7 +86,9 @@ export class InteractionSystem {
       const facing = dist > 0.05 ? (fwd.x * dx + fwd.z * dz) / dist : 1;
       const cd = this.lastUse.get(d.id);
       if (cd !== undefined && this.time - cd < (d.cooldown ?? 0.6)) continue;
-      const score = (d.priority ?? 0) * 10 - dist + facing * 0.6;
+      // Facing matters for things in front of you, not for the spot you're standing on.
+      const fw = Math.min(1, dist / 0.9);
+      const score = (d.priority ?? 0) * 10 - dist + (facing * fw + (1 - fw)) * 0.6;
       if (score > bestScore) { bestScore = score; best = d; }
     }
     return best;

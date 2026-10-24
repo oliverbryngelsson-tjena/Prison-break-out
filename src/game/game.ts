@@ -458,6 +458,8 @@ export class Game implements SessionHandlers, CutsceneHost {
         return;
       }
       case 'downed':
+        // Chapters may take over (the final fight).
+        if (this.chapter.onEvent('downed', a)) return;
         if (a.who === this.remoteChar) this.hud.notify(`${SPEAKERS[this.remoteChar].name} is down! Help them up.`, 3);
         if (this.authority && this.local.state === 'downed' && this.remote.downed) this.session.emit('fail', { reason: 'You both went down.' });
         if (this.authority && a.who === this.localChar && this.partnerAway) this.session.emit('fail', { reason: 'You went down.' });
@@ -470,6 +472,7 @@ export class Game implements SessionHandlers, CutsceneHost {
         void this.applyOutfit(a.who as CharacterId, String(a.v));
         return;
       case 'chapterEnd':
+        if (a.ending) writeSave(null, String(a.ending));
         this.endChapter((a.next as number | null) ?? null);
         return;
       default:
@@ -819,6 +822,7 @@ export class Game implements SessionHandlers, CutsceneHost {
   skipTouch = 0;
 
   private updateReviveInteract(): void {
+    if (this.chapter.flags.pvp) { if (this.interact.items.has(this.reviveId)) this.interact.remove(this.reviveId); return; }
     if (this.remote.downed && !this.interact.items.has(this.reviveId)) {
       this.interact.add({
         id: this.reviveId, pos: this.remote.body.pos.clone(), label: `Help ${SPEAKERS[this.remoteChar].name} up`, mode: 'hold', holdTime: 2.2,

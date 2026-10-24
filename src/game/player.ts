@@ -62,6 +62,8 @@ export class PlayerController {
   private moveVel = new THREE.Vector3();
   private script: { steps: ScriptStep[]; i: number; t: number; from: THREE.Vector3; fromYaw: number; done?: () => void } | null = null;
   crawlMode = false;
+  /** Health regenerates after a few seconds without damage (off in the final fight). */
+  regen = true;
   /** Seconds since last damage (for regeneration). */
   private sinceHit = 99;
   private combo = 0;
@@ -193,7 +195,7 @@ export class PlayerController {
     const inp = this.ctx.input;
     this.invulnerable = Math.max(0, this.invulnerable - dt);
     this.sinceHit += dt;
-    if (this.sinceHit > 5 && b.hp < b.maxHp && this.state !== 'downed') b.hp = Math.min(b.maxHp, b.hp + 9 * dt);
+    if (this.regen && this.sinceHit > 5 && b.hp < b.maxHp && this.state !== 'downed') b.hp = Math.min(b.maxHp, b.hp + 9 * dt);
     this.ctx.interact.time += dt;
 
     switch (this.state) {

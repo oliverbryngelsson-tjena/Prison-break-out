@@ -5,6 +5,7 @@ import { Chapter2 } from './ch2';
 import { Chapter3 } from './ch3';
 import { Chapter4 } from './ch4';
 import { Chapter5 } from './ch5';
+import { Chapter6 } from './ch6';
 
 export const CHAPTERS: Array<{ num: number; title: string; make: () => Chapter }> = [
   { num: 1, title: 'Prison Life', make: () => new Chapter1() },
@@ -12,6 +13,7 @@ export const CHAPTERS: Array<{ num: number; title: string; make: () => Chapter }
   { num: 3, title: 'On the Run', make: () => new Chapter3() },
   { num: 4, title: 'The Revenge', make: () => new Chapter4() },
   { num: 5, title: 'The Chase', make: () => new Chapter5() },
+  { num: 6, title: 'The Betrayal', make: () => new Chapter6() },
 ];
 
 export function createChapter(n: number): Chapter {
