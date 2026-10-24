@@ -1,9 +1,11 @@
 // Chapter registry.
 import type { Chapter } from './chapter';
 import { Chapter1 } from './ch1';
+import { Chapter2 } from './ch2';
 
 export const CHAPTERS: Array<{ num: number; title: string; make: () => Chapter }> = [
   { num: 1, title: 'Prison Life', make: () => new Chapter1() },
+  { num: 2, title: 'The Breakout', make: () => new Chapter2() },
 ];
 
 export function createChapter(n: number): Chapter {

@@ -78,7 +78,8 @@ export class Terrain {
 
   async build(world: World): Promise<void> {
     const d = this.def;
-    this.material = await terrainMaterial(world.mats, d.layers, d.normals !== false && world.q.level !== 'low');
+    const tier = world.q.level === 'low' ? 0 : world.q.level === 'medium' ? 1 : 2;
+    this.material = await terrainMaterial(world.mats, d.layers, d.normals !== false && tier > 0, tier);
     const n = d.res, cell = d.size / (n - 1);
     const chunk = d.chunk ?? 32;
     const data = this.hf.data;
@@ -131,7 +132,7 @@ export class Terrain {
 }
 
 /** Ground shader: four tiled layers blended by vertex weights with height-aware transitions; rock is tri-planar. */
-export async function terrainMaterial(mats: MaterialLib, layers: TerrainLayer[], normals: boolean): Promise<THREE.MeshStandardMaterial> {
+export async function terrainMaterial(mats: MaterialLib, layers: TerrainLayer[], normals: boolean, tier = 2): Promise<THREE.MeshStandardMaterial> {
   const sets = await Promise.all(layers.map((l) => mats.textureSet(l.set)));
   const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, metalness: 0, vertexColors: true });
   m.envMapIntensity = 0.35;
@@ -152,11 +153,26 @@ export async function terrainMaterial(mats: MaterialLib, layers: TerrainLayer[],
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>\nvarying vec4 vSplat;\nvarying vec3 vTW;\nvarying vec3 vTN;\n${decl}
 vec4 triRock(vec3 p, vec3 n, float s) {
+  #if TERRAIN_TIER >= 2
   vec3 w = pow(abs(n), vec3(4.0)); w /= (w.x + w.y + w.z);
   return texture2D(tC2, p.zy * s) * w.x + texture2D(tC2, p.xz * s) * w.y + texture2D(tC2, p.xy * s) * w.z;
+  #else
+  // Cheaper: project from the dominant side axis on slopes.
+  vec2 uv = abs(n.x) > abs(n.z) ? p.zy : p.xy;
+  return texture2D(tC2, mix(p.xz, uv, step(0.55, 1.0 - abs(n.y))) * s);
+  #endif
 }
 vec4 terrainBlend(out float rough, out vec3 nTS) {
   vec2 p = vTW.xz;
+  #if TERRAIN_TIER == 0
+  // Low quality: plain weights, skip layers that don't contribute.
+  vec4 w = vSplat;
+  vec4 c0 = vec4(0.0), c1 = vec4(0.0), c2 = vec4(0.0), c3 = vec4(0.0);
+  if (w.x > 0.02) { c0 = texture2D(tC0, p * uS0); c0.rgb *= uT0; }
+  if (w.y > 0.02) { c1 = texture2D(tC1, p * uS1); c1.rgb *= uT1; }
+  if (w.z > 0.02) { c2 = triRock(vTW, vTN, uS2); c2.rgb *= uT2; }
+  if (w.w > 0.02) { c3 = texture2D(tC3, p * uS3); c3.rgb *= uT3; }
+  #else
   vec4 c0 = texture2D(tC0, p * uS0); c0.rgb *= uT0;
   vec4 c1 = texture2D(tC1, p * uS1); c1.rgb *= uT1;
   vec4 c2 = triRock(vTW, vTN, uS2); c2.rgb *= uT2;
@@ -166,6 +182,7 @@ vec4 terrainBlend(out float rough, out vec3 nTS) {
   vec4 w = vSplat + h * 0.35;
   float mx = max(max(w.x, w.y), max(w.z, w.w)) - 0.28;
   w = max(w - mx, 0.0);
+  #endif
   w /= max(1e-4, w.x + w.y + w.z + w.w);
   rough = dot(w, vec4(uR0, uR1, uR2, uR3));
   #ifdef TERRAIN_NORMALS
@@ -189,9 +206,10 @@ vec4 terrainBlend(out float rough, out vec3 nTS) {
   normal = normalize((viewMatrix * vec4(pn, 0.0)).xyz);
 }
 #endif`);
-    if (normals) shader.defines = { ...(shader.defines ?? {}), TERRAIN_NORMALS: '' };
+    shader.defines = { ...(shader.defines ?? {}), TERRAIN_TIER: tier };
+    if (normals) shader.defines.TERRAIN_NORMALS = '';
   };
-  m.customProgramCacheKey = () => 'terrain' + (normals ? 'N' : '');
+  m.customProgramCacheKey = () => 'terrain' + tier + (normals ? 'N' : '');
   return m;
 }
 

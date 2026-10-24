@@ -65,7 +65,7 @@ export class Flashlight implements LightCone {
     this.mesh.frustumCulled = false;
     world.root.add(this.mesh);
     // Light pool on the ground where the beam lands.
-    const spotMat = new THREE.MeshBasicMaterial({ color: 0xfff0cc, transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending, map: radialTex() });
+    const spotMat = new THREE.MeshBasicMaterial({ color: 0xfff0cc, transparent: true, opacity: 0.16, depthWrite: false, blending: THREE.AdditiveBlending, map: radialTex() });
     this.spot = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), spotMat);
     this.spot.rotation.x = -Math.PI / 2;
     this.spot.renderOrder = 2;
@@ -126,7 +126,7 @@ export class Searchlight implements LightCone {
     this.mesh.frustumCulled = false;
     world.root.add(this.mesh);
     this.spotRadius = 2.6;
-    const poolMat = new THREE.MeshBasicMaterial({ color: 0xfff6e0, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending, map: radialTex() });
+    const poolMat = new THREE.MeshBasicMaterial({ color: 0xfff6e0, transparent: true, opacity: 0.3, depthWrite: false, blending: THREE.AdditiveBlending, map: radialTex() });
     this.pool = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), poolMat);
     this.pool.rotation.x = -Math.PI / 2;
     this.pool.renderOrder = 2;
@@ -157,6 +157,8 @@ export class Searchlight implements LightCone {
     const r = Math.tan(this.half) * d;
     this.pool.position.set(this.target.x, this.target.y + 0.05, this.target.z);
     this.pool.scale.set(r * 2.2, r * 2.2 / Math.max(0.3, -this.dir.y), 1);
+    // A grazing beam spreads its light over a longer, dimmer ellipse.
+    (this.pool.material as THREE.MeshBasicMaterial).opacity = 0.32 * THREE.MathUtils.clamp(-this.dir.y * 1.6, 0.25, 1);
     this.pool.rotation.z = -Math.atan2(this.dir.x, this.dir.z);
     if (this.lamp) this.lamp.lookAt(this.target);
     if (this.light) { this.light.position.copy(this.pos); this.light.target.position.copy(this.target); this.light.target.updateMatrixWorld(); }
