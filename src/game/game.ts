@@ -3,6 +3,7 @@ import { Extras } from './extras';
 import { BARKS, BARK_DUR } from './voices';
 import { VoiceBank } from './voicebank';
 import { Capture } from './capture';
+import { prefetchChapter, stopPrefetch } from './prefetch';
 import { Guns, PLAYER_SHOT_DMG, SHOT_RANGE, type ShotEvent } from './guns';
 import { DEFAULT_LOADOUT, hitChance, SHOP, WEAPONS, type WeaponId } from './weapons';
 import { MiniGames } from './minigames';
@@ -97,6 +98,9 @@ export class Game implements SessionHandlers, CutsceneHost {
   private coopHolds = new Map<string, Set<string>>();
   private failTimer = -1;
   private pendingCutscene: { id: string; at: number } | null = null;
+  /** Milliseconds from the start of load() to each step (for tuning load times). */
+  readonly loadTimes: Record<string, number> = {};
+  private prefetchTimer = 0;
   private pendingDialogue: { lines: Line[]; at: number } | null = null;
   private barkCooldown = new Map<string, number>();
   inCutscene = false;
@@ -193,19 +197,34 @@ export class Game implements SessionHandlers, CutsceneHost {
   // ------------------------------------------------------------------ loading
   async load(chapterNum: number, checkpoint: string | null, savedFlags?: Record<string, boolean | number | string>): Promise<void> {
     this.state = 'loading';
+    stopPrefetch();
+    const t0 = performance.now();
+    const mark = (k: string) => { this.loadTimes[k] = Math.round(performance.now() - t0); };
+    this.audio.holdLongFiles(true);
+    try { await this.loadInner(chapterNum, checkpoint, savedFlags, mark); } finally { this.audio.holdLongFiles(false); }
+  }
+
+  private async loadInner(chapterNum: number, checkpoint: string | null, savedFlags: Record<string, boolean | number | string> | undefined, mark: (k: string) => void): Promise<void> {
     const r = this.deps.renderer;
     this.world = new World(this.mats, this.chars, this.audio, r.q);
     await this.world.init();
+    mark('world');
     this.world.particles.setViewport(window.innerHeight);
     this.chapter = createChapter(chapterNum);
     this.chapter.attach(this);
     this.flags = { ...this.chapter.flagsDefault };
+    // Character models don't depend on the level: fetch and parse them while it builds.
+    const outfit0 = (() => { const c = checkpoint && this.chapter.checkpoints[checkpoint] ? checkpoint : Object.keys(this.chapter.checkpoints)[0]; return this.chapter.checkpoints[c].outfit ?? this.chapter.outfit; })();
+    const early = Promise.all([this.chars.create(this.localChar, outfit0), this.chars.create(this.remoteChar, outfit0), ...this.chapter.npcDefs.map((d) => this.chars.create(d.char, d.variant))]);
+    early.catch(() => { /* awaited below */ });
     await this.chapter.build();
+    mark('build');
     void this.guns.preload();
     const cp = checkpoint && this.chapter.checkpoints[checkpoint] ? checkpoint : Object.keys(this.chapter.checkpoints)[0];
     const outfit = this.chapter.checkpoints[cp].outfit ?? this.chapter.outfit;
     // Player characters
-    const [lm, rm] = await Promise.all([this.chars.create(this.localChar, outfit), this.chars.create(this.remoteChar, outfit)]);
+    const models = await early;
+    const [lm, rm] = outfit === outfit0 ? [models[0], models[1]] : await Promise.all([this.chars.create(this.localChar, outfit), this.chars.create(this.remoteChar, outfit)]);
     const lb = new Body(this.localChar, 'player', 'prisoner', lm, this.world);
     const rb = new Body(this.remoteChar, 'player', 'prisoner', rm, this.world);
     lb.onStep = rb.onStep = (b, s, loud) => this.footstep(b, s, loud);
@@ -215,7 +234,8 @@ export class Game implements SessionHandlers, CutsceneHost {
     this.remote.variant = outfit;
     this.remote.onVariant = (v) => void this.applyOutfit(this.remoteChar, v);
     // NPCs
-    await Promise.all(this.chapter.npcDefs.map((d) => this.spawnNpc(d)));
+    await Promise.all(this.chapter.npcDefs.map((d, i) => this.spawnNpc(d, models[2 + i])));
+    mark('characters');
     if (savedFlags) this.chapter.flags = { ...savedFlags };
     this.applyLoadout();
     this.chapter.checkpoint = cp;
@@ -227,20 +247,24 @@ export class Game implements SessionHandlers, CutsceneHost {
     this.onLoadStatus?.('Preparing shaders');
     try {
       await Promise.race([
-        this.deps.renderer.gl.compileAsync(this.world.scene, this.cam.camera),
-        new Promise((r) => setTimeout(r, 25000)),
+        this.deps.renderer.compile(this.world.scene, this.cam.camera),
+        new Promise((r) => setTimeout(r, 12000)),
       ]);
     } catch { /* ignore */ }
+    mark('shaders');
     // Upload textures and draw once so the first visible frame is cheap.
     try { this.deps.renderer.render(0.016); } catch { /* ignore */ }
+    mark('firstFrame');
     void this.dialogue.bank?.prefetchChapter(0);
     void this.dialogue.bank?.prefetchChapter(chapterNum);
+    // Once you're playing, quietly download the next chapter so its loading screen is short.
+    this.prefetchTimer = window.setTimeout(() => { if (chapterNum < 6) prefetchChapter(chapterNum + 1, chapterNum); }, 25000);
     this.session.loaded(chapterNum, cp);
     if (!this.session.online) this.begin(cp);
   }
 
-  async spawnNpc(d: import('./npc').NpcDef): Promise<Npc> {
-    const model = await this.chars.create(d.char, d.variant);
+  async spawnNpc(d: import('./npc').NpcDef, preloaded?: import('../engine/characters').CharacterModel): Promise<Npc> {
+    const model = preloaded ?? await this.chars.create(d.char, d.variant);
     const npc = new Npc(d, model, this.world, this.npcHooks());
     npc.body.onStep = (b, s, loud) => this.footstep(b, s, loud * 0.7);
     this.npcs.set(d.id, npc);
@@ -1101,6 +1125,7 @@ export class Game implements SessionHandlers, CutsceneHost {
   private npcMarkers = new Set<string>();
 
   dispose(): void {
+    clearTimeout(this.prefetchTimer);
     for (const u of this.unsubs) u();
     this.session.dispose();
     this.dialogue.stop();

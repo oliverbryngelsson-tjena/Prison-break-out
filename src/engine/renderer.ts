@@ -225,6 +225,19 @@ export class Renderer {
   }
 
   private frameNo = 0;
+  /** Compiles every shader the scene needs, for the target it will really be drawn into: with
+   *  post-processing that is an off-screen linear buffer, so compiling against the screen (sRGB)
+   *  would only build a second, unused copy of every program. */
+  compile(scene: THREE.Scene, camera: THREE.Camera): Promise<unknown> {
+    const prev = this.gl.getRenderTarget();
+    let rt: THREE.WebGLRenderTarget | null = null;
+    if (this.composer) { rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType }); this.gl.setRenderTarget(rt); }
+    // compileAsync sets the programs up synchronously, then waits for them to be ready.
+    const p = this.gl.compileAsync(scene, camera);
+    this.gl.setRenderTarget(prev);
+    return p.finally(() => rt?.dispose());
+  }
+
   render(dt: number): void {
     if (!this.scene || !this.camera) return;
     this.gl.info.reset();
