@@ -403,7 +403,7 @@ export class Menus {
       row('Sound effects', slider(0, 1, 0.05, s.volumes.sfx, (v) => { s.volumes.sfx = v; }));
       row('Dialogue', slider(0, 1, 0.05, s.volumes.dialogue, (v) => { s.volumes.dialogue = v; }));
       row('Ambience', slider(0, 1, 0.05, s.volumes.ambience, (v) => { s.volumes.ambience = v; }));
-      row('Spoken dialogue (device voice)', toggle(s.tts, (v) => { s.tts = v; }));
+      row('Voice acting', toggle(s.tts, (v) => { s.tts = v; }));
       body.appendChild(h('<p class="hint">Spoken dialogue uses your device\'s built-in speech voices; subtitles are always available.</p>'));
     } else if (this.settingsTab === 'gameplay') {
       row('Subtitles', toggle(s.subtitles, (v) => { s.subtitles = v; }));

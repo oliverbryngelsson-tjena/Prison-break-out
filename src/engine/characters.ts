@@ -134,6 +134,9 @@ export class CharacterModel {
   lookTarget: THREE.Vector3 | null = null;
   private lookWeight = 0;
   speaking = 0;
+  /** Mouth opening 0..1 from a recorded line's loudness; null = procedural talking from `speaking`. */
+  mouth: number | null = null;
+  private mouthNow = 0;
   private speakPhase = 0;
   private blinkTimer = 2 + Math.random() * 3;
   private blinkAmt = 0;
@@ -185,8 +188,16 @@ export class CharacterModel {
     const animHip = lib.clipMeta[this.sex]?.hipY ?? 0.9;
     this.hipScale = entry.hipY / animHip;
     this.mixer = new THREE.AnimationMixer(scene);
+    // Face bones the procedural layer moves (jaw, eyelids). Not every clip has tracks for them, so
+    // they are put back to their rest pose each frame; offsets used to pile up (gaping mouths,
+    // eyelids stretched out of the head).
+    for (const n of ['Bip01_MJaw', 'Bip01_LEyeBlinkTop', 'Bip01_REyeBlinkTop']) {
+      const b = this.bone(n);
+      if (b) this.faceRest.push({ b, q: b.quaternion.clone(), p: b.position.clone() });
+    }
     this.setIdle('idle');
   }
+  private faceRest: { b: THREE.Object3D; q: THREE.Quaternion; p: THREE.Vector3 }[] = [];
 
   bone(name: string): THREE.Object3D | undefined {
     return this.bones.get(name) ?? this.bones.get(name.replace(/ /g, '_'));
@@ -362,6 +373,7 @@ export class CharacterModel {
     }
     for (const ov of this.fading) ov.action.setEffectiveWeight(ov.weight);
 
+    for (const f of this.faceRest) { f.b.quaternion.copy(f.q); f.b.position.copy(f.p); }
     this.mixer.update(dt);
     this.hip.position.y *= this.hipScale;
     if (this.crouch > 0.01 && v > 0.05) this.applyCrouchWalk(this.crouch);
@@ -423,11 +435,15 @@ export class CharacterModel {
     // Speech jaw movement
     const jaw = this.bone('Bip01_MJaw');
     if (jaw) {
-      if (this.speaking > 0) {
+      let target = 0;
+      if (this.mouth !== null) target = this.mouth * 0.2;
+      else if (this.speaking > 0) {
         this.speakPhase += dt * (9 + Math.sin(this.speakPhase * 0.37) * 3);
-        const open = Math.max(0, Math.sin(this.speakPhase) * 0.5 + Math.sin(this.speakPhase * 2.3) * 0.3) * 0.16 * this.speaking;
-        jaw.rotateZ(-open);
+        target = Math.max(0, Math.sin(this.speakPhase) * 0.5 + Math.sin(this.speakPhase * 2.3) * 0.3) * 0.16 * this.speaking;
       }
+      // Smooth so the jaw doesn't snap; the bone is reset to rest each frame, so this never accumulates.
+      this.mouthNow += (target - this.mouthNow) * Math.min(1, dt * 25);
+      if (this.mouthNow > 0.002) jaw.rotateZ(-this.mouthNow);
     }
     // Blinking
     this.blinkTimer -= dt;
