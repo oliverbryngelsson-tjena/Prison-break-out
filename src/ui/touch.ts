@@ -40,7 +40,24 @@ export const DEFAULT_LAYOUT: Record<string, ButtonLayout> = {
   aux: { x: 8, y: 46, size: 64 },
 };
 
+/** Phones held upright: buttons in the bottom-right quarter, above the thumb reach line. */
+export const DEFAULT_LAYOUT_PORTRAIT: Record<string, ButtonLayout> = {
+  interact: { x: 24, y: 20, size: 86 },
+  attack: { x: 5, y: 9, size: 82 },
+  block: { x: 30, y: 5, size: 62 },
+  dodge: { x: 4, y: 21, size: 58 },
+  jump: { x: 7, y: 31, size: 58 },
+  crouch: { x: 27, y: 32, size: 56 },
+  sprint: { x: 45, y: 8, size: 58 },
+  throttle: { x: 6, y: 9, size: 104 },
+  brake: { x: 38, y: 5, size: 78 },
+  aux: { x: 9, y: 24, size: 64 },
+};
+
 const LAYOUT_KEY = 'pbo.touchLayout';
+const isPortrait = () => window.innerHeight > window.innerWidth;
+const defaults = () => (isPortrait() ? DEFAULT_LAYOUT_PORTRAIT : DEFAULT_LAYOUT);
+const layoutKey = () => (isPortrait() ? LAYOUT_KEY + ':portrait' : LAYOUT_KEY);
 
 export class TouchControls {
   readonly root: HTMLElement;
@@ -128,8 +145,13 @@ export class TouchControls {
     lookZone.addEventListener('pointercancel', endLook);
     this.enabled = input.device === 'touch' || new URLSearchParams(location.search).has('touch');
     this.applyLayout();
-    window.addEventListener('resize', () => this.applyLayout());
+    window.addEventListener('resize', () => {
+      // Each orientation keeps its own (customisable) layout.
+      if (this.layoutPortrait !== isPortrait()) { this.layout = loadLayout(); this.layoutPortrait = isPortrait(); }
+      this.applyLayout();
+    });
   }
+  private layoutPortrait = isPortrait();
 
   private updateStick(x: number, y: number): void {
     const R = 58 * this.scale;
@@ -226,7 +248,7 @@ export class TouchControls {
     const sMin = Math.min(window.innerWidth, window.innerHeight);
     const auto = Math.max(0.7, Math.min(1.25, sMin / 420));
     for (const [name, b] of this.buttons) {
-      const l = this.layout[name] ?? DEFAULT_LAYOUT[name];
+      const l = this.layout[name] ?? defaults()[name];
       const size = l.size * this.scale * auto;
       b.style.width = b.style.height = `${size}px`;
       b.style.right = `calc(${l.x}% + env(safe-area-inset-right, 0px))`;
@@ -251,7 +273,7 @@ export class TouchControls {
     const move = (ev: PointerEvent) => {
       const x = ((window.innerWidth - ev.clientX) / window.innerWidth) * 100 - (b.offsetWidth / 2 / window.innerWidth) * 100;
       const y = ((window.innerHeight - ev.clientY) / window.innerHeight) * 100 - (b.offsetHeight / 2 / window.innerHeight) * 100;
-      const cur = this.layout[name] ?? { ...DEFAULT_LAYOUT[name] };
+      const cur = this.layout[name] ?? { ...defaults()[name] };
       this.layout[name] = { ...cur, x: Math.max(0, Math.min(90, x)), y: Math.max(0, Math.min(85, y)) };
       this.applyLayout();
     };
@@ -265,13 +287,13 @@ export class TouchControls {
 
   resizeSelected(size: number): void {
     if (!this.selected) return;
-    const cur = this.layout[this.selected] ?? { ...DEFAULT_LAYOUT[this.selected] };
+    const cur = this.layout[this.selected] ?? { ...defaults()[this.selected] };
     this.layout[this.selected] = { ...cur, size };
     this.applyLayout();
   }
 
   resetLayout(): void {
-    this.layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
+    this.layout = JSON.parse(JSON.stringify(defaults()));
     saveLayout(this.layout);
     this.applyLayout();
   }
@@ -288,12 +310,12 @@ export class TouchControls {
 
 function loadLayout(): Record<string, ButtonLayout> {
   try {
-    const s = localStorage.getItem(LAYOUT_KEY);
-    if (s) return { ...JSON.parse(JSON.stringify(DEFAULT_LAYOUT)), ...JSON.parse(s) };
+    const s = localStorage.getItem(layoutKey());
+    if (s) return { ...JSON.parse(JSON.stringify(defaults())), ...JSON.parse(s) };
   } catch { /* ignore */ }
-  return JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
+  return JSON.parse(JSON.stringify(defaults()));
 }
 
 function saveLayout(l: Record<string, ButtonLayout>): void {
-  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(l)); } catch { /* ignore */ }
+  try { localStorage.setItem(layoutKey(), JSON.stringify(l)); } catch { /* ignore */ }
 }

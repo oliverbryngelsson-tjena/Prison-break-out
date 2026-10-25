@@ -1,4 +1,6 @@
 // Application shell: boot, menus, lobby, loading, the running game and chapter transitions.
+import { PadNav } from './ui/padnav';
+import { initUiScale, setUserUiScale } from './ui/scale';
 import type { CharacterId, GameMsg, Progress, RoomState } from '../shared/protocol';
 import { Renderer } from './engine/renderer';
 import { Input } from './engine/input';
@@ -64,6 +66,8 @@ export class App {
 
   // ------------------------------------------------------------------ boot
   async boot(): Promise<void> {
+    setUserUiScale(this.settings.uiScale);
+    initUiScale();
     const bar = document.getElementById('boot-bar');
     const msg = document.getElementById('boot-msg');
     const step = (p: number, m: string) => { if (bar) bar.style.width = `${Math.round(p * 100)}%`; if (msg) msg.textContent = m; };
@@ -163,7 +167,7 @@ export class App {
     const bar = document.createElement('div');
     bar.className = 'edit-bar';
     bar.innerHTML = `<span>Drag buttons to move them.</span>
-      <label style="display:flex;gap:6px;align-items:center">Size <input type="range" min="44" max="120" step="2" value="72" data-size></label>
+      <label style="display:flex;gap:0.375rem;align-items:center">Size <input type="range" min="44" max="120" step="2" value="72" data-size></label>
       <button class="btn small" data-reset>Reset</button><button class="btn small primary" data-done>Done</button>`;
     const size = bar.querySelector('[data-size]') as HTMLInputElement;
     size.addEventListener('input', () => this.touch.resizeSelected(Number(size.value)));
@@ -196,6 +200,7 @@ export class App {
   private applySettings(s: Settings): void {
     this.settings = s;
     saveSettings(s);
+    setUserUiScale(s.uiScale);
     if (this.renderer) {
       const want = s.quality === 'auto' ? this.renderer.device.tier : s.quality;
       if (want !== this.renderer.q.level) this.renderer.setQuality(want);
@@ -232,7 +237,15 @@ export class App {
   }
   private lastServerSetting: string | null = null;
 
+  private padNav = new PadNav();
+
   private bindGlobal(): void {
+    // Menus own the gamepad/arrow keys whenever a screen is open or the game is paused.
+    this.padNav.suspended = () => this.state === 'game' && !this.paused && !this.menus.current;
+    // Losing the mouse capture during play (Esc, alt-tab) opens the pause menu, like most PC games.
+    this.input.onPointerLock = (locked) => {
+      if (!locked && this.state === 'game' && !this.paused && this.game && !this.game.inCutscene && this.input.device === 'keyboard') this.setPaused(true);
+    };
     const unlock = () => this.audio.unlock();
     window.addEventListener('pointerdown', unlock, { capture: true });
     window.addEventListener('keydown', unlock, { capture: true });
@@ -244,7 +257,7 @@ export class App {
     // Keep the screen awake during play where supported.
     this.input.onDeviceChange = (d) => {
       this.touch.enabled = d === 'touch' || new URLSearchParams(location.search).has('touch');
-      if (this.state === 'game' && !this.paused) this.touch.setMode('foot');
+      this.touch.applyLayout();
       this.pauseBtn.classList.toggle('show', this.state === 'game' && !this.paused);
     };
   }
@@ -510,18 +523,27 @@ export class App {
       this.menus.show('pause');
     } else if (!silent) {
       this.menus.show(null);
-      if (this.state === 'game') { this.touch.setMode('foot'); this.pauseBtn.classList.add('show'); }
+      if (this.state === 'game') {
+        this.touch.setMode(this.game?.local.state === 'bike' ? 'bike' : 'foot');
+        this.pauseBtn.classList.add('show');
+        if (this.input.device === 'keyboard') this.input.lockPointer();
+      }
     }
   }
 
   // ------------------------------------------------------------------ loop
+  /** Test option (?fps=N): run the game at a low frame rate to reproduce slow-device behaviour. */
+  private simFps = Number(new URLSearchParams(location.search).get('fps')) || 0;
+
   private loop = (): void => {
     requestAnimationFrame(this.loop);
     const now = performance.now();
+    if (this.simFps > 0 && now - this.last < 1000 / this.simFps) return;
     const dt = Math.min(0.1, Math.max(0.0005, (now - this.last) / 1000));
     this.last = now;
     this.debug.frames = ((this.debug.frames as number) ?? 0) + 1;
     try {
+      this.padNav.update();
       if (this.game && this.game.state !== 'loading') {
         if (this.state === 'game' && !this.paused && this.input.buttons.pause.pressed && !this.game.inCutscene) this.setPaused(true);
         else if (this.paused && this.input.buttons.pause.pressed) this.setPaused(false);

@@ -128,6 +128,13 @@ export class Terrain {
     }
     world.root.add(this.group);
     world.physics.addHeightfield(this.hf);
+    // Invisible walls just inside the terrain's edges: nobody can walk or ride off the end of the world.
+    const d0 = this.def, inset = 2, span = d0.size, cx = d0.x0 + span / 2, cz = d0.z0 + span / 2;
+    const wall = (x: number, z: number, sx: number, sz: number) => world.physics.addBox({ x, y: 0, z }, { x: sx, y: 400, z: sz }, 0, { walkable: false, blocksSight: false, blocksCamera: false, tag: 'bounds' });
+    wall(d0.x0 + inset - 0.5, cz, 1, span);
+    wall(d0.x0 + span - inset + 0.5, cz, 1, span);
+    wall(cx, d0.z0 + inset - 0.5, span, 1);
+    wall(cx, d0.z0 + span - inset + 0.5, span, 1);
   }
 }
 

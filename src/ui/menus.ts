@@ -224,20 +224,20 @@ export class Menus {
 
   // ---------------------------------------------------------------- lobby
   private buildLobby(): void {
-    const el = this.add('lobby', h(`<div class="center"><div class="panel" style="width:min(1000px,96vw)">
+    const el = this.add('lobby', h(`<div class="center"><div class="panel" style="width:min(62.5rem,96vw)">
       <h2>Private Lobby <button class="btn small back danger" data-a="leave">Leave</button></h2>
       <div class="lobby">
         <div>
           <div class="code-box"><div class="lbl">Room code</div><div class="code" data-code>-----</div>
             <div class="row" style="justify-content:center"><button class="btn small" data-a="invite">Invite friend</button><button class="btn small" data-a="copy">Copy code</button></div>
-            <div class="hint" data-copied style="margin-top:6px"></div>
+            <div class="hint" data-copied style="margin-top:0.375rem"></div>
           </div>
           <div class="players" data-players></div>
-          <div class="hint" data-chapter style="margin-top:10px"></div>
+          <div class="hint" data-chapter style="margin-top:0.625rem"></div>
         </div>
         <div>
           <div class="chars" data-chars></div>
-          <div class="row" style="margin-top:14px;justify-content:flex-end">
+          <div class="row" style="margin-top:0.875rem;justify-content:flex-end">
             <span class="hint" data-status></span>
             <button class="btn" data-a="ready">Ready</button>
             <button class="btn primary" data-a="start">Start</button>
@@ -377,6 +377,7 @@ export class Menus {
     };
     if (this.settingsTab === 'graphics') {
       row('Quality preset', seg([['auto', 'Auto'], ['low', 'Low'], ['medium', 'Medium'], ['high', 'High'], ['ultra', 'Ultra']], s.quality, (v) => { s.quality = v; }));
+      row('Interface size', slider(0.75, 1.5, 0.05, s.uiScale ?? 1, (v) => { s.uiScale = v; }));
       row('Show performance stats', toggle(s.showFps, (v) => { s.showFps = v; }));
       body.appendChild(h('<p class="hint">Low: no shadows, reduced resolution. Medium: shadows, anti-aliasing. High: soft shadows, bloom, film grain. Ultra: high-resolution shadows and effects. Dynamic resolution keeps the frame rate steady on Low–High.</p>'));
     } else if (this.settingsTab === 'controls') {
@@ -390,7 +391,11 @@ export class Menus {
       const b = h('<button class="btn small">Edit button layout</button>');
       b.addEventListener('click', () => this.cb.onEditLayout());
       row('Move and resize buttons', b);
-      body.appendChild(h('<p class="hint">Keyboard: WASD move · Shift run · C crouch · E use · Space jump · Mouse: look, left click hit, right click block · Q dodge · Esc pause. Gamepads are supported.</p>'));
+      body.appendChild(h(`<div class="hint" style="line-height:1.6;margin-top:0.75rem">
+        <b>Keyboard + mouse</b> — click the game to capture the mouse · WASD move · Mouse look · Wheel zoom · Shift run · C crouch · E use (hold for co-op actions) · Space jump · Left click hit · Right click block · Q dodge · Enter skip · Esc pause.<br>
+        <b>Bike</b> — W gas · S brake · A/D steer · X boost.<br>
+        <b>Gamepad</b> (Xbox / PlayStation / most USB and Bluetooth pads) — left stick move · right stick look · Y/△ use · A/✕ jump · B/○ crouch · X/□ hit · LB/L1 block · RB/R1 dodge · L3 run · RT/LT gas and brake on the bike · Menu/Options pause · View/Share skip. Menus: D-pad or stick to move, A/✕ select, B/○ back.
+      </div>`));
     } else if (this.settingsTab === 'audio') {
       row('Master volume', slider(0, 1, 0.05, s.volumes.master, (v) => { s.volumes.master = v; }));
       row('Music', slider(0, 1, 0.05, s.volumes.music, (v) => { s.volumes.music = v; }));
@@ -409,12 +414,12 @@ export class Menus {
     } else {
       const i = document.createElement('input');
       i.type = 'text';
-      i.placeholder = 'Same server as this page';
+      i.placeholder = 'Empty = join by room code (no server)';
       i.value = s.serverUrl;
-      i.style.cssText = 'width:min(320px,52vw);background:rgba(0,0,0,.4);border:1px solid var(--line);color:var(--text);padding:9px 10px;border-radius:6px;font-size:14px';
+      i.style.cssText = 'width:min(20rem,52vw);background:rgba(0,0,0,.4);border:1px solid var(--line);color:var(--text);padding:0.5625rem 0.625rem;border-radius:0.375rem;font-size:0.875rem';
       i.addEventListener('change', () => { s.serverUrl = i.value.trim(); changed(); });
       row('Game server address', i);
-      body.appendChild(h('<p class="hint">Leave empty to use the server that hosts this page. For the Android/iOS app, enter your deployed server (for example wss://your-game.example.com). Both players must use the same server.</p>'));
+      body.appendChild(h('<p class="hint">Leave empty to play by room code: the player who creates the room hosts it and the partner connects directly — no server needed. Only enter an address if you run your own room server (for example wss://your-game.example.com); both players must then use the same one.</p>'));
     }
   }
 
@@ -470,10 +475,10 @@ export class Menus {
 
   // ---------------------------------------------------------------- pause
   private buildPause(): void {
-    const el = this.add('pause', h(`<div class="center"><div class="panel" style="width:min(460px,92vw)">
+    const el = this.add('pause', h(`<div class="center"><div class="panel" style="width:min(28.75rem,92vw)">
       <h2>Paused</h2>
       <p class="hint" data-info></p>
-      <div class="menu-list" style="margin-top:6px">
+      <div class="menu-list" style="margin-top:0.375rem">
         <button class="mbtn" data-a="resume">Resume</button>
         <button class="mbtn" data-a="settings">Settings</button>
         <button class="mbtn" data-a="quit">Leave game</button>
@@ -491,11 +496,11 @@ export class Menus {
 
   // ---------------------------------------------------------------- chapter end
   private buildEnd(): void {
-    const el = this.add('end', h(`<div class="center"><div class="panel" style="width:min(560px,92vw);text-align:center">
-      <div class="ch" style="font-family:var(--font);letter-spacing:.4em;color:var(--accent);font-size:13px" data-ch>CHAPTER 1 COMPLETE</div>
-      <h2 style="justify-content:center;font-size:34px;margin:10px 0" data-nm>Prison Life</h2>
+    const el = this.add('end', h(`<div class="center"><div class="panel" style="width:min(35rem,92vw);text-align:center">
+      <div class="ch" style="font-family:var(--font);letter-spacing:.4em;color:var(--accent);font-size:0.8125rem" data-ch>CHAPTER 1 COMPLETE</div>
+      <h2 style="justify-content:center;font-size:2.125rem;margin:0.625rem 0" data-nm>Prison Life</h2>
       <p data-txt></p>
-      <div class="row" style="justify-content:center;margin-top:10px">
+      <div class="row" style="justify-content:center;margin-top:0.625rem">
         <button class="btn primary" data-a="next">Continue</button>
         <button class="btn" data-a="menu">Main menu</button>
       </div>
@@ -518,7 +523,7 @@ export class Menus {
 
   // ---------------------------------------------------------------- message box
   private buildMessage(): void {
-    const el = this.add('message', h(`<div class="center"><div class="panel" style="width:min(480px,92vw)">
+    const el = this.add('message', h(`<div class="center"><div class="panel" style="width:min(30rem,92vw)">
       <h2 data-t>Notice</h2><p data-m></p>
       <div class="row"><button class="btn primary" data-a="ok">OK</button></div>
     </div></div>`));

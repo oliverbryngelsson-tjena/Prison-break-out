@@ -282,6 +282,12 @@ export class BikeController {
       // fell under the ground (e.g. teleports): snap up
       this.pos.y = gy;
     }
+    // Never end a step inside the terrain when we started it on or above the terrain.
+    const tNow = ph.terrainHeight(this.pos.x, this.pos.z), tPrev = ph.terrainHeight(before.x, before.z);
+    if (tNow !== null && tPrev !== null && before.y >= tPrev - 0.3 && this.pos.y < tNow - 0.3) {
+      this.pos.y = tNow;
+      if (!this.grounded) { this.grounded = true; this.vy = 0; }
+    }
     this.prevGround = gy;
     if (this.pos.y < -60) this.crash('fell');
     // --- engine sound params
@@ -357,9 +363,11 @@ export class BikeSystem {
   private input(): { throttle: number; brake: number; steer: number } {
     const inp = this.game.input;
     const y = inp.move.y;
+    const pad = inp.device === 'gamepad';
     return {
-      throttle: Math.max(inp.buttons.throttle.down ? 1 : 0, y > 0.25 ? Math.min(1, y * 1.3) : 0),
-      brake: Math.max(inp.buttons.brake.down ? 1 : 0, y < -0.3 ? 1 : 0),
+      // Gamepad triggers are analog; keys and touch buttons are full on.
+      throttle: Math.max(pad ? inp.analog.throttle : inp.buttons.throttle.down ? 1 : 0, y > 0.25 ? Math.min(1, y * 1.3) : 0),
+      brake: Math.max(pad ? inp.analog.brake : inp.buttons.brake.down ? 1 : 0, y < -0.3 ? 1 : 0),
       steer: THREE.MathUtils.clamp(inp.move.x, -1, 1),
     };
   }
@@ -372,7 +380,9 @@ export class BikeSystem {
     if (this.mounted && g.local.state === 'bike') {
       const c = this.ctrl;
       const ctl = g.inCutscene ? { throttle: 0, brake: 0, steer: 0 } : this.input();
-      c.update(dt, ctl);
+      // Sub-steps keep fast riding on slow frames from skipping over (or under) the terrain.
+      const n = Math.min(6, Math.max(1, Math.ceil(dt / 0.025)));
+      for (let i = 0; i < n && !c.crashed; i++) c.update(dt / n, ctl);
       const vis = this.visuals.get(g.localChar)!;
       vis.root.visible = true;
       vis.set(c.pos, c.yaw, c.pitch, c.lean, c.steer, c.spin);

@@ -385,6 +385,37 @@ export class CollisionWorld {
     return !this.raycast(a, d, len - 0.05, (x) => x.blocksSight);
   }
 
+  /** Highest terrain (heightfield) height at x,z, or null outside every heightfield. */
+  terrainHeight(x: number, z: number): number | null {
+    let best: number | null = null;
+    for (const hf of this.heightfields) if (hf.contains(x, z)) { const h = hf.height(x, z); if (best === null || h > best) best = h; }
+    return best;
+  }
+
+  /**
+   * Keeps a walker from climbing (or sinking into) terrain steeper than `maxSlope` (rise/run) when it was
+   * standing on the terrain: reverts the horizontal move, trying to slide along one axis first.
+   * Returns true if the move was changed.
+   */
+  limitTerrainSlope(pos: THREE.Vector3, fromX: number, fromZ: number, fromY: number, maxSlope = 1.3): boolean {
+    const h0 = this.terrainHeight(fromX, fromZ);
+    if (h0 === null || Math.abs(fromY - h0) > 0.35) return false; // not walking on terrain (floors, tunnels, bridges)
+    const steep = (x: number, z: number) => {
+      const h = this.terrainHeight(x, z);
+      if (h === null) return false;
+      const run = Math.hypot(x - fromX, z - fromZ);
+      return h > fromY + 0.05 && run > 1e-4 && (h - h0) / run > maxSlope;
+    };
+    if (!steep(pos.x, pos.z)) return false;
+    // A walkable box (bridge, stairs, floor) at the new spot overrides the terrain.
+    const g = this.groundAt(pos.x, pos.z, fromY + 0.36);
+    if (g?.box && g.y > (this.terrainHeight(pos.x, pos.z) ?? -1e9) - 0.05) return false;
+    if (!steep(pos.x, fromZ)) { pos.z = fromZ; return true; }
+    if (!steep(fromX, pos.z)) { pos.x = fromX; return true; }
+    pos.x = fromX; pos.z = fromZ;
+    return true;
+  }
+
   inWater(x: number, z: number, y: number): boolean {
     for (const w of this.water) if (x >= w.minX && x <= w.maxX && z >= w.minZ && z <= w.maxZ && y < w.y) return true;
     return false;

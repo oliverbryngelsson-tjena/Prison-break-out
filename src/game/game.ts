@@ -634,7 +634,7 @@ export class Game implements SessionHandlers, CutsceneHost {
       this.local.body.speed = 0;
       this.remote.scripted = true;
       this.remote.cutsceneHold = true;
-      this.hud.setSkipHint(this.cutscenes.current?.skippable === false ? null : this.input.device === 'touch' ? 'Tap and hold to skip' : 'Press Enter to skip');
+      this.hud.setSkipHint(this.cutscenes.current?.skippable === false ? null : this.input.device === 'touch' ? 'Tap and hold to skip' : `Press ${this.input.glyph('skip')} or hold ${this.input.glyph('interact')} to skip`);
     } else {
       if (this.local.state === 'cutscene') this.local.state = 'free';
       this.remote.release();
@@ -821,7 +821,7 @@ export class Game implements SessionHandlers, CutsceneHost {
       const lb = this.local.body;
       if (this.cam.mode === 'bike') this.cam.mode = 'follow';
       this.cam.height = this.local.crawlMode ? 0.7 : lb.crouched ? 1.15 : 1.55;
-      this.cam.distance = this.local.crawlMode ? 2.0 : this.local.inCombat ? 3.8 : 3.4;
+      this.cam.distance = (this.local.crawlMode ? 2.0 : this.local.inCombat ? 3.8 : 3.4) * (this.local.crawlMode ? 1 : this.input.zoom);
       this.cam.update(dt, inp.look, lb.pos, lb.yaw, lb.speed > 0.5, this.world.physics);
     }
     this.cam.autoFollow = this.deps.settings.autoCamera;
@@ -865,12 +865,24 @@ export class Game implements SessionHandlers, CutsceneHost {
       }
       const coopP = h.coop && h.holdTime ? this.coopProgress(h.coop) : -1;
       hud.setPrompt(this.interact.label(h), coopP >= 0 ? coopP : h.coop ? 0.5 + 0.5 * Math.sin(performance.now() / 300) * 0.3 : Number.isFinite(h.holdTime ?? 1.5) ? this.interact.holdT / (h.holdTime ?? 1.5) : 1, sub, h.icon ?? 'hand');
-    } else if (this.local.takedownTarget) hud.setPrompt('Takedown', 0, this.input.device === 'touch' ? 'Tap Hit' : 'Attack', 'fist');
+    } else if (this.local.takedownTarget) hud.setPrompt('Takedown', 0, this.input.device === 'touch' ? 'Tap Hit' : `[${this.input.glyph('attack')}] Attack`, 'fist');
     else if (c && this.local.state === 'free') {
-      const key = this.input.device === 'touch' ? '' : this.input.device === 'gamepad' ? 'Ⓨ' : 'E';
+      const key = this.input.glyph('interact');
       const partnerHolding = c.coop ? this.interact.coopHeld.get(c.coop)?.size ?? 0 : 0;
       hud.setPrompt(this.interact.label(c), 0, (key ? `[${key}] ` : '') + ((c.mode ?? 'press') === 'hold' ? 'Hold' : 'Press') + (partnerHolding ? ` — ${SPEAKERS[this.remoteChar].name} is ready` : ''), c.icon ?? 'hand');
     } else hud.setPrompt(null);
+    // One-line control help: mouse capture on PC, bike controls while standing still on a bike.
+    let ctl: string | null = null;
+    if (!this.inCutscene && this.state === 'playing') {
+      const inp = this.input;
+      if (inp.device === 'keyboard' && !inp.pointerLocked) ctl = 'Click the game to look around with the mouse';
+      else if (this.local.state === 'bike' && this.local.body.speed < 0.5 && Math.abs(this.bikeSnap?.[5] ?? 0) < 1) {
+        ctl = inp.device === 'touch' ? 'Hold Gas to ride · stick to steer'
+          : inp.device === 'gamepad' ? `${inp.glyph('throttle')} gas · ${inp.glyph('brake')} brake · left stick steer`
+          : 'W gas · S brake · A / D steer';
+      }
+    }
+    hud.setControlHint(ctl);
     touch.setLabel('interact', c && !this.inCutscene ? shortLabel(this.interact.label(c)) : null, !!c);
     touch.setLabel('attack', this.local.takedownTarget ? 'Takedown' : null, !!this.local.takedownTarget);
     touch.setActive('crouch', this.local.body.crouched);

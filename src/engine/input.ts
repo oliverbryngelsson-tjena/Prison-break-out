@@ -8,6 +8,20 @@ export interface ButtonState { down: boolean; pressed: boolean; released: boolea
 
 export interface Sensitivity { touch: number; mouse: number; gamepad: number; invertY: boolean }
 
+/** Button names shown in prompts, per device. */
+const KEY_GLYPHS: Record<ButtonName, string> = {
+  interact: 'E', jump: 'Space', crouch: 'C', sprint: 'Shift', attack: 'LMB', block: 'RMB', dodge: 'Q', pause: 'Esc',
+  throttle: 'W', brake: 'S', skip: 'Enter', aux: 'X',
+};
+const XBOX_GLYPHS: Record<ButtonName, string> = {
+  interact: 'Y', jump: 'A', crouch: 'B', sprint: 'L3', attack: 'X', block: 'LB', dodge: 'RB', pause: 'Menu',
+  throttle: 'RT', brake: 'LT', skip: 'View', aux: 'X',
+};
+const PS_GLYPHS: Record<ButtonName, string> = {
+  interact: '△', jump: '✕', crouch: '○', sprint: 'L3', attack: '□', block: 'L1', dodge: 'R1', pause: 'Options',
+  throttle: 'R2', brake: 'L2', skip: 'Share', aux: '□',
+};
+
 const KEYMAP: Record<string, ButtonName> = {
   KeyE: 'interact', KeyF: 'interact', Space: 'jump', KeyC: 'crouch', ControlLeft: 'crouch', ShiftLeft: 'sprint', ShiftRight: 'sprint',
   KeyQ: 'dodge', KeyR: 'block', Escape: 'pause', KeyP: 'pause', Enter: 'skip', KeyX: 'aux', KeyJ: 'attack', KeyK: 'block',
@@ -36,6 +50,25 @@ export class Input {
   private mouseDelta = new THREE.Vector2();
   private keyTaps = new Set<ButtonName>();
   pointerLocked = false;
+  /** Called when pointer lock is gained or lost (lost during play = pause). */
+  onPointerLock: ((locked: boolean) => void) | null = null;
+  /** Analog trigger values (gamepad), 0..1. */
+  readonly analog = { throttle: 0, brake: 0 };
+  /** Camera zoom from the mouse wheel (multiplier on the follow distance). */
+  zoom = 1;
+  private dragging = false;
+  private padKind: 'xbox' | 'ps' = 'xbox';
+  /** Gamepad rumble on hits, if the pad supports it. */
+  rumble(strength = 0.5, ms = 120): void {
+    const gp = navigator.getGamepads?.().find((g) => g && g.connected) as (Gamepad & { vibrationActuator?: { playEffect?: (t: string, p: object) => Promise<unknown> } }) | undefined;
+    try { void gp?.vibrationActuator?.playEffect?.('dual-rumble', { duration: ms, strongMagnitude: strength, weakMagnitude: strength * 0.6 }); } catch { /* unsupported */ }
+  }
+  /** Label for a button on the current device ('' on touch, which shows on-screen buttons instead). */
+  glyph(b: ButtonName): string {
+    if (this.device === 'touch') return '';
+    if (this.device === 'gamepad') return (this.padKind === 'ps' ? PS_GLYPHS : XBOX_GLYPHS)[b];
+    return KEY_GLYPHS[b];
+  }
   /** Recent key events (debugging). */
   readonly keyLog: string[] = [];
   private canvas: HTMLElement | null = null;
@@ -57,26 +90,47 @@ export class Input {
     window.addEventListener('keyup', (e) => { this.keys.delete(e.code); this.keyLog.push(`${Math.round(performance.now())}:${e.code}:u`); });
     window.addEventListener('blur', () => { this.keys.clear(); this.mouseButtons.clear(); this.keyLog.push(`${Math.round(performance.now())}:blur`); });
     window.addEventListener('mousemove', (e) => {
-      if (this.pointerLocked) this.mouseDelta.x += e.movementX, this.mouseDelta.y += e.movementY;
+      // Locked: free look. Not locked (pointer lock refused, e.g. inside an iframe): drag with a button held.
+      if (this.pointerLocked || this.dragging) { this.mouseDelta.x += e.movementX; this.mouseDelta.y += e.movementY; }
     });
     window.addEventListener('mousedown', (e) => {
-      if (!this.pointerLocked) return;
+      if (!this.pointerLocked) {
+        if (e.target === this.canvas && this.enabled) { this.dragging = true; this.setDevice('keyboard'); }
+        return;
+      }
       this.setDevice('keyboard');
       this.mouseButtons.add(e.button);
       if (e.button === 0) this.keyTaps.add('attack');
     });
-    window.addEventListener('mouseup', (e) => this.mouseButtons.delete(e.button));
-    document.addEventListener('pointerlockchange', () => { this.pointerLocked = document.pointerLockElement === this.canvas; });
+    window.addEventListener('mouseup', (e) => { this.mouseButtons.delete(e.button); this.dragging = false; });
+    window.addEventListener('wheel', (e) => {
+      if (!this.pointerLocked && e.target !== this.canvas) return;
+      this.zoom = Math.min(1.5, Math.max(0.65, this.zoom * (e.deltaY > 0 ? 1.08 : 1 / 1.08)));
+    }, { passive: true });
+    window.addEventListener('contextmenu', (e) => { if (this.pointerLocked || e.target === this.canvas) e.preventDefault(); });
+    document.addEventListener('pointerlockchange', () => {
+      const was = this.pointerLocked;
+      this.pointerLocked = !!this.canvas && document.pointerLockElement === this.canvas;
+      if (was !== this.pointerLocked) { this.mouseButtons.clear(); this.onPointerLock?.(this.pointerLocked); }
+    });
     window.addEventListener('touchstart', () => this.setDevice('touch'), { passive: true, capture: true });
   }
 
   attachCanvas(canvas: HTMLElement): void {
     this.canvas = canvas;
     canvas.addEventListener('click', () => {
-      if (this.device !== 'touch' && this.enabled && !this.pointerLocked && canvas.requestPointerLock) {
-        try { canvas.requestPointerLock(); } catch { /* not allowed */ }
-      }
+      if (this.device !== 'touch' && this.enabled && !this.pointerLocked) this.lockPointer();
     });
+  }
+
+  /** Captures the mouse for camera look (needs a user gesture: a click or key press). */
+  lockPointer(): void {
+    const c = this.canvas as (HTMLElement & { requestPointerLock?: (o?: object) => Promise<void> | void }) | null;
+    if (!c?.requestPointerLock || this.device === 'touch') return;
+    try {
+      const r = c.requestPointerLock({ unadjustedMovement: true });
+      if (r && typeof (r as Promise<void>).catch === 'function') (r as Promise<void>).catch(() => { try { c.requestPointerLock!(); } catch { /* refused */ } });
+    } catch { try { c.requestPointerLock(); } catch { /* refused */ } }
   }
 
   releasePointer(): void {
@@ -113,14 +167,32 @@ export class Input {
     const gp = navigator.getGamepads?.().find((g) => g && g.connected);
     const gpMove = new THREE.Vector2();
     const gpLook = new THREE.Vector2();
+    this.analog.throttle = 0;
+    this.analog.brake = 0;
     if (gp) {
-      const dz = (v: number) => (Math.abs(v) < 0.15 ? 0 : (v - Math.sign(v) * 0.15) / 0.85);
-      gpMove.set(dz(gp.axes[0] ?? 0), -dz(gp.axes[1] ?? 0));
-      gpLook.set(dz(gp.axes[2] ?? 0), dz(gp.axes[3] ?? 0));
+      this.padKind = /054c|playstation|dualshock|dualsense|wireless controller/i.test(gp.id) ? 'ps' : 'xbox';
+      // Radial dead zone with a smooth ramp (no drift, fine control near the centre).
+      const stick = (x: number, y: number, out: THREE.Vector2) => {
+        const m = Math.hypot(x, y);
+        if (m < 0.16) return out.set(0, 0);
+        const k = Math.min(1, (m - 0.16) / 0.8) / m;
+        return out.set(x * k, y * k);
+      };
+      stick(gp.axes[0] ?? 0, gp.axes[1] ?? 0, gpMove);
+      gpMove.y = -gpMove.y;
+      stick(gp.axes[2] ?? 0, gp.axes[3] ?? 0, gpLook);
+      // Response curve on the look stick: precise aim, fast turns at full tilt.
+      gpLook.multiplyScalar(0.35 + 0.65 * gpLook.length());
       const b = (i: number) => !!gp.buttons[i]?.pressed;
-      const map: Array<[number, ButtonName]> = [[0, 'jump'], [1, 'crouch'], [2, 'attack'], [3, 'interact'], [4, 'block'], [5, 'dodge'], [10, 'sprint'], [9, 'pause'], [7, 'throttle'], [6, 'brake'], [8, 'skip']];
+      const map: Array<[number, ButtonName]> = [[0, 'jump'], [1, 'crouch'], [2, 'attack'], [2, 'aux'], [3, 'interact'], [4, 'block'], [5, 'dodge'], [10, 'sprint'], [9, 'pause'], [7, 'throttle'], [6, 'brake'], [8, 'skip']];
       let any = gpMove.lengthSq() > 0 || gpLook.lengthSq() > 0;
       for (const [i, name] of map) if (b(i)) { held[name] = true; any = true; }
+      this.analog.throttle = gp.buttons[7]?.value ?? 0;
+      this.analog.brake = gp.buttons[6]?.value ?? 0;
+      if (this.analog.throttle > 0.05 || this.analog.brake > 0.05) any = true;
+      // D-pad drives movement too (handy on pads without a comfortable stick).
+      const dx = (b(15) ? 1 : 0) - (b(14) ? 1 : 0), dy = (b(12) ? 1 : 0) - (b(13) ? 1 : 0);
+      if (dx || dy) { gpMove.set(dx, dy).normalize(); any = true; }
       if (any) this.setDevice('gamepad');
     }
 
@@ -149,14 +221,16 @@ export class Input {
     const now = performance.now();
     for (const name of BUTTONS) {
       const s = this.buttons[name];
+      // Pause keeps working while input is disabled (it is how you leave the pause menu).
+      const en = this.enabled || name === 'pause';
       const tapped = this.keyTaps.has(name) || this.virtual.taps.has(name);
-      const down = this.enabled && (!!held[name] || tapped);
-      s.pressed = (down && !s.down) || (this.enabled && tapped && s.down === false);
+      const down = en && (!!held[name] || tapped);
+      s.pressed = (down && !s.down) || (en && tapped && s.down === false);
       s.released = !down && s.down;
       if (s.pressed) s.time = now;
-      s.down = !!held[name] && this.enabled;
+      s.down = !!held[name] && en;
       // A tap that was pressed and released between frames still registers once.
-      if (tapped && !held[name]) { s.pressed = this.enabled; s.released = false; }
+      if (tapped && !held[name]) { s.pressed = en; s.released = false; }
     }
     this.keyTaps.clear();
     this.virtual.taps.clear();

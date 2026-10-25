@@ -44,6 +44,7 @@ export class Hud {
   private titleTimer = 0;
   private lastObjective = '';
   private skipHint: HTMLElement;
+  private ctlHint: HTMLElement | null = null;
   showStats = false;
   fade = 0;
 
@@ -130,6 +131,13 @@ export class Hud {
     if (!text) { this.banner.classList.remove('show'); return; }
     this.banner.textContent = text;
     this.banner.className = `hud-banner show ${kind}`;
+  }
+
+  /** Small one-line help at the bottom (e.g. 'Click to control the camera'). */
+  setControlHint(text: string | null): void {
+    if (!this.ctlHint) this.ctlHint = el('div', 'hud-ctlhint', this.root);
+    if (this.ctlHint.textContent !== (text ?? '')) this.ctlHint.textContent = text ?? '';
+    this.ctlHint.classList.toggle('show', !!text);
   }
 
   setSkipHint(text: string | null): void {
