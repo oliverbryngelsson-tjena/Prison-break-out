@@ -1,7 +1,8 @@
 # Builds the game client and publishes it to GitHub Pages.
-# The online room server cannot run on Pages: deploy server/ separately (see README) and set the
-# repository variable GAME_SERVER_URL (Settings > Secrets and variables > Actions > Variables),
-# e.g. wss://your-server.example.com
+# Online play works with no setup: the player who creates a room hosts it in their browser and the
+# partner connects peer-to-peer (WebRTC, introduced by the free PeerJS signaling service).
+# Optional: to use a dedicated room server instead, deploy server/ (see README) and set the repository
+# variable GAME_SERVER_URL (Settings > Secrets and variables > Actions > Variables), e.g. wss://your-server.example.com
 name: Deploy client to GitHub Pages
 on:
   push:
@@ -27,6 +28,7 @@ jobs:
       - run: npx vite build
         env:
           VITE_SERVER_URL: ${{ vars.GAME_SERVER_URL }}
+          VITE_NET_MODE: p2p
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

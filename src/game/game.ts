@@ -122,8 +122,20 @@ export class Game implements SessionHandlers, CutsceneHost {
     if (deps.net) {
       this.unsubs.push(deps.net.on('peer', (ev) => this.onPeerEvent(ev)));
       this.unsubs.push(deps.net.on('status', (s) => {
-        if (s === 'reconnecting') deps.hud.setBanner('Connection lost — reconnecting…', 'warn');
-        else if (s === 'online') { deps.hud.setBanner(null); }
+        const net = deps.net!;
+        // Peer-to-peer guest: the room lives in the partner's browser, so losing it means losing the partner.
+        const p2pGuest = net.mode === 'p2p' && !net.hosting;
+        if (s === 'reconnecting') {
+          if (p2pGuest) { if (!this.partnerAway) this.onPeerEvent('disconnected'); }
+          else deps.hud.setBanner('Connection lost — reconnecting…', 'warn');
+        } else if (s === 'online') {
+          deps.hud.setBanner(null);
+        }
+      }));
+      this.unsubs.push(deps.net.on('room', (r) => {
+        if (!this.partnerAway || deps.net!.mode !== 'p2p') return;
+        const other = r.players.find((p) => p.id !== deps.net!.you);
+        if (other?.connected && deps.net!.connected) this.onPeerEvent('reconnected');
       }));
     }
   }
@@ -495,6 +507,7 @@ export class Game implements SessionHandlers, CutsceneHost {
   }
 
   fullState(): unknown {
+    if (this.state === 'loading' || !this.local || !this.chapter) return null;
     return {
       chapter: this.chapter.num,
       ch: this.chapter.serialize(),

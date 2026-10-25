@@ -42,7 +42,7 @@ const A = await launch('A', 'Ana');
 const B = await launch('B', 'Ben');
 const P = { A, B };
 try {
-  const R = process.env.RENDER ? `render=${process.env.RENDER}` : '';
+  const R = [process.env.RENDER ? `render=${process.env.RENDER}` : '', process.env.Q || ''].filter(Boolean).join('&');
   await A.page.goto(BASE + (R ? `?${R}` : ''), { timeout: 120000 });
   await A.page.waitForFunction(() => window.__ready && window.__app.net.status === 'online', null, { timeout: 240000 });
   await A.page.evaluate(([ch, cp]) => window.__app.net.createRoom('Ana', { chapter: +ch, checkpoint: cp, flags: {}, savedAt: Date.now(), playTime: 0 }), [CH, CP]);
@@ -63,6 +63,7 @@ try {
     try {
       if (s.until) { await Promise.all(targets.map((c) => c.page.waitForFunction(s.until, null, { timeout: s.timeout ?? 120000, polling: 300 }))); console.log(stamp(), s.on || 'AB', 'until ok:', s.until.slice(0, 70)); }
       else if (s.wait) await new Promise((r) => setTimeout(r, s.wait));
+      else if (s.reload) for (const c of targets) await c.page.reload({ timeout: 120000 });
       else if (s.eval) for (const c of targets) console.log(stamp(), c.label, 'eval =>', JSON.stringify(await c.page.evaluate(s.eval)).slice(0, 400));
       else if (s.hold) { await Promise.all(targets.map((c) => c.page.keyboard.down(s.hold))); await new Promise((r) => setTimeout(r, s.ms ?? 1000)); await Promise.all(targets.map((c) => c.page.keyboard.up(s.hold))); }
       else if (s.press) await Promise.all(targets.map((c) => c.page.keyboard.press(s.press)));

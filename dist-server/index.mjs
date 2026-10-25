@@ -19,8 +19,7 @@ function normalizeCode(code) {
   return code.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, CODE_LENGTH);
 }
 
-// server/rooms.ts
-import { randomBytes, randomInt } from "node:crypto";
+// shared/rooms.ts
 var send = (conn, msg) => {
   if (conn && conn.ws.readyState === 1) conn.ws.send(JSON.stringify(msg));
 };
@@ -33,7 +32,14 @@ var RoomManager = class {
   log;
   rooms = /* @__PURE__ */ new Map();
   stats = { created: 0, joined: 0, resumed: 0, relayed: 0 };
+  /** Code to use for the next created room (P2P hosts register it with the signaling server first). */
+  reservedCode = null;
   newCode() {
+    if (this.reservedCode && !this.rooms.has(this.reservedCode)) {
+      const c = this.reservedCode;
+      this.reservedCode = null;
+      return c;
+    }
     for (let tries = 0; tries < 1e3; tries++) {
       let c = "";
       for (let i = 0; i < CODE_LENGTH; i++) c += CODE_ALPHABET[randomInt(CODE_ALPHABET.length)];
@@ -253,6 +259,23 @@ var RoomManager = class {
       this.pushRoom(room);
     }
   }
+  /** Snapshot of a room without live connections (P2P host reload). */
+  exportRoom(code) {
+    const r = this.rooms.get(code);
+    if (!r) return null;
+    return { ...r, players: r.players.map((p) => ({ ...p, conn: null })) };
+  }
+  /** Restores a room saved by exportRoom; every seat starts disconnected and can resume with its token. */
+  importRoom(data, restorerId) {
+    const r = data;
+    if (!r || typeof r.code !== "string" || !Array.isArray(r.players)) return null;
+    const now = Date.now();
+    const room = { ...r, lastActivity: now, players: r.players.map((p) => ({ ...p, conn: null, disconnectedAt: now })) };
+    const other = room.players.find((p) => p.id !== restorerId);
+    if (room.phase === "playing" && restorerId && other && room.authorityId === restorerId) room.authorityId = other.id;
+    this.rooms.set(room.code, room);
+    return room.code;
+  }
   setPing(conn, ms) {
     const room = conn.roomCode ? this.rooms.get(conn.roomCode) : void 0;
     const p = room?.players.find((x) => x.id === conn.playerId);
@@ -292,11 +315,23 @@ var RoomManager = class {
     }
   }
 };
+function bytes(n) {
+  const b = new Uint8Array(n);
+  globalThis.crypto.getRandomValues(b);
+  return b;
+}
+function randomInt(n) {
+  const lim = 256 - 256 % n;
+  for (; ; ) {
+    const v = bytes(1)[0];
+    if (v < lim) return v % n;
+  }
+}
 function id() {
-  return randomBytes(6).toString("hex");
+  return [...bytes(6)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 function token() {
-  return randomBytes(18).toString("base64url");
+  return [...bytes(18)].map((b) => b.toString(36).padStart(2, "0")).join("");
 }
 function sanitizeName(n) {
   const s = String(n ?? "").replace(/[^\p{L}\p{N} _.-]/gu, "").trim().slice(0, 16);
@@ -306,6 +341,37 @@ function validProgress(p) {
   if (!p || typeof p !== "object") return false;
   const x = p;
   return Number.isInteger(x.chapter) && x.chapter >= 1 && x.chapter <= 6 && typeof x.checkpoint === "string" && x.checkpoint.length < 64 && typeof x.flags === "object" && JSON.stringify(x.flags).length < 8e3;
+}
+
+// shared/serve.ts
+function serveConnection(rooms2, t) {
+  const conn = { ws: t, playerId: null, roomCode: null, name: "Player", helloed: false, budget: 200, lastRefill: Date.now() };
+  t.send(JSON.stringify({ t: "welcome", v: PROTOCOL_VERSION, serverTime: Date.now() }));
+  let open = true;
+  return {
+    message(data) {
+      if (!open) return;
+      let msg;
+      try {
+        const parsed = JSON.parse(data);
+        if (!isClientMsg(parsed)) return;
+        msg = parsed;
+      } catch {
+        return;
+      }
+      if (msg.t === "hello" && msg.v !== PROTOCOL_VERSION) {
+        t.send(JSON.stringify({ t: "error", code: "BAD_VERSION", message: "Game version mismatch. Please refresh to update." }));
+        return;
+      }
+      if (msg.t === "ping" && typeof msg.rtt === "number") rooms2.setPing(conn, msg.rtt);
+      rooms2.handle(conn, msg);
+    },
+    closed() {
+      if (!open) return;
+      open = false;
+      rooms2.detach(conn, false);
+    }
+  };
 }
 
 // server/index.ts
@@ -378,8 +444,8 @@ var server = http.createServer((req, res) => {
   }
 });
 var wss = new WebSocketServer({ server, path: "/ws", maxPayload: 64 * 1024 });
-wss.on("connection", (ws, req) => {
-  const conn = { ws, playerId: null, roomCode: null, name: "Player", helloed: false, budget: 200, lastRefill: Date.now() };
+wss.on("connection", (ws) => {
+  const served = serveConnection(rooms, ws);
   let alive = true;
   ws.on("pong", () => {
     alive = true;
@@ -395,29 +461,12 @@ wss.on("connection", (ws, req) => {
     } catch {
     }
   }, 15e3);
-  ws.send(JSON.stringify({ t: "welcome", v: PROTOCOL_VERSION, serverTime: Date.now() }));
-  ws.on("message", (data) => {
-    let msg;
-    try {
-      const parsed = JSON.parse(String(data));
-      if (!isClientMsg(parsed)) return;
-      msg = parsed;
-    } catch {
-      return;
-    }
-    if (msg.t === "hello" && msg.v !== PROTOCOL_VERSION) {
-      ws.send(JSON.stringify({ t: "error", code: "BAD_VERSION", message: "Game version mismatch. Please refresh to update." }));
-      return;
-    }
-    if (msg.t === "ping" && typeof msg.rtt === "number") rooms.setPing(conn, msg.rtt);
-    rooms.handle(conn, msg);
-  });
+  ws.on("message", (data) => served.message(String(data)));
   ws.on("close", () => {
     clearInterval(hb);
-    rooms.detach(conn, false);
+    served.closed();
   });
   ws.on("error", () => {
   });
-  void req;
 });
 server.listen(PORT, () => log(`server on :${PORT} (static from ${DIST})`));

@@ -329,7 +329,9 @@ export class App {
       await this.net.createRoom(name, progress);
     } catch {
       this.menus.show('create');
-      this.menus.setCreateError('Could not reach the game server. Check your connection or the server address in Settings → Network.');
+      this.menus.setCreateError(this.net.mode === 'p2p'
+        ? 'Could not open a room. Check your internet connection and try again.'
+        : 'Could not reach the game server. Check your connection or the server address in Settings → Network.');
     }
   }
 
@@ -337,7 +339,9 @@ export class App {
     try {
       await this.net.joinRoom(code, this.settings.name || 'Player');
     } catch {
-      this.menus.setJoinError('Could not reach the game server. Check your connection or the server address in Settings → Network.');
+      this.menus.setJoinError(this.net.mode === 'p2p'
+        ? 'Could not reach your friend\'s game. Check the code and your internet connection.'
+        : 'Could not reach the game server. Check your connection or the server address in Settings → Network.');
     }
   }
 

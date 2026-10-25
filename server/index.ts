@@ -5,8 +5,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
 import { WebSocketServer } from 'ws';
-import { PROTOCOL_VERSION, isClientMsg, type ClientMsg } from '../shared/protocol';
-import { RoomManager, type Conn } from './rooms';
+import { PROTOCOL_VERSION } from '../shared/protocol';
+import { RoomManager } from '../shared/rooms';
+import { serveConnection } from '../shared/serve';
 
 const PORT = Number(process.env.PORT || 8080);
 const DIST = path.resolve(process.env.DIST_DIR || 'dist');
@@ -55,8 +56,8 @@ const server = http.createServer((req, res) => {
 });
 
 const wss = new WebSocketServer({ server, path: '/ws', maxPayload: 64 * 1024 });
-wss.on('connection', (ws, req) => {
-  const conn: Conn = { ws, playerId: null, roomCode: null, name: 'Player', helloed: false, budget: 200, lastRefill: Date.now() };
+wss.on('connection', (ws) => {
+  const served = serveConnection(rooms, ws);
   let alive = true;
   ws.on('pong', () => { alive = true; });
   const hb = setInterval(() => {
@@ -64,29 +65,12 @@ wss.on('connection', (ws, req) => {
     alive = false;
     try { ws.ping(); } catch { /* ignore */ }
   }, 15000);
-  ws.send(JSON.stringify({ t: 'welcome', v: PROTOCOL_VERSION, serverTime: Date.now() }));
-  ws.on('message', (data) => {
-    let msg: ClientMsg;
-    try {
-      const parsed = JSON.parse(String(data));
-      if (!isClientMsg(parsed)) return;
-      msg = parsed;
-    } catch {
-      return;
-    }
-    if (msg.t === 'hello' && msg.v !== PROTOCOL_VERSION) {
-      ws.send(JSON.stringify({ t: 'error', code: 'BAD_VERSION', message: 'Game version mismatch. Please refresh to update.' }));
-      return;
-    }
-    if (msg.t === 'ping' && typeof msg.rtt === 'number') rooms.setPing(conn, msg.rtt);
-    rooms.handle(conn, msg);
-  });
+  ws.on('message', (data) => served.message(String(data)));
   ws.on('close', () => {
     clearInterval(hb);
-    rooms.detach(conn, false);
+    served.closed();
   });
   ws.on('error', () => { /* close follows */ });
-  void req;
 });
 
 server.listen(PORT, () => log(`server on :${PORT} (static from ${DIST})`));

@@ -1,6 +1,5 @@
-// Room management for two-player private lobbies.
-import { randomBytes, randomInt } from 'node:crypto';
-import type { WebSocket } from 'ws';
+// Room management for two-player private lobbies. Runs in the Node server and, for peer-to-peer
+// games, inside the host player's browser (no Node APIs here).
 import {
   AUTHORITY_HANDOFF_MS,
   CODE_ALPHABET,
@@ -15,10 +14,17 @@ import {
   type RoomState,
   type ServerMsg,
   normalizeCode,
-} from '../shared/protocol';
+} from './protocol';
+
+/** Anything that can carry JSON text to one client (a WebSocket, a WebRTC data channel, a loopback). */
+export interface Transport {
+  readyState: number;
+  send(data: string): void;
+  close(code?: number, reason?: string): void;
+}
 
 export interface Conn {
-  ws: WebSocket;
+  ws: Transport;
   playerId: string | null;
   roomCode: string | null;
   name: string;
@@ -63,7 +69,11 @@ export class RoomManager {
     setInterval(() => this.sweep(), 1000).unref?.();
   }
 
-  private newCode(): string {
+  /** Code to use for the next created room (P2P hosts register it with the signaling server first). */
+  reservedCode: string | null = null;
+
+  newCode(): string {
+    if (this.reservedCode && !this.rooms.has(this.reservedCode)) { const c = this.reservedCode; this.reservedCode = null; return c; }
     for (let tries = 0; tries < 1000; tries++) {
       let c = '';
       for (let i = 0; i < CODE_LENGTH; i++) c += CODE_ALPHABET[randomInt(CODE_ALPHABET.length)];
@@ -284,6 +294,26 @@ export class RoomManager {
     }
   }
 
+  /** Snapshot of a room without live connections (P2P host reload). */
+  exportRoom(code: string): unknown {
+    const r = this.rooms.get(code);
+    if (!r) return null;
+    return { ...r, players: r.players.map((p) => ({ ...p, conn: null })) };
+  }
+
+  /** Restores a room saved by exportRoom; every seat starts disconnected and can resume with its token. */
+  importRoom(data: unknown, restorerId?: string): string | null {
+    const r = data as Room | null;
+    if (!r || typeof r.code !== 'string' || !Array.isArray(r.players)) return null;
+    const now = Date.now();
+    const room: Room = { ...r, lastActivity: now, players: r.players.map((p) => ({ ...p, conn: null, disconnectedAt: now })) };
+    // The player who reloaded lost their world state; the partner who kept playing becomes the authority.
+    const other = room.players.find((p) => p.id !== restorerId);
+    if (room.phase === 'playing' && restorerId && other && room.authorityId === restorerId) room.authorityId = other.id;
+    this.rooms.set(room.code, room);
+    return room.code;
+  }
+
   setPing(conn: Conn, ms: number) {
     const room = conn.roomCode ? this.rooms.get(conn.roomCode) : undefined;
     const p = room?.players.find((x) => x.id === conn.playerId);
@@ -327,11 +357,21 @@ export class RoomManager {
   }
 }
 
+function bytes(n: number): Uint8Array {
+  const b = new Uint8Array(n);
+  globalThis.crypto.getRandomValues(b);
+  return b;
+}
+function randomInt(n: number): number {
+  // Rejection sampling for an unbiased index.
+  const lim = 256 - (256 % n);
+  for (;;) { const v = bytes(1)[0]; if (v < lim) return v % n; }
+}
 function id(): string {
-  return randomBytes(6).toString('hex');
+  return [...bytes(6)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 function token(): string {
-  return randomBytes(18).toString('base64url');
+  return [...bytes(18)].map((b) => b.toString(36).padStart(2, '0')).join('');
 }
 function sanitizeName(n: unknown): string {
   const s = String(n ?? '').replace(/[^\p{L}\p{N} _.-]/gu, '').trim().slice(0, 16);

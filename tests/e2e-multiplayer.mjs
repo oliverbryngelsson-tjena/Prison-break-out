@@ -6,6 +6,8 @@ import fs from 'node:fs';
 const { chromium } = createRequire(import.meta.url)('playwright');
 
 const BASE = process.argv[2] || 'http://localhost:5173/';
+// Extra query, e.g. Q='peer=127.0.0.1:9000' for peer-to-peer rooms through a local signaling server.
+const Q = process.env.Q ? process.env.Q : '';
 const OUT = process.env.OUT || 'test-results';
 fs.mkdirSync(OUT, { recursive: true });
 const ARGS = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'];
@@ -43,7 +45,7 @@ async function main() {
   const A = await launch('A', 'Ana');
   const B = await launch('B', 'Ben');
   try {
-    await A.page.goto(BASE, { timeout: 120000 });
+    await A.page.goto(BASE + (Q ? `?${Q}` : ''), { timeout: 120000 });
     await wait(A, () => window.__ready === true, null, 240000);
     await wait(A, () => window.__app.net.status === 'online', null, 30000);
     check('A: menu loaded and server online', true);
@@ -58,7 +60,7 @@ async function main() {
     check('A: private room created', /^[A-Z0-9]{5}$/.test(code) && shownCode === code, `code ${code}`);
 
     // B joins through the invite link
-    await B.page.goto(`${BASE}?join=${code}`, { timeout: 120000 });
+    await B.page.goto(`${BASE}?join=${code}${Q ? '&' + Q : ''}`, { timeout: 120000 });
     await wait(B, () => window.__ready === true, null, 240000);
     const prefilled = await B.page.inputValue('[data-screen=join] [data-code]');
     check('B: invite link opens Join with the code filled in', prefilled === code);
@@ -96,7 +98,8 @@ async function main() {
     const roles = await Promise.all([A, B].map((p) => ev(p, () => ({ local: window.__app.game.localChar, auth: window.__app.game.authority }))));
     check('Host is the world authority, guest is not', roles[0].auth === true && roles[1].auth === false, JSON.stringify(roles));
 
-    // Opening cutscene plays on both clients
+    // Opening cutscene plays on both clients (once each client has begun the chapter)
+    await Promise.all([A, B].map((p) => wait(p, () => window.__app.game?.begun, null, 60000)));
     const cs = await Promise.all([A, B].map((p) => ev(p, () => window.__app.game.cutscenes.current?.id ?? (window.__app.game.cutscenes.played.has('cs_arrival') ? 'played' : null))));
     check('Opening cutscene runs on both clients', cs.every((c) => c === 'cs_arrival' || c === 'played'), cs.join(','));
     await snap(A, 'A_cutscene');

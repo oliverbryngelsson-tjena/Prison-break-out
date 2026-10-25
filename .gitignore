@@ -8,3 +8,4 @@ android/app/build/
 .env
 /public/_staging/
 /.staging/
+dist-p2p/
