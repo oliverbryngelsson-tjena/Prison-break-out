@@ -74,6 +74,7 @@ export class Hud {
     this.skipHint = el('div', 'hud-skip', this.root);
     this.fadeEl = el('div', 'hud-fade', this.root);
     this.stats = el('div', 'hud-stats', this.root);
+    this.setAmmo(null);
   }
 
   setVisible(v: boolean): void {
@@ -246,6 +247,18 @@ export class Hud {
     }
     if (this.showStats && statsText) { this.stats.style.display = ''; this.stats.textContent = statsText; }
     else this.stats.style.display = 'none';
+  }
+
+  // ---- ammo counter (bottom right)
+  private ammoEl: HTMLElement | null = null;
+  private ammoText = '';
+  setAmmo(text: string | null): void {
+    if (!this.ammoEl) this.ammoEl = el('div', 'hud-ammo', this.root);
+    const t = text ?? '';
+    if (t === this.ammoText) return;
+    this.ammoText = t;
+    this.ammoEl.textContent = t;
+    this.ammoEl.classList.toggle('show', !!text);
   }
 
   // ---- weapon shop (Dutch's van)

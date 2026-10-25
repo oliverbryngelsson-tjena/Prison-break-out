@@ -1,5 +1,5 @@
 // Guns: the weapon model in the hands, muzzle flash, tracer, impact and shot sound.
-// Players aim automatically at the best enemy in front; every bullet is one shared 'shot' event
+// Players aim automatically at the best enemy in front; every bullet is one shared 'gunshot' event
 // so both clients see and hear it. The authority applies the damage.
 //
 // Holding: the gun is placed from the body's frame (shoulder pocket for long guns, out in front
@@ -140,9 +140,11 @@ export class Guns {
   }
   private ready: Promise<void> = Promise.resolve();
 
+  /** Show (or hide) a gun on a body regardless of loadout: cutscenes, or an armed NPC putting it away. */
   show(id: string, on: boolean): void {
-    if (on) this.shown.add(id); else this.shown.delete(id);
+    if (on) { this.shown.add(id); this.hiddenIds.delete(id); } else { this.shown.delete(id); this.hiddenIds.add(id); }
   }
+  private hiddenIds = new Set<string>();
 
   weaponOf(id: string): WeaponDef {
     if (id === 'elias' || id === 'jax') return WEAPONS[this.loadout[id]] ?? WEAPONS.pistol;
@@ -199,6 +201,7 @@ export class Guns {
     const ids = new Set<string>(this.shown);
     if (this.playersArmed) { ids.add('elias'); ids.add('jax'); }
     for (const n of g.npcs.values()) if (n.def.gun) ids.add(n.id);
+    for (const id of this.hiddenIds) if (!(id === 'elias' || id === 'jax') || !this.playersArmed) ids.delete(id);
     for (const [id, m] of this.models) if (!ids.has(id)) m.root.visible = false;
     for (const id of ids) {
       const b = this.bodyOf(id);
@@ -375,5 +378,6 @@ export class Guns {
     this.light?.removeFromParent();
     this.light = null;
     this.shown.clear();
+    this.hiddenIds.clear();
   }
 }

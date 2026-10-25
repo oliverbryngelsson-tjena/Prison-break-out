@@ -25,10 +25,10 @@ type AppState = 'boot' | 'menu' | 'lobby' | 'loading' | 'game' | 'end';
 const CHAPTER_END_TEXT: Record<number, string> = {
   1: 'A screwdriver, a vent and a name: Victor Crane. Tonight, Redmoor loses two inmates.',
   2: 'Over the wall and into the dark. Every siren in the county is coming.',
-  3: 'Old wounds, a long road and a secret that won\'t stay buried.',
-  4: 'Crane\'s house burns behind them. The police are already on the road.',
-  5: 'The chase is over. The truth is not.',
-  6: 'Only one of them walks away.',
+  3: 'A ride from Ray, Jax\'s hidden cash, and a table full of Dutch\'s guns. Next: Victor\'s little brother.',
+  4: 'Julius talked. Victor is at Crane Motors on Dock Street — and he knows they\'re coming.',
+  5: 'Victor Crane is dead. His money and his ledger ride out the back on his own bikes.',
+  6: 'Free. The ledger reaches the papers; Elias Varga and Jax Rourke are never found. Thanks for playing.',
 };
 
 export class App {
@@ -348,7 +348,7 @@ export class App {
     });
     n.on('relay', (_from, d: GameMsg) => {
       if (d.k !== 'app') return;
-      if (d.cmd === 'next' && d.chapter) void this.loadChapter(d.chapter, '', {});
+      if (d.cmd === 'next' && d.chapter) void this.loadChapter(d.chapter, '', (d.flags as Record<string, boolean | number | string>) ?? {});
       if (d.cmd === 'menu') this.toLobby();
     });
     n.on('peer', (ev) => {
@@ -485,8 +485,11 @@ export class App {
   private hostNextChapter(): void {
     const next = this.pendingNext;
     if (!next) return;
-    this.net.relay({ k: 'app', cmd: 'next', chapter: next });
-    void this.loadChapter(next, '', {});
+    // Carry-over flags (the weapons you picked) were saved with the next chapter's progress.
+    const saved = loadSave().progress;
+    const flags = saved && saved.chapter === next ? saved.flags ?? {} : {};
+    this.net.relay({ k: 'app', cmd: 'next', chapter: next, flags });
+    void this.loadChapter(next, '', flags);
   }
 
   private onGameExit(reason: 'quit' | 'partnerLeft' | 'error' | 'finished', detail?: string): void {

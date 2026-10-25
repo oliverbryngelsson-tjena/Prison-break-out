@@ -226,7 +226,8 @@ export class Npc implements Combatant {
       this.setPose('stagger');
     } else this.setPose('hit_react', undefined, { side: Math.random() < 0.5 ? -1 : 1 });
     // Getting hit makes anyone aware.
-    if (this.state !== 'stunned' && this.state !== 'combat' && this.state !== 'alert') {
+    // (Scripted NPCs keep doing what the story needs, even when shot.)
+    if (this.state !== 'stunned' && this.state !== 'combat' && this.state !== 'alert' && this.state !== 'scripted') {
       this.awareness.elias = this.awareness.jax = 1;
       this.setState(this.hostile ? 'combat' : 'alert');
     }

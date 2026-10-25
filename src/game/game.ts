@@ -325,21 +325,7 @@ export class Game implements SessionHandlers, CutsceneHost {
         else this.session.hit(who, dmg, dir, kind);
       },
       onKO: (npc) => { this.chapter.onEvent('ko', { npc: npc.id }); },
-      onShoot: (npc, who, hit, dmg) => {
-        if (this.state !== 'playing') return;
-        const tb = this.body(who);
-        const from = this.guns.muzzle(npc.id);
-        let to = tb.chest();
-        if (!hit) {
-          to.add(new THREE.Vector3((Math.random() - 0.5) * 1.8, (Math.random() - 0.35) * 0.9, (Math.random() - 0.5) * 1.8));
-          to = from.clone().addScaledVector(to.sub(from).normalize(), from.distanceTo(tb.pos) + 8);
-        }
-        const tr = this.guns.trace(from, to);
-        const ok = hit && !tr.wall;
-        const ev: ShotEvent = { by: npc.id, from: v3a(from), to: v3a(tr.end), wall: tr.wall };
-        if (ok) { ev.who = who; ev.dmg = dmg; }
-        this.session.emit('shot', ev);
-      },
+      onShoot: (npc, who, hit, dmg) => this.npcShoot(npc, who, hit, dmg),
       bark: (npc, kind) => this.npcBark(npc, kind),
       lightAt: (p) => this.chapter.lightAt(p),
       suspicion: (who, p, npc) => this.chapter.suspicion(who, p, npc.id),
@@ -386,6 +372,23 @@ export class Game implements SessionHandlers, CutsceneHost {
     }
   }
 
+  /** Authority: an NPC fires at a player (hit already decided). Shared as a 'gunshot' event. */
+  npcShoot(npc: Npc, who: CharacterId, hit: boolean, dmg: number): void {
+    if (this.state !== 'playing') return;
+    const tb = this.body(who);
+    const from = this.guns.muzzle(npc.id);
+    let to = tb.chest();
+    if (!hit) {
+      to.add(new THREE.Vector3((Math.random() - 0.5) * 1.8, (Math.random() - 0.35) * 0.9, (Math.random() - 0.5) * 1.8));
+      to = from.clone().addScaledVector(to.sub(from).normalize(), from.distanceTo(tb.pos) + 8);
+    }
+    const tr = this.guns.trace(from, to);
+    const ok = hit && !tr.wall;
+    const ev: ShotEvent = { by: npc.id, from: v3a(from), to: v3a(tr.end), wall: tr.wall };
+    if (ok) { ev.who = who; ev.dmg = dmg; }
+    this.session.emit('gunshot', ev);
+  }
+
   /** Local player pulls the trigger: roll each bullet against the weapon's spread, show it now, send it. */
   private localShoot(t: Combatant | null, dir: THREE.Vector3): void {
     const gn = this.guns;
@@ -430,7 +433,7 @@ export class Game implements SessionHandlers, CutsceneHost {
     const ev: ShotEvent = { by: this.localChar, from: v3a(from), to: v3a(ends[0]), wall: wallAny, w: w.id };
     if (ends.length > 1) ev.more = ends.slice(1, 6).map(v3a);
     if (dmg > 0 && npc) { ev.id = npc.id; ev.dmg = dmg; }
-    this.session.request('shot', ev);
+    this.session.request('gunshot', ev);
   }
 
   /** Weapons carried over from earlier chapters (defaults if the chapter was started from the menu). */
@@ -529,7 +532,9 @@ export class Game implements SessionHandlers, CutsceneHost {
         return;
       case 'csSkip':
         if (this.cutscenes.current?.id === a.id) this.cutscenes.finish();
-        this.pendingCutscene = null;
+        // Only drop a queued cutscene if this skip is for it: a late skip of the previous scene
+        // used to cancel the next one before it started (its ending never ran: soft lock).
+        if (this.pendingCutscene?.id === a.id) this.pendingCutscene = null;
         return;
       case 'dlg': {
         const lines = (a.lines as Line[] | undefined) ?? this.chapter.dialogues[String(a.id)];
@@ -582,7 +587,7 @@ export class Game implements SessionHandlers, CutsceneHost {
       case 'restart':
         this.restartAt(String(a.checkpoint));
         return;
-      case 'shot': {
+      case 'gunshot': {
         const sh = a as unknown as ShotEvent;
         const from = new THREE.Vector3(...sh.from), to = new THREE.Vector3(...sh.to);
         if (sh.by !== this.localChar) this.guns.fire(sh.by, from, to, !!sh.wall, (sh.more ?? []).map((p) => new THREE.Vector3(...p)));
@@ -651,7 +656,7 @@ export class Game implements SessionHandlers, CutsceneHost {
 
   validate(type: string, args: unknown, from: 'local' | 'peer'): boolean {
     const a = (args ?? {}) as Record<string, unknown>;
-    if (type === 'shot') {
+    if (type === 'gunshot') {
       if (from === 'peer' && a.by !== this.remoteChar) return false;
       if (a.id) {
         const npc = this.npcs.get(String(a.id));
@@ -1067,6 +1072,7 @@ export class Game implements SessionHandlers, CutsceneHost {
     hud.setControlHint(ctl);
     touch.setLabel('interact', c && !this.inCutscene ? shortLabel(this.interact.label(c)) : null, !!c);
     const armed = this.guns.playersArmed && this.flags.combat;
+    hud.setAmmo(armed && !this.inCutscene && this.state === 'playing' ? `${this.guns.local.name}  ·  ${this.guns.reloadT > 0 ? 'reloading' : `${this.guns.ammo} / ${this.guns.local.mag}`}` : null);
     touch.setLabel('attack', this.local.takedownTarget ? 'Takedown' : armed ? (this.guns.reloadT > 0 ? 'Reload' : `Shoot ${this.guns.ammo}`) : null, !!this.local.takedownTarget || (armed && !!this.local.aimTarget));
     touch.setActive('crouch', this.local.body.crouched);
     touch.setFlags(this.flags);

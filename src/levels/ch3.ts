@@ -496,10 +496,31 @@ export class Chapter3 extends Chapter {
     this.fireLight = new THREE.PointLight(0xff8a3a, 0, 14, 2);
     this.fireLight.position.copy(this.firePos).add(v3(0, 0.8, 0));
     w.scene.add(this.fireLight);
+    // Jax's old basketball hoop by the trailer (mini-game): pole, backboard, rim and net.
+    {
+      const hx = x - 6.5, hz = z - 9.5, hy = this.y(hx, hz);
+      const steelH = L.plain(0x55595c, 0.5, 0.6);
+      kit.batch.add(cylinderBetween(v3(hx, hy, hz - 0.5), v3(hx, hy + 3.25, hz - 0.5), 0.07, 10), steelH);
+      kit.batch.add(cylinderBetween(v3(hx, hy + 3.1, hz - 0.5), v3(hx, hy + 3.1, hz - 0.3), 0.05, 8), steelH);
+      kit.box(L.plain(0xd8d4c8, 0.7), [hx, hy + 3.35, hz - 0.28], [1.6, 1.0, 0.05], 0, false);
+      kit.box(L.plain(0xb0402a, 0.6), [hx, hy + 3.18, hz - 0.25], [0.5, 0.35, 0.02], 0, false);
+      const rim = new THREE.TorusGeometry(0.23, 0.017, 6, 22);
+      rim.rotateX(Math.PI / 2);
+      rim.translate(hx, hy + 3.05, hz);
+      kit.batch.add(rim, L.plain(0xc04020, 0.5, 0.4));
+      const net = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.15, 0.4, 12, 3, true), new THREE.MeshStandardMaterial({ color: 0xeeeeee, wireframe: true, transparent: true, opacity: 0.6 }));
+      net.position.set(hx, hy + 2.84, hz);
+      w.root.add(net);
+      w.physics.addBox({ x: hx, y: hy + 1.6, z: hz - 0.5 }, { x: 0.2, y: 3.2, z: 0.2 }, 0, { surface: 'metal' });
+      kit.batch.add(cylinderBetween(v3(hx, hy + 3.25, hz - 0.5), v3(hx, hy + 4.1, hz - 0.5), 0.04, 8), steelH);
+      kit.bulb(L.emissive(0xffe0b0, 3), steelH, hx, hy + 4.15, hz - 0.3, 0xffdcaa, 2.6, 13, 'trailer');
+      this.hoop = { rim: v3(hx, hy + 3.05, hz), spots: [v3(hx - 1.1, this.y(hx - 1.1, hz + 4.3), hz + 4.3), v3(hx + 1.1, this.y(hx + 1.1, hz + 4.3), hz + 4.3)] };
+    }
     // Logs to sit on
     for (const [ox, oz, yaw] of [[-1.6, 0.3, 0.3], [1.5, -0.4, -0.2]] as const) this.kit.batch.add(cylinderBetween(v3(fx + ox - Math.cos(yaw) * 0.8, this.firePos.y + 0.22, fz + oz + Math.sin(yaw) * 0.8), v3(fx + ox + Math.cos(yaw) * 0.8, this.firePos.y + 0.22, fz + oz - Math.sin(yaw) * 0.8), 0.22, 8), bark);
   }
   private firePos = new THREE.Vector3();
+  private hoop = { rim: v3(0, 0, 0), spots: [v3(0, 0, 0), v3(0, 0, 0)] as [THREE.Vector3, THREE.Vector3] };
 
   private updateFire(dt: number): void {
     if (!this.fire.visible) { this.fireLight.intensity = 0; return; }
@@ -660,6 +681,8 @@ export class Chapter3 extends Chapter {
         enabled: () => this.flags.phase === 'cabin' && !!this.flags.talked && !this.bikes.mounted,
         onUse: () => { this.bikes.parkedLocal = false; this.bikes.mount(bp.pos.clone(), bp.yaw); g.session.request('mounted', { who: c }); } });
     }
+    // One game of HORSE before the bikes (optional).
+    g.minigames.addHoops({ id: 'hoops_jax', rim: this.hoop.rim, spots: this.hoop.spots, enabled: () => this.flags.phase === 'cabin' && !this.bikes.mounted });
     // Dutch's guns, laid out behind his car: each of you picks one.
     I.add({ id: 'deal_guns', pos: this.dealPos, radius: 1.8, label: () => (this.flags[`picked_${g.localChar}`] ? 'Swap your weapon' : 'Pick a weapon'), icon: 'hand', priority: 4,
       enabled: () => this.flags.phase === 'dealer' && !g.hud.shopOpen, onUse: () => g.openWeaponShop('Dutch\'s guns — take one') });

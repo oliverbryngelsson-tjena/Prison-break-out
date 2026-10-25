@@ -139,7 +139,7 @@ export type GameMsg =
   | { k: 'loaded'; chapter: number; checkpoint: string }
   | { k: 'hit'; target: string; dmg: number; dir: [number, number]; kind: string }
   /** App-level commands outside a running chapter (e.g. host continues to the next chapter). */
-  | { k: 'app'; cmd: 'next' | 'menu'; chapter?: number };
+  | { k: 'app'; cmd: 'next' | 'menu'; chapter?: number; flags?: Record<string, boolean | number | string> };
 
 export function isClientMsg(x: unknown): x is ClientMsg {
   return !!x && typeof x === 'object' && typeof (x as { t?: unknown }).t === 'string';

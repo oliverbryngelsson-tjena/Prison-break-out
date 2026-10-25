@@ -274,7 +274,7 @@ body.portrait .hud-title .ch { font-size: 0.6875rem; }
 .hud-mg .track .sweet { position: absolute; top: 0; bottom: 0; background: rgba(88, 194, 125, .55); }
 .hud-mg .track .mark { position: absolute; top: -0.125rem; bottom: -0.125rem; width: 0.25rem; margin-left: -0.125rem; background: #fff; border-radius: 0.125rem; box-shadow: 0 0 0.5rem rgba(255,255,255,.7); }
 /* HUD layout editor */
-.hud.hud-editing .hud-objective, .hud.hud-editing .hud-partner, .hud.hud-editing .hud-prompt, .hud.hud-editing .hud-subtitle, .hud.hud-editing .hud-banner, .hud.hud-editing .hud-notice { opacity: 1 !important; pointer-events: auto; touch-action: none; outline: 2px dashed var(--accent-2); outline-offset: 0.25rem; cursor: move; }
+.hud.hud-editing .hud-objective, .hud.hud-editing .hud-partner, .hud.hud-editing .hud-prompt, .hud.hud-editing .hud-subtitle, .hud.hud-editing .hud-banner, .hud.hud-editing .hud-notice, .hud.hud-editing .hud-ammo { opacity: 1 !important; pointer-events: auto; touch-action: none; outline: 2px dashed var(--accent-2); outline-offset: 0.25rem; cursor: move; }
 .hud.hud-editing .hud-objective.empty { opacity: 1 !important; }
 .hud .moved { transition: opacity .2s; }
 .touch.editing .touch-look, .touch.editing .touch-move { pointer-events: none; }
@@ -292,3 +292,6 @@ body.portrait .hud-title .ch { font-size: 0.6875rem; }
 .hud-shop .st span { width: 4.6rem; color: var(--muted); }
 .hud-shop .st i { flex: 1; height: .3rem; background: rgba(255,255,255,.1); border-radius: 2px; overflow: hidden; }
 .hud-shop .st i b { display: block; height: 100%; background: var(--accent-2); }
+.hud-ammo { position: absolute; right: calc(1rem + var(--safe-r)); bottom: calc(0.9rem + var(--safe-b)); font-family: var(--font); font-size: 0.8125rem; letter-spacing: .08em; color: #fff; background: rgba(0,0,0,.45); padding: 0.3rem 0.75rem; border-radius: 1rem; opacity: 0; transition: opacity .3s; }
+.hud-ammo.show { opacity: 1; }
+body.touch-device .hud-ammo { display: none; }

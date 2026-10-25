@@ -11,6 +11,7 @@ const ITEMS: Array<{ id: string; sel: string; sample: string }> = [
   { id: 'subtitle', sel: '.hud-subtitle', sample: 'Subtitles appear here.' },
   { id: 'banner', sel: '.hud-banner', sample: 'Warnings appear here' },
   { id: 'notice', sel: '.hud-notice', sample: 'Notices' },
+  { id: 'ammo', sel: '.hud-ammo', sample: 'AK-47 · 30 / 30' },
 ];
 
 const KEY = 'pbo.hudLayout';
