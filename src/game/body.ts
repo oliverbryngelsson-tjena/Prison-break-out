@@ -50,10 +50,9 @@ export class Body implements Actor {
     this.height = model.height;
     model.postHooks.push((m, dt) => this.applyPoses(m, dt));
     world.root.add(model.root);
-    if (!world.q.shadows) {
-      this.shadow = world.blobShadow(0.95);
-      world.root.add(this.shadow);
-    }
+    // Soft contact shadow under every character (lighter where real shadows are also drawn).
+    this.shadow = world.blobShadow(0.95, world.q.shadows ? 0.38 : 0.6);
+    world.root.add(this.shadow);
     world.actors.set(id, this);
   }
 

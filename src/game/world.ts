@@ -166,9 +166,9 @@ export class World {
   }
 
   /** A cheap blob shadow under a character or prop (used when real shadows are off). */
-  blobShadow(size = 0.9): THREE.Mesh {
+  blobShadow(size = 0.9, opacity = 0.6): THREE.Mesh {
     const tex = canvasTexture('softShadow', DRAW.softShadow, 128);
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0.6 }));
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, opacity }));
     m.rotation.x = -Math.PI / 2;
     m.renderOrder = 1;
     return m;

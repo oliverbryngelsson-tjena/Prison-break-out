@@ -84,6 +84,10 @@ export class Renderer {
   /** 0..1 fade to black applied in post (or via overlay when post is off). */
   fade = 0;
   onContextLost: (() => void) | null = null;
+  /** Quality is on Auto: may step down a preset when the device can't keep up. */
+  autoLevel = false;
+  onAutoQuality: ((level: QualityLevel) => void) | null = null;
+  private slowSince = 0;
 
   constructor(container: HTMLElement, level?: QualityLevel) {
     this.gl = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', stencil: false, depth: true, alpha: false });
@@ -91,8 +95,11 @@ export class Renderer {
     this.canvas.id = 'game-canvas';
     container.appendChild(this.canvas);
     this.device = detectDevice(this.gl.getContext());
-    this.q = { ...PRESETS[level ?? this.device.tier] };
+    this.autoLevel = !level;
+    this.q = { ...PRESETS[level ?? this.autoTier()] };
     this.gl.outputColorSpace = THREE.SRGBColorSpace;
+    // Count every pass of a frame in the stats (post-processing renders several times per frame).
+    this.gl.info.autoReset = false;
     this.gl.shadowMap.enabled = true;
     initKTX2(this.gl);
     this.canvas.addEventListener('webglcontextlost', (e) => {
@@ -104,6 +111,15 @@ export class Renderer {
     window.visualViewport?.addEventListener('resize', () => this.resize());
   }
 
+  /** Detected tier, or a lower one this device was stepped down to before. */
+  autoTier(): QualityLevel {
+    const order: QualityLevel[] = ['low', 'medium', 'high', 'ultra'];
+    let saved: string | null = null;
+    try { saved = localStorage.getItem('pbo.autoTier'); } catch { /* ignore */ }
+    const i = order.indexOf(saved as QualityLevel);
+    return i >= 0 && i < order.indexOf(this.device.tier) ? order[i] : this.device.tier;
+  }
+
   setQuality(level: QualityLevel): void {
     this.q = { ...PRESETS[level] };
     this.applyQuality();
@@ -111,6 +127,9 @@ export class Renderer {
 
   private applyQuality(): void {
     const q = this.q;
+    // Phone screens are small: past ~1.6x pixel density the extra pixels are barely visible but
+    // cost a lot of GPU time.
+    if (this.device.mobile) q.maxPixelRatio = Math.min(q.maxPixelRatio, 1.6);
     this.scale = q.renderScale;
     this.gl.shadowMap.enabled = q.shadows;
     this.gl.shadowMap.type = q.shadowSoft ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
@@ -205,8 +224,19 @@ export class Renderer {
     }
   }
 
+  private frameNo = 0;
   render(dt: number): void {
     if (!this.scene || !this.camera) return;
+    this.gl.info.reset();
+    // When the GPU is struggling, redraw shadow maps every other frame (moving shadows lag by one
+    // frame, which is hard to see, and the shadow pass is one of the most expensive parts).
+    const sm = this.gl.shadowMap;
+    if (sm.enabled) {
+      this.frameNo++;
+      const half = this.fps < 45;
+      sm.autoUpdate = !half;
+      if (half && this.frameNo % 2 === 0) sm.needsUpdate = true;
+    }
     this.grade.uniforms.get('fade')!.value = this.fade;
     if (this.composer) this.composer.render(dt);
     else this.gl.render(this.scene, this.camera);
@@ -226,6 +256,23 @@ export class Renderer {
     this.fps = 1000 / Math.max(avg, 1);
     if (!this.q.dynamicResolution || this.frameTimes.length < 90) return;
     if (now - this.lastScaleChange < 2500) return;
+    // Auto quality: still slow at the lowest resolution for a while -> one preset lower (remembered).
+    if (this.autoLevel && this.scale <= this.q.minScale + 1e-3 && avg > 25) {
+      this.slowSince ||= now;
+      if (now - this.slowSince > 8000) {
+        const order: QualityLevel[] = ['low', 'medium', 'high', 'ultra'];
+        const i = order.indexOf(this.q.level);
+        const floor = avg > 40 ? 0 : 1; // only go down to 'low' when it is very slow
+        if (i > floor) {
+          const next = order[i - 1];
+          try { localStorage.setItem('pbo.autoTier', next); } catch { /* ignore */ }
+          this.setQuality(next);
+          this.onAutoQuality?.(next);
+          this.frameTimes.length = 0;
+        }
+        this.slowSince = 0;
+      }
+    } else this.slowSince = 0;
     if (avg > 21 && this.scale > this.q.minScale) {
       this.scale = Math.max(this.q.minScale, this.scale - 0.08);
       this.lastScaleChange = now;

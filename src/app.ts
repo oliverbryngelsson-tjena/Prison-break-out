@@ -207,7 +207,8 @@ export class App {
     saveSettings(s);
     setUserUiScale(s.uiScale);
     if (this.renderer) {
-      const want = s.quality === 'auto' ? this.renderer.device.tier : s.quality;
+      this.renderer.autoLevel = s.quality === 'auto';
+      const want = s.quality === 'auto' ? this.renderer.autoTier() : s.quality;
       if (want !== this.renderer.q.level) this.renderer.setQuality(want);
     }
     if (this.input) this.input.sens = { touch: s.sens.touch, mouse: s.sens.mouse, gamepad: s.sens.gamepad, invertY: s.invertY };
