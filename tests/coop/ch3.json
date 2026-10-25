@@ -81,7 +81,7 @@
   "on": "AB",
   "check": {
    "name": "the fallen log is walkable on both",
-   "expr": "window.__app.game.chapter.logCol.enabled === true"
+   "expr": "!!window.__app.game.chapter.logRamp && window.__app.game.chapter.logRamp.enabled === true"
   }
  },
  {

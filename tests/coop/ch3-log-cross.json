@@ -1,0 +1,65 @@
+[
+ {
+  "on": "AB",
+  "until": "window.__app.game.begun && !window.__app.game.cutscenes.current",
+  "timeout": 120000
+ },
+ {
+  "wait": 2000
+ },
+ {
+  "on": "A",
+  "eval": "(window.__app.game.session.emit('coopDone', { group: 'log' }), true)"
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.chapter.logT >= 0.99",
+  "timeout": 20000
+ },
+ {
+  "on": "A",
+  "eval": "(() => { const g = window.__app.game, b = g.chapter.logBase; g.local.cancelScript?.(); g.local.state = 'free'; g.local.teleport({ x: b.x - 0.3, y: b.y + 0.05, z: b.z - 0.7 }, 0); return true; })()"
+ },
+ {
+  "on": "B",
+  "eval": "(() => { const g = window.__app.game, b = g.chapter.logBase; g.local.cancelScript?.(); g.local.state = 'free'; g.local.teleport({ x: b.x + 0.4, y: b.y + 0.05, z: b.z - 0.9 }, 0); return true; })()"
+ },
+ {
+  "wait": 1200
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "'Cross the log' prompt shows",
+   "expr": "window.__app.game.interact.current && window.__app.game.interact.current.id === 'log_cross'"
+  }
+ },
+ {
+  "on": "AB",
+  "press": "KeyE"
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.chapter.flags.phase === 'north'",
+  "timeout": 60000
+ },
+ {
+  "on": "AB",
+  "until": "!window.__app.game.local.scripted",
+  "timeout": 20000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "both crossed to the far side",
+   "expr": "window.__app.game.local.body.pos.z > window.__app.game.chapter.logBase.z + 15 && window.__app.game.chapter.flags.phase === 'north'"
+  }
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "standing on solid ground after crossing",
+   "expr": "Math.abs(window.__app.game.local.body.pos.y - window.__app.game.chapter.y(window.__app.game.local.body.pos.x, window.__app.game.local.body.pos.z)) < 0.6"
+  }
+ }
+]

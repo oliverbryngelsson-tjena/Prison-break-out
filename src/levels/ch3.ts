@@ -48,7 +48,6 @@ export class Chapter3 extends Chapter {
   private patrol!: Car;
   private patrolPath!: Path;
   private log!: THREE.Group;
-  private logCol!: import('../engine/physics').Box;
   private logT = 0;
   private clothes: THREE.Object3D[] = [];
   private fire!: THREE.Group;
@@ -476,27 +475,49 @@ export class Chapter3 extends Chapter {
       this.log.add(new THREE.Mesh(cylinderBetween(v3(0, yy, 0), v3(Math.cos(a) * 1.4, yy + 0.8, Math.sin(a) * 1.4), 0.06, 5), bark));
     }
     w.root.add(this.log);
-    // Standing: thin collider at the base; bridge collider enabled when fallen.
-    w.physics.addBox({ x: base.x, y: base.y + 2, z: base.z }, { x: 0.8, y: 4, z: 0.8 }, 0, { surface: 'wood' });
-    const mid = base.clone().add(v3(0, 0.25, len / 2));
-    this.logCol = w.physics.addBox({ x: mid.x, y: base.y + 0.1, z: mid.z }, { x: 0.9, y: 0.5, z: len }, 0, { surface: 'wood' });
-    this.logCol.enabled = false;
+    // Standing: thin collider at the base (removed once it falls). The walkable bridge is a slope
+    // along the trunk, added when it lands.
+    this.logStand = w.physics.addBox({ x: base.x, y: base.y + 2, z: base.z }, { x: 0.8, y: 4, z: 0.8 }, 0, { surface: 'wood' });
     this.logBase = base;
     this.applyLog(0);
   }
   private logBase = new THREE.Vector3();
+  /** Scripted walk over the fallen pine, arms out for balance. */
+  private crossLog(): void {
+    const g = this.g, b = this.logBase, far = this.logFar();
+    const side = g.localChar === 'elias' ? -0.6 : 0.6;
+    const off = this.y(LOG_X + side, far.z + 1.6);
+    g.local.runScript([
+      { to: v3(LOG_X, b.y + 0.38, b.z + 0.5), dur: 0.6, yaw: 0, anim: 1.2 },
+      { to: v3(LOG_X, far.y + 0.38, far.z - 0.5), dur: 6.0, yaw: 0, anim: 1.0, pose: 'balance' },
+      { to: v3(LOG_X + side, off, far.z + 1.6), dur: 0.6, yaw: 0, anim: 1.4 },
+    ]);
+    g.audio.play('creak', { pos: b.clone().add(v3(0, 0, 7)), volume: 0.4 });
+  }
+  private logStand: import('../engine/physics').Box | null = null;
+  private logRamp: import('../engine/physics').Box | null = null;
+  /** Far end of the fallen log (top of the trunk). */
+  private logFar(): THREE.Vector3 { return v3(LOG_X, this.y(LOG_X, this.logBase.z + 15), this.logBase.z + 15); }
 
   private applyLog(t: number): void {
     this.logT = t;
     // Fall north (rotate about X).
     const k = t * t;
     this.log.rotation.x = k * (Math.PI / 2 - 0.02);
-    this.logCol.enabled = t >= 0.99;
+    const down = t >= 0.99;
+    if (this.logStand) this.logStand.enabled = !down;
+    if (this.logRamp) this.logRamp.enabled = down;
     // Raise the far end slightly so it rests on the far rim.
-    if (t >= 0.99) {
-      const far = this.y(LOG_X, this.logBase.z + 15);
+    if (down) {
+      const far = this.logFar().y;
       this.log.rotation.x = Math.PI / 2 - Math.atan2(far - this.logBase.y, 15);
-      this.g.world.physics.move(this.logCol, LOG_X, (this.logBase.y + far) / 2 + 0.25, this.logBase.z + 7.5);
+      if (!this.logRamp) {
+        // Walkable slope along the top of the trunk, from rim to rim.
+        // Starts at ground level a metre before the trunk so you can step on from the rim.
+        const z0 = this.logBase.z - 1.0, z1 = this.logBase.z + 15.2;
+        const y0 = this.logBase.y + 0.02, y1 = far + 0.38;
+        this.logRamp = this.g.world.physics.addRamp({ x: LOG_X, y: (y0 + y1) / 2, z: (z0 + z1) / 2 }, { x: 1.1, y: Math.abs(y1 - y0) + 0.3, z: z1 - z0 }, 0, 'z', y0, y1, { surface: 'wood' });
+      }
     }
   }
 
@@ -549,6 +570,9 @@ export class Chapter3 extends Chapter {
     ] });
     I.add({ id: 'log_a', coop: 'log', role: 'a', pos: v3(lb.x - 0.7, lb.y, lb.z - 0.8), radius: 1.3, label: 'Push the dead pine', icon: 'coop', mode: 'hold', holdTime: 1.4, pose: 'push', facing: 0.3,
       enabled: () => this.flags.phase === 'ravine' && !this.flags.logDown });
+    // Once it's down: press Use at the near end to walk across (balancing).
+    I.add({ id: 'log_cross', pos: v3(lb.x, lb.y, lb.z - 0.3), radius: 1.8, label: 'Cross the log', icon: 'climb', priority: 2,
+      enabled: () => !!this.flags.logDown && this.logT >= 0.99 && this.g.local.body.pos.z < lb.z + 1, onUse: () => this.crossLog() });
     I.add({ id: 'log_b', coop: 'log', role: 'b', pos: v3(lb.x + 0.7, lb.y, lb.z - 0.8), radius: 1.3, label: 'Push the dead pine', icon: 'coop', mode: 'hold', holdTime: 1.4, pose: 'push', facing: -0.3,
       enabled: () => this.flags.phase === 'ravine' && !this.flags.logDown });
     for (const c of ['elias', 'jax'] as CharacterId[]) {
