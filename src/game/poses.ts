@@ -238,6 +238,22 @@ export const POSES: Record<string, PoseDef> = {
       void t;
     },
   },
+  cuffed: {
+    // Pinned face down with the hands behind the back (getting handcuffed).
+    dur: Infinity, canMove: false, lockTurn: true, fade: 0.2,
+    apply(m, t, w) {
+      const fr = frame(m);
+      bodyPitch(m, fr, (Math.PI / 2) * w);
+      hip(m, 0, -0.8 * w, -0.35 * w);
+      const fr2 = frame(m);
+      const pelvis = m.bone('Bip01')!.getWorldPosition(new THREE.Vector3());
+      const small = pelvis.clone().lerp(fr2.chest, 0.3).add(new THREE.Vector3(0, 0.2, 0));
+      const wriggle = Math.sin(t * 9) * 0.015 * Math.max(0, 1 - t * 0.4);
+      arm(m, 'R', small.clone().addScaledVector(fr2.right, 0.07 + wriggle), w, new THREE.Vector3(0, 1, 0));
+      arm(m, 'L', small.clone().addScaledVector(fr2.right, -0.07 + wriggle), w, new THREE.Vector3(0, 1, 0));
+      headTurn(m, frame(m), 0, 0.9 * w);
+    },
+  },
   downed: {
     // Wounded on the ground, propped on one elbow, reaching out.
     dur: Infinity, canMove: false, lockTurn: true, fade: 0.3, clip: 'idle_breathe',

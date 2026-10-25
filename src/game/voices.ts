@@ -81,6 +81,9 @@ export const BARKS = {
 };
 export const BARK_DUR = 1.8;
 
+/** What a guard or officer says while pinning a caught player (recorded for every NPC voice). */
+export const CAPTURE_LINES = ['Don\'t move! Hands behind your back!', 'Got you. Stay down!', 'Stop resisting!'];
+
 export const QUIPS: Record<'elias' | 'jax', string[]> = {
   elias: ['Patience. That\'s all it takes.', 'Six years of push-ups in a cell. You didn\'t stand a chance.', 'Again? You sure?'],
   jax: ['Told you. Quick hands.', 'Don\'t feel bad. Everybody loses to me.', 'Want to go again, old man?'],
