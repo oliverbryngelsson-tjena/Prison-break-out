@@ -339,7 +339,7 @@ export class Chapter5 extends Chapter {
     const tractor = await w.model('tractor');
     const tx = -10, tz = -190;
     kit.place(tractor, [tx, this.terrain.height(tx, tz), tz], 1.2, 1.1);
-    w.physics.addBox({ x: tx, y: this.terrain.height(tx, tz) + 1.1, z: tz }, { x: 2.6, y: 2.2, z: 3.8 }, 1.2, { surface: 'metal' });
+    w.physics.addBox({ x: tx, y: this.terrain.height(tx, tz) + 1.2, z: tz }, { x: 3.7, y: 2.4, z: 2.5 }, 1.2, { surface: 'metal' }); // tractor model 3.4 x 2.3, scaled 1.1
     // Trailhead tarp + Mia's note at the start
     const start = v3(-240, this.terrain.height(-240, -255), -255);
     kit.box(L.plain(0x3e4a3a, 0.95), [start.x + 1.5, start.y + 0.02, start.z - 2], [5, 0.04, 3.5], 0.6, false);
