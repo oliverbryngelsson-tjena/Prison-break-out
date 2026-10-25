@@ -1,4 +1,6 @@
 // The running game: owns the world, both player characters, NPCs, story events and the frame loop.
+import { Extras } from './extras';
+import { MiniGames } from './minigames';
 import * as THREE from 'three';
 import type { CharacterId, NpcSnap, PlayerSnap, Progress } from '../../shared/protocol';
 import type { Renderer } from '../engine/renderer';
@@ -95,6 +97,10 @@ export class Game implements SessionHandlers, CutsceneHost {
   private reviveId = '__revive';
   /** Hook for chapter-specific per-frame logic that needs the game loop (bikes etc.). */
   readonly updaters = new Set<(dt: number) => void>();
+  /** Co-op mini-games (arm wrestling, hoops) that chapters can place. */
+  readonly minigames: MiniGames = new MiniGames(this);
+  /** Optional memories to examine (story extras). */
+  readonly extras: Extras = new Extras(this);
   /** Loading screen status callback. */
   onLoadStatus: ((s: string) => void) | null = null;
   /** Local bike state for snapshots [lean, pitch, steer, rpm, spin] (set by BikeSystem). */
@@ -439,6 +445,7 @@ export class Game implements SessionHandlers, CutsceneHost {
         this.coopSince.delete(group);
         this.interact.coopHeld.delete(group);
         if (this.interact.holding?.coop === group) this.local.endCoopHold();
+        if (group.startsWith('mg_')) { this.minigames.onCoop(group); return; }
         this.chapter.onEvent('coop', { group });
         return;
       }
@@ -488,6 +495,8 @@ export class Game implements SessionHandlers, CutsceneHost {
         this.endChapter((a.next as number | null) ?? null);
         return;
       default:
+        if (type.startsWith('mg') && this.minigames.onEvent(type, args)) return;
+        if (type === 'memory' && this.extras.onEvent(type, args)) return;
         if (!this.chapter.onEvent(type, args)) console.warn('unhandled event', type);
     }
   }
@@ -634,9 +643,12 @@ export class Game implements SessionHandlers, CutsceneHost {
       this.local.body.speed = 0;
       this.remote.scripted = true;
       this.remote.cutsceneHold = true;
-      this.hud.setSkipHint(this.cutscenes.current?.skippable === false ? null : this.input.device === 'touch' ? 'Tap and hold to skip' : 'Press Enter to skip');
+      this.hud.setSkipHint(this.cutscenes.current?.skippable === false ? null : this.input.device === 'touch' ? 'Tap and hold to skip' : `Press ${this.input.glyph('skip')} or hold ${this.input.glyph('interact')} to skip`);
     } else {
       if (this.local.state === 'cutscene') this.local.state = 'free';
+      // Cutscene poses (lying, sitting, kneeling…) must not stick once you have control again.
+      if (this.local.state === 'free' && this.local.body.poseName && this.local.body.poseName !== 'ride') this.local.body.clearPose(0.4);
+      this.local.body.model.lookTarget = null;
       this.remote.release();
       this.hud.setSkipHint(null);
     }
@@ -821,7 +833,7 @@ export class Game implements SessionHandlers, CutsceneHost {
       const lb = this.local.body;
       if (this.cam.mode === 'bike') this.cam.mode = 'follow';
       this.cam.height = this.local.crawlMode ? 0.7 : lb.crouched ? 1.15 : 1.55;
-      this.cam.distance = this.local.crawlMode ? 2.0 : this.local.inCombat ? 3.8 : 3.4;
+      this.cam.distance = (this.local.crawlMode ? 2.0 : this.local.inCombat ? 3.8 : 3.4) * (this.local.crawlMode ? 1 : this.input.zoom);
       this.cam.update(dt, inp.look, lb.pos, lb.yaw, lb.speed > 0.5, this.world.physics);
     }
     this.cam.autoFollow = this.deps.settings.autoCamera;
@@ -865,12 +877,24 @@ export class Game implements SessionHandlers, CutsceneHost {
       }
       const coopP = h.coop && h.holdTime ? this.coopProgress(h.coop) : -1;
       hud.setPrompt(this.interact.label(h), coopP >= 0 ? coopP : h.coop ? 0.5 + 0.5 * Math.sin(performance.now() / 300) * 0.3 : Number.isFinite(h.holdTime ?? 1.5) ? this.interact.holdT / (h.holdTime ?? 1.5) : 1, sub, h.icon ?? 'hand');
-    } else if (this.local.takedownTarget) hud.setPrompt('Takedown', 0, this.input.device === 'touch' ? 'Tap Hit' : 'Attack', 'fist');
+    } else if (this.local.takedownTarget) hud.setPrompt('Takedown', 0, this.input.device === 'touch' ? 'Tap Hit' : `[${this.input.glyph('attack')}] Attack`, 'fist');
     else if (c && this.local.state === 'free') {
-      const key = this.input.device === 'touch' ? '' : this.input.device === 'gamepad' ? 'Ⓨ' : 'E';
+      const key = this.input.glyph('interact');
       const partnerHolding = c.coop ? this.interact.coopHeld.get(c.coop)?.size ?? 0 : 0;
       hud.setPrompt(this.interact.label(c), 0, (key ? `[${key}] ` : '') + ((c.mode ?? 'press') === 'hold' ? 'Hold' : 'Press') + (partnerHolding ? ` — ${SPEAKERS[this.remoteChar].name} is ready` : ''), c.icon ?? 'hand');
     } else hud.setPrompt(null);
+    // One-line control help: mouse capture on PC, bike controls while standing still on a bike.
+    let ctl: string | null = null;
+    if (!this.inCutscene && this.state === 'playing') {
+      const inp = this.input;
+      if (inp.device === 'keyboard' && !inp.pointerLocked) ctl = 'Click the game to look around with the mouse';
+      else if (this.local.state === 'bike' && this.local.body.speed < 0.5 && Math.abs(this.bikeSnap?.[5] ?? 0) < 1) {
+        ctl = inp.device === 'touch' ? 'Hold Gas to ride · stick to steer'
+          : inp.device === 'gamepad' ? `${inp.glyph('throttle')} gas · ${inp.glyph('brake')} brake · left stick steer`
+          : 'W gas · S brake · A / D steer';
+      }
+    }
+    hud.setControlHint(ctl);
     touch.setLabel('interact', c && !this.inCutscene ? shortLabel(this.interact.label(c)) : null, !!c);
     touch.setLabel('attack', this.local.takedownTarget ? 'Takedown' : null, !!this.local.takedownTarget);
     touch.setActive('crouch', this.local.body.crouched);
@@ -890,9 +914,9 @@ export class Game implements SessionHandlers, CutsceneHost {
         hud.addMarker({ id: 'npc:' + n.id, kind: 'guard', pos: () => n.body.head().add(new THREE.Vector3(0, 0.35, 0)), value: () => (n.alive && !this.inCutscene ? n.awareness[this.localChar] : 0) });
       }
     }
-    const r = this.deps.renderer.stats();
     hud.showStats = this.deps.settings.showFps;
-    hud.update(dt, this.cam.camera, `${r.fps} fps · ${r.ms} ms · ${r.calls} calls · ${(r.tris / 1000).toFixed(0)}k tris · scale ${r.scale} · ${r.quality}${r.heapMB ? ` · ${r.heapMB} MB` : ''} · rtt ${Math.round(this.deps.net?.rtt ?? 0)} ms`);
+    const r = hud.showStats ? this.deps.renderer.stats() : null;
+    hud.update(dt, this.cam.camera, !r ? '' : `${r.fps} fps · ${r.ms} ms · ${r.calls} calls · ${(r.tris / 1000).toFixed(0)}k tris · scale ${r.scale} · ${r.quality}${r.heapMB ? ` · ${r.heapMB} MB` : ''} · rtt ${Math.round(this.deps.net?.rtt ?? 0)} ms`);
   }
   private markersMade = false;
   private loadedTimer = 1.5;
@@ -909,6 +933,7 @@ export class Game implements SessionHandlers, CutsceneHost {
     this.hud.setSubtitle(null, '');
     for (const n of this.npcs.values()) n.dispose();
     this.npcs.clear();
+    this.minigames.dispose();
     try { this.chapter?.dispose(); } catch (e) { console.warn('chapter dispose', e); }
     try { this.world?.dispose(); } catch (e) { console.warn('world dispose', e); }
     this.audio.stopMusic(1.5);

@@ -13,7 +13,12 @@ export const CAST = [
   // Leads
   { id: 'elias', src: 'Avatars/Professions/Gardener_Male_01', sex: 'm', role: 'lead', tex: 1024, default: 'prison',
     variants: { prison: { clothes: ORANGE, hands: 'SKIN', shoes: [58, 50, 42],
-      keys: [{ hue: [30, 75], sat: [0.35, 1], val: [0.25, 1], to: 3 }] }, civil: null } },
+      keys: [{ hue: [30, 75], sat: [0.35, 1], val: [0.25, 1], to: 3 }] },
+      // Own clothes, but without the gardener's green gloves and yellow rubber boots.
+      civil: { hands: 'SKIN', shoes: [52, 44, 38], keys: [
+        { hue: [34, 72], sat: [0.38, 1], val: [0.3, 1], to: 3, bleed: true }, // boots
+        { hue: [55, 95], sat: [0.18, 1], val: [0.28, 1], to: 2, bleed: true }, // glove cuffs
+      ] } } },
   { id: 'jax', src: 'Avatars/Adults/Male_Adult_20', sex: 'm', role: 'lead', tex: 1024, default: 'prison',
     variants: { prison: { clothes: [206, 98, 38] }, civil: null } },
   // Story characters

@@ -98,8 +98,10 @@ async function main() {
     const roles = await Promise.all([A, B].map((p) => ev(p, () => ({ local: window.__app.game.localChar, auth: window.__app.game.authority }))));
     check('Host is the world authority, guest is not', roles[0].auth === true && roles[1].auth === false, JSON.stringify(roles));
 
-    // Opening cutscene plays on both clients (once each client has begun the chapter)
+    // Opening cutscene plays on both clients. It is scheduled ~400 ms after the chapter begins so both
+    // clients start it at the same shared time, so wait for it rather than sampling right at begin.
     await Promise.all([A, B].map((p) => wait(p, () => window.__app.game?.begun, null, 60000)));
+    await Promise.all([A, B].map((p) => wait(p, () => !!window.__app.game.cutscenes.current || window.__app.game.cutscenes.played.has('cs_arrival'), null, 20000).catch(() => {})));
     const cs = await Promise.all([A, B].map((p) => ev(p, () => window.__app.game.cutscenes.current?.id ?? (window.__app.game.cutscenes.played.has('cs_arrival') ? 'played' : null))));
     check('Opening cutscene runs on both clients', cs.every((c) => c === 'cs_arrival' || c === 'played'), cs.join(','));
     await snap(A, 'A_cutscene');

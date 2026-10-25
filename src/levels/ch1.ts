@@ -84,6 +84,7 @@ export class Chapter1 extends Chapter {
     D.sal = [{ who: 'inm_d', text: 'Count\'s at nine. Miss it and they lock the whole block down. Nobody\'ll thank you.' }];
     D.pruitt_talk = [{ who: 'pruitt', text: 'Keep moving, inmate. Yard\'s that way.' }];
     D.kemp = [{ who: 'yardguard', text: 'Thirty minutes. Then everybody back inside.' }];
+    D.arm_hint = [{ who: 'jax', text: 'Hey, accountant. Table by the stairs. Let\'s see what those arms are good for.', dur: 3.6 }];
     D.yard_hint = [{ who: 'elias', text: 'Brick holds court by the weights. Best not to give him an audience.' }];
     D.fight_tip = [{ who: 'narrator', text: 'Hit to punch, hold Block to guard, Dodge to sidestep. Help each other — knock out Brick\'s crew.', dur: 5 }];
     D.distract = [
@@ -168,6 +169,24 @@ export class Chapter1 extends Chapter {
       });
     };
     talk('talk_mo', 'mo', (c) => (c === 'elias' ? 'mo_elias' : 'mo_jax'));
+    // Optional memories (either player can examine; both hear the exchange).
+    const morning = () => this.flags.phase === 'morning';
+    g.extras.addMemory({ id: 'c1_photo', pos: v3(12.4, 0, -11.2), radius: 1.0, label: 'Look at the photo', enabled: morning, lines: [
+      { who: 'jax', text: 'Who\'s the guy with the terrible tie?' },
+      { who: 'elias', text: 'Tom Harlan. My partner. That\'s the day we signed our first big client.' },
+      { who: 'elias', text: 'Crane Development. First client. Last client.', pause: 0.6 },
+    ] });
+    g.extras.addMemory({ id: 'c1_tally', pos: v3(12.4, 0, -8.6), radius: 1.0, label: 'Look at the marks on the wall', enabled: morning, lines: [
+      { who: 'elias', text: 'Forty-one marks. Counting down to parole?' },
+      { who: 'jax', text: 'Counting up. Days since somebody lied to my mother about my brother.', anim: 'talk_sad' },
+    ] });
+    g.extras.addMemory({ id: 'c1_tv', pos: v3(0, 0, 4.2), radius: 2.0, label: 'Watch the news', enabled: morning, lines: [
+      { who: 'narrator', radio: true, text: '…opening the new Harlow flood barrier, Victor Crane thanked the town for "thirty years of trust"…', dur: 4.2 },
+      { who: 'jax', text: 'Look at him smile.' },
+      { who: 'elias', text: 'He smiled exactly like that at my sentencing.', anim: 'talk_angry' },
+    ] });
+    // Arm wrestling at a free dayroom table (best of as many rounds as you like).
+    g.minigames.addArmWrestling({ id: 'arm_dayroom', center: v3(4.2, 0, -10), table: 0.785, axis: 'z', enabled: () => this.flags.phase === 'morning' && !g.flags.combat });
     talk('talk_dutch', 'inm_a', 'dutch');
     talk('talk_ramos', 'inm_b', 'ramos', 'any', 'Listen');
     talk('talk_tully', 'inm_c', 'tully', 'any', 'Listen');
@@ -488,6 +507,7 @@ export class Chapter1 extends Chapter {
         if (this.authority) {
           this.saveCheckpoint('morning');
           this.objective('Morning recreation — head out to the yard', [0, 1.5, 8]);
+          setTimeout(() => this.say('arm_hint'), 9000);
         }
         return true;
       case 'talk': {

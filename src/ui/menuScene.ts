@@ -1,4 +1,5 @@
 // 3D background for the main menu: a dim cell at night with both characters.
+import { aspectZoom } from '../engine/camera';
 import * as THREE from 'three';
 import { World } from '../game/world';
 import { Kit } from '../levels/kit';
@@ -88,9 +89,11 @@ export class MenuScene {
 
   resize(w: number, h: number): void {
     this.camera.aspect = w / h;
+    this.camera.zoom = aspectZoom(this.camera.fov, w / h);
+    // Frame the cell to the right of the menu column on wide screens; centred (menu below) in portrait.
+    if (h > w) this.camera.clearViewOffset();
+    else this.camera.setViewOffset(w, h, -w * 0.14, 0, w, h);
     this.camera.updateProjectionMatrix();
-    // Frame the cell to the right of the menu column on wide screens.
-    this.camera.setViewOffset(w, h, -w * 0.14, 0, w, h);
   }
 
   update(dt: number): void {

@@ -52,7 +52,7 @@ export interface ScriptStep {
 
 const easeF = (t: number, e?: ScriptStep['ease']) => (e === 'linear' ? t : e === 'out' ? 1 - (1 - t) ** 2 : t * t * (3 - 2 * t));
 
-export type PlayerState = 'free' | 'scripted' | 'busy' | 'downed' | 'cutscene' | 'bike' | 'hidden';
+export type PlayerState = 'free' | 'scripted' | 'busy' | 'downed' | 'cutscene' | 'bike' | 'hidden' | 'minigame';
 
 export class PlayerController {
   state: PlayerState = 'free';
@@ -98,6 +98,7 @@ export class PlayerController {
     this.vy = 0;
     this.moveVel.set(0, 0, 0);
     this.body.speed = 0;
+    this.hasSafe = false;
   }
 
   /** Runs a scripted sequence of moves (climbs, vaults, boosts, cutscene walks). */
@@ -201,6 +202,7 @@ export class PlayerController {
     switch (this.state) {
       case 'scripted': this.updateScript(dt); break;
       case 'cutscene': case 'bike': break;
+      case 'minigame': b.speed = 0; break;
       case 'downed': b.speed = 0; this.applyGravity(dt); break;
       case 'hidden': b.speed = 0; if (inp.buttons.interact.pressed) this.interactNearby(); break;
       case 'busy': this.updateHold(dt); this.applyGravity(dt); break;
@@ -336,27 +338,64 @@ export class PlayerController {
       this.moveVel.z += (want.z - this.moveVel.z) * Math.min(1, dt * 10);
     }
     const h = this.crawlMode ? 0.8 : b.crouched ? 1.2 : 1.75;
-    const physics = this.ctx.world.physics;
     const before = b.pos.clone();
-    physics.moveCapsule(b.pos, this.moveVel.x * dt, this.moveVel.z * dt, b.radius, h, 0.36, undefined, this.wallNormal);
-    this.pushOutOfActors();
-    // Use actual displacement for animation speed (no running into walls).
-    const moved = Math.hypot(b.pos.x - before.x, b.pos.z - before.z) / Math.max(dt, 1e-4);
-    b.speed += (Math.min(moved, Math.hypot(this.moveVel.x, this.moveVel.z)) - b.speed) * Math.min(1, dt * 12);
-    if (dodging || attacking) b.speed = Math.min(b.speed, 0.4);
-
-    // --- jump / gravity
+    // --- jump
     if (f.jump && inp.buttons.jump.pressed && b.grounded && !b.crouched && !attacking) {
       this.vy = 4.3;
       b.grounded = false;
       this.ctx.audio.play('whoosh', { pos: b.pos, volume: 0.25 });
     }
-    this.applyGravity(dt);
+    // --- movement + gravity in small sub-steps: slow frames (phones, background tabs) can't tunnel or fall through.
+    this.stepPhysics(dt, h);
+    // Use actual displacement for animation speed (no running into walls).
+    const moved = Math.hypot(b.pos.x - before.x, b.pos.z - before.z) / Math.max(dt, 1e-4);
+    b.speed += (Math.min(moved, Math.hypot(this.moveVel.x, this.moveVel.z)) - b.speed) * Math.min(1, dt * 12);
+    if (dodging || attacking) b.speed = Math.min(b.speed, 0.4);
 
     // Noise for stealth
     const loud = this.sprinting ? 9 : b.speed > 2.5 ? 5.5 : b.crouched ? 0 : b.speed > 0.5 ? 1.8 : 0;
     if (loud > 0 && Math.random() < dt * 4) this.ctx.world.addNoise(b.pos, loud, this.char, 'step');
     cam.fovBoost = this.sprinting ? 6 : 0;
+  }
+
+  /** Horizontal move + gravity, split so each step covers at most ~1/40 s. */
+  private stepPhysics(dt: number, h: number): void {
+    const b = this.body;
+    const physics = this.ctx.world.physics;
+    const n = Math.min(8, Math.max(1, Math.ceil(dt / 0.025)));
+    const sdt = dt / n;
+    for (let i = 0; i < n; i++) {
+      const fx = b.pos.x, fz = b.pos.z, fy = b.pos.y;
+      physics.moveCapsule(b.pos, this.moveVel.x * sdt, this.moveVel.z * sdt, b.radius, h, 0.36, undefined, this.wallNormal);
+      if (b.grounded && physics.limitTerrainSlope(b.pos, fx, fz, fy)) {
+        // Sliding along a cliff: drop the velocity component into it.
+        const dx = b.pos.x - fx, dz = b.pos.z - fz;
+        if (Math.abs(dx) < 1e-6) this.moveVel.x *= 0.2;
+        if (Math.abs(dz) < 1e-6) this.moveVel.z *= 0.2;
+      }
+      this.pushOutOfActors();
+      this.applyGravity(sdt);
+      this.rescueFromTerrain(fx, fz, fy);
+    }
+    if (b.grounded && this.vy === 0) { this.lastSafe.copy(b.pos); this.hasSafe = true; }
+  }
+  /** Last spot the player stood on solid ground (fall-out-of-the-world recovery). */
+  private lastSafe = new THREE.Vector3();
+  private hasSafe = false;
+
+  /** If a step still ended inside the terrain after standing on it, put the feet back on top. */
+  private rescueFromTerrain(fx: number, fz: number, fy: number): void {
+    const b = this.body;
+    const ph = this.ctx.world.physics;
+    const h = ph.terrainHeight(b.pos.x, b.pos.z);
+    if (h === null || b.pos.y > h - 0.3) return;
+    const h0 = ph.terrainHeight(fx, fz);
+    if (h0 === null || fy < h0 - 0.3) return; // was already below the terrain (tunnel, interior): leave it
+    const g = ph.groundAt(b.pos.x, b.pos.z, b.pos.y + 0.36);
+    if (g?.box && b.pos.y - g.y < 0.5) return; // standing on a real floor below the terrain surface
+    b.pos.y = h;
+    this.vy = 0;
+    b.grounded = true;
   }
 
   /** Depth of water at the player's feet (0 when dry). */
@@ -389,7 +428,11 @@ export class PlayerController {
       b.grounded = true;
       if (impact > 5) this.ctx.audio.play('land', { pos: b.pos, volume: Math.min(1, impact / 10) });
     }
-    if (b.pos.y < -40) this.ctx.onDowned();
+    if (b.pos.y < -40) {
+      // Fell out of the world (a hole in the level): put the player back where they last stood.
+      if (this.hasSafe && this.state !== 'downed') { this.teleport(this.lastSafe.clone().add(new THREE.Vector3(0, 0.05, 0))); b.grounded = true; }
+      else this.ctx.onDowned();
+    }
   }
 
   private pushOutOfActors(): void {

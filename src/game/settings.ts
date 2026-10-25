@@ -18,6 +18,8 @@ export interface Settings {
   autoCamera: boolean;
   serverUrl: string;
   preferredCharacter: CharacterId;
+  /** Interface size multiplier on top of the automatic screen-based scale. */
+  uiScale: number;
 }
 
 const KEY = 'pbo.settings';
@@ -40,6 +42,7 @@ export function defaultSettings(): Settings {
     autoCamera: true,
     serverUrl: '',
     preferredCharacter: 'elias',
+    uiScale: 1,
   };
 }
 

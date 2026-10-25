@@ -1,0 +1,74 @@
+[
+ {
+  "on": "AB",
+  "until": "window.__app.game.begun && !window.__app.game.cutscenes.current",
+  "timeout": 120000
+ },
+ {
+  "tpA": [
+   4.2,
+   0,
+   -11.0,
+   0
+  ],
+  "tpB": [
+   4.2,
+   0,
+   -9.0,
+   3.1416
+  ]
+ },
+ {
+  "wait": 1200
+ },
+ {
+  "on": "AB",
+  "hold": "KeyE",
+  "ms": 4000
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.minigames.active && window.__app.game.minigames.active.kind === 'arm'",
+  "timeout": 10000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "arm wrestling starts for both players",
+   "expr": "window.__app.game.minigames.active.kind === 'arm' && window.__app.game.local.state === 'minigame'"
+  }
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "the panel shows on both screens",
+   "expr": "document.querySelector('.hud-mg.show') !== null"
+  }
+ },
+ {
+  "wait": 3600
+ },
+ {
+  "on": "A",
+  "eval": "new Promise(res => { let n = 0; const ev = (t) => window.dispatchEvent(new KeyboardEvent(t, { code: 'KeyE', key: 'e' })); const iv = setInterval(() => { ev('keydown'); setTimeout(() => ev('keyup'), 25); if (++n > 70 || !window.__app.game.minigames.active) { clearInterval(iv); res(n); } }, 70); })"
+ },
+ {
+  "on": "AB",
+  "until": "!window.__app.game.minigames.active",
+  "timeout": 20000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "Elias (mashing) wins on both screens",
+   "expr": "(window.__app.game.minigames.wins.arm_dayroom || {}).elias === 1"
+  }
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "both players are free again",
+   "expr": "window.__app.game.local.state === 'free'"
+  }
+ }
+]

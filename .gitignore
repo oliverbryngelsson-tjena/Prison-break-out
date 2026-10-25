@@ -9,3 +9,6 @@ android/app/build/
 /public/_staging/
 /.staging/
 dist-p2p/
+dist-ui/
+dist-old/
+dist-mem/

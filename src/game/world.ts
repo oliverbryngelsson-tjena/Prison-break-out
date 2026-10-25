@@ -7,7 +7,7 @@ import { CollisionWorld, type Surface } from '../engine/physics';
 import { MaterialLib, canvasTexture, DRAW } from '../engine/materials';
 import { CharacterLibrary } from '../engine/characters';
 import type { AudioManager, Sound } from '../engine/audio';
-import { loadEnvironment, loadGLTF, loadJSON } from '../engine/assets';
+import { disposeTree, loadEnvironment, loadGLTF, loadJSON } from '../engine/assets';
 import type { QualitySettings } from '../engine/quality';
 import type { Grade } from '../engine/renderer';
 import { Particles } from './particles';
@@ -196,10 +196,8 @@ export class World {
     for (const s of this.loops) s.stop(1);
     this.loops = [];
     this.tickers.clear();
-    this.scene.traverse((o) => {
-      const m = o as THREE.Mesh;
-      if (m.isMesh && !(m as unknown as THREE.SkinnedMesh).isSkinnedMesh && m.geometry && !m.userData.shared) m.geometry.dispose();
-    });
+    // Free every GPU resource of the level (geometry, materials, textures, skeletons, env map).
+    disposeTree(this.scene);
     this.envTex?.dispose();
     this.physics.clear();
     this.particles.dispose();

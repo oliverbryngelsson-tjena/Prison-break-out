@@ -110,10 +110,10 @@ export class Chapter4 extends Chapter {
     const w = g.world;
     await w.setEnvironment({
       hdr: 'env/quarry.hdr', envIntensity: 0.12, background: 0x080b10,
-      fog: { color: 0x0c1016, density: 0.012 },
-      hemi: { sky: 0x2a3650, ground: 0x0e0c0a, intensity: 0.3 },
-      sun: { color: 0x8ea6d8, intensity: 0.5, dir: [0.4, 0.8, -0.3], shadows: true },
-      grade: { saturation: 0.82, contrast: 1.1, lift: [0.0, 0.005, 0.014], gain: [1.0, 1.0, 1.04], shadowTint: [0.9, 0.96, 1.12], highlightTint: [1.08, 1.0, 0.9], exposure: 1.12, bloom: 1.0, vignette: 0.6 },
+      fog: { color: 0x10151d, density: 0.011 },
+      hemi: { sky: 0x3a4a68, ground: 0x13110e, intensity: 0.62 },
+      sun: { color: 0x9ab2e0, intensity: 0.9, dir: [0.4, 0.8, -0.3], shadows: true },
+      grade: { saturation: 0.82, contrast: 1.1, lift: [0.0, 0.005, 0.014], gain: [1.0, 1.0, 1.04], shadowTint: [0.9, 0.96, 1.12], highlightTint: [1.08, 1.0, 0.9], exposure: 1.22, bloom: 1.0, vignette: 0.6 },
       reverb: 0.35,
     });
     this.kit = new Kit(w);
@@ -250,7 +250,34 @@ export class Chapter4 extends Chapter {
     win.rotation.y = Math.PI;
     w.root.add(win);
     kit.bulb(L.emissive(0xffd29a, 3), L.plain(0x333333, 0.6, 0.5), YARD.x + 0.4, yy + 2.6, YARD.z + 7.0, 0xffc890, 2.5, 10, 'yard');
+    // Photos pinned to the trailer wall (memory)
+    for (const [dx, dy, c] of [[5.2, 1.75, 0xd8cdb0], [5.6, 1.55, 0xc8d0d8], [6.0, 1.8, 0xe0d4c0]] as const) {
+      const ph = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.16), L.plain(c, 0.9));
+      ph.position.set(YARD.x + dx, yy + dy, YARD.z + 7.08);
+      ph.rotation.y = Math.PI;
+      w.root.add(ph);
+    }
+    // Mia's old basketball hoop (mini-game): pole, backboard, rim and net.
+    const hx = YARD.x - 8, hz = YARD.z - 6.6;
+    const steelH = L.plain(0x55595c, 0.5, 0.6);
+    kit.batch.add(cylinderBetween(v3(hx, yy, hz - 0.5), v3(hx, yy + 3.25, hz - 0.5), 0.07, 10), steelH);
+    kit.batch.add(cylinderBetween(v3(hx, yy + 3.1, hz - 0.5), v3(hx, yy + 3.1, hz - 0.3), 0.05, 8), steelH);
+    kit.box(L.plain(0xd8d4c8, 0.7), [hx, yy + 3.35, hz - 0.28], [1.6, 1.0, 0.05], 0, false);
+    kit.box(L.plain(0xb0402a, 0.6), [hx, yy + 3.18, hz - 0.25], [0.5, 0.35, 0.02], 0, false);
+    const rim = new THREE.TorusGeometry(0.23, 0.017, 6, 22);
+    rim.rotateX(Math.PI / 2);
+    rim.translate(hx, yy + 3.05, hz);
+    kit.batch.add(rim, L.plain(0xc04020, 0.5, 0.4));
+    const net = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.15, 0.4, 12, 3, true), new THREE.MeshStandardMaterial({ color: 0xeeeeee, wireframe: true, transparent: true, opacity: 0.6 }));
+    net.position.set(hx, yy + 2.84, hz);
+    w.root.add(net);
+    w.physics.addBox({ x: hx, y: yy + 1.6, z: hz - 0.5 }, { x: 0.2, y: 3.2, z: 0.2 }, 0, { surface: 'metal' });
+    // Lamp clamped above the backboard so the court is playable at night.
+    kit.batch.add(cylinderBetween(v3(hx, yy + 3.25, hz - 0.5), v3(hx, yy + 4.1, hz - 0.5), 0.04, 8), steelH);
+    kit.bulb(L.emissive(0xffe0b0, 3), steelH, hx, yy + 4.15, hz - 0.3, 0xffdcaa, 2.6, 13, 'yard');
+    this.hoop = { rim: v3(hx, yy + 3.05, hz), spots: [v3(hx - 1.1, yy, hz + 4.3), v3(hx + 1.1, yy, hz + 4.3)] };
   }
+  private hoop = { rim: v3(0, 0, 0), spots: [v3(0, 0, 0), v3(0, 0, 0)] as [THREE.Vector3, THREE.Vector3] };
 
   // ------------------------------------------------------------------ pit: machinery, stairs, conveyor
   private async buildPit(): Promise<void> {
@@ -429,6 +456,17 @@ export class Chapter4 extends Chapter {
   private buildInteractions(): void {
     const g = this.g;
     const I = g.interact;
+    g.extras.addMemory({ id: 'c4_photos', pos: v3(YARD.x + 5.6, RIM_Y - 1, YARD.z + 6.4), radius: 1.3, label: 'Look at the photos', enabled: () => this.flags.phase === 'yard', lines: [
+      { who: 'jax', text: 'That you? With the ears?' },
+      { who: 'elias', text: 'Mia and me. Our dad\'s first tow truck. She could drive it before she could read.' },
+      { who: 'jax', text: 'She got the brains.' },
+      { who: 'elias', text: 'She got everything. I got a job with Crane.', pause: 0.6 },
+    ] });
+    g.extras.addMemory({ id: 'c4_sign', pos: v3(-47.5, this.y(-47.5, -45), -45), radius: 1.8, label: 'Read the sign', enabled: () => this.flags.phase === 'rim', lines: [
+      { who: 'jax', text: '"Crane Aggregates. Building Harlow\'s future." He named a hole in the ground after himself.' },
+      { who: 'elias', text: 'He\'s been filling holes with people for thirty years. Let\'s go.', anim: 'talk_angry' },
+    ] });
+    g.minigames.addHoops({ id: 'hoops_mia', rim: this.hoop.rim, spots: this.hoop.spots, enabled: () => this.flags.phase === 'yard' && !this.flags.metMia });
     I.add({ id: 'talk_mia', pos: v3(YARD.x + 3, this.y(YARD.x + 3, YARD.z + 4), YARD.z + 4), radius: 2.2, label: 'Talk to Mia', icon: 'talk',
       enabled: () => this.flags.phase === 'yard' && !this.flags.metMia, onUse: () => g.session.request('meetMia', {}) });
     I.add({ id: 'breaker_a', coop: 'breakers', role: 'a', pos: v3(20.6, RIM_Y, 65.4), radius: 1.2, label: 'Pull the breaker', icon: 'coop', mode: 'hold', holdTime: 1.0, pose: 'use', poseCtx: { k: { height: 1.3 } }, facing: 0,
@@ -500,7 +538,12 @@ export class Chapter4 extends Chapter {
         { dur: 5, fade: 'in', shot: () => shot(v3(YARD.x - 20, RIM_Y + 6, YARD.z - 20), v3(YARD.x, RIM_Y, YARD.z), 5, { fov: 44, toEnd: v3(YARD.x + 2, RIM_Y, YARD.z + 2) }),
           lines: [{ who: 'narrator', text: 'Harlow. Varga Salvage, after dark.', dur: 3.2 }] },
       ],
-      end: () => { if (this.authority) this.objective('Find Mia', [YARD.x + 3, RIM_Y + 1, YARD.z + 4]); },
+      end: () => {
+        if (this.authority) {
+          this.objective('Find Mia', [YARD.x + 3, RIM_Y + 1, YARD.z + 4]);
+          setTimeout(() => g.session.emit('dlg', { lines: [{ who: 'jax', text: 'Is that a hoop? One game before we do anything stupid. Loser buys the first drink when this is over.', dur: 4.2 }], at: g.session.sharedNow() + 200 }), 5000);
+        }
+      },
     };
     C.cs4_mia = {
       id: 'cs4_mia', music: 'music_sad',

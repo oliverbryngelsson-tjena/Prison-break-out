@@ -1,0 +1,68 @@
+[
+ {
+  "on": "AB",
+  "until": "window.__app.game.begun && !window.__app.game.cutscenes.current",
+  "timeout": 120000
+ },
+ {
+  "tpA": [
+   12.4,
+   null,
+   -11.2,
+   1.57
+  ],
+  "tpB": [
+   4.2,
+   null,
+   -9.0,
+   0
+  ]
+ },
+ {
+  "wait": 1200
+ },
+ {
+  "on": "A",
+  "check": {
+   "name": "memory prompt shows for the player next to it",
+   "expr": "window.__app.game.interact.current && window.__app.game.interact.current.id === 'mem_c1_photo'"
+  }
+ },
+ {
+  "on": "A",
+  "press": "KeyE"
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.chapter.flags.mem_c1_photo === true",
+  "timeout": 20000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "both players get the memory and hear it",
+   "expr": "window.__app.game.chapter.flags.mem_c1_photo === true && window.__app.game.dialogue.active"
+  }
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "memory counter is shared",
+   "expr": "window.__app.game.extras.found === 1 && window.__app.game.extras.total === 3"
+  }
+ },
+ {
+  "on": "AB",
+  "eval": "(window.__app.game.dialogue.stop(), true)"
+ },
+ {
+  "wait": 800
+ },
+ {
+  "on": "A",
+  "check": {
+   "name": "memory can't be replayed",
+   "expr": "!window.__app.game.interact.current || window.__app.game.interact.current.id !== 'mem_c1_photo'"
+  }
+ }
+]

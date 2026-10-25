@@ -40,7 +40,9 @@ def recolor(img, mask_path, rules, keys=None, protect_skin=False):
         sel = (hue >= key["hue"][0]) & (hue <= key["hue"][1]) & (sat >= key.get("sat", [0, 1])[0]) & (val >= key.get("val", [0, 1])[0])
         x0, y0, x1, y1 = key.get("rect", [0, 0, 1, 1])
         sel &= (u >= x0) & (u <= x1) & (v >= y0) & (v <= y1)
-        sel &= mask > 0
+        # "bleed" also takes matching texels outside the UV islands (edge padding seen through filtering).
+        if not key.get("bleed"):
+            sel &= mask > 0
         mask[sel] = key["to"]
     if protect_skin:
         # Bare skin (e.g. forearms with pushed-up sleeves) keeps its original colour.

@@ -44,6 +44,8 @@ export class Hud {
   private titleTimer = 0;
   private lastObjective = '';
   private skipHint: HTMLElement;
+  private ctlHint: HTMLElement | null = null;
+  private mg: { root: HTMLElement; t: HTMLElement; s: HTMLElement; l: HTMLElement; r: HTMLElement; mark: HTMLElement; sweet: HTMLElement } | null = null;
   showStats = false;
   fade = 0;
 
@@ -92,7 +94,12 @@ export class Hud {
     if (text) this.objective.classList.add('flash');
   }
 
+  private partnerKey = '';
   setPartner(name: string, char: string, status: 'ok' | 'lag' | 'away', ping: number, hp: number): void {
+    // Rebuilding this every frame was a measurable cost; only touch the DOM when something changed.
+    const key = `${name}|${char}|${status}|${Math.round(ping / 10)}|${Math.round(hp)}`;
+    if (key === this.partnerKey) return;
+    this.partnerKey = key;
     this.partner.innerHTML = `<span class="dot ${status}"></span><span class="pname">${escapeHtml(name)}</span><span class="pchar">${char === 'elias' ? 'Elias' : 'Jax'}</span>` +
       `<span class="ping">${status === 'away' ? 'offline' : ping ? ping + ' ms' : ''}</span><span class="php"><i style="width:${Math.max(0, Math.min(100, hp))}%"></i></span>`;
   }
@@ -130,6 +137,38 @@ export class Hud {
     if (!text) { this.banner.classList.remove('show'); return; }
     this.banner.textContent = text;
     this.banner.className = `hud-banner show ${kind}`;
+  }
+
+  /** Mini-game panel: title, instruction and a bar (balance -1..1, or a 0..1 meter with a target zone). */
+  setMiniGame(s: { title: string; sub: string; bar?: number; meter?: number | null; sweet?: [number, number]; left?: string; right?: string } | null): void {
+    if (!s) { this.mg?.root.classList.remove('show'); return; }
+    if (!this.mg) {
+      const root = el('div', 'hud-mg', this.root);
+      const t = el('div', 't', root), sub = el('div', 's', root);
+      const row = el('div', 'row', root);
+      const l = el('span', 'l', row), track = el('div', 'track', row), r = el('span', 'r', row);
+      const sweet = el('b', 'sweet', track), mark = el('i', 'mark', track);
+      this.mg = { root, t, s: sub, l, r, mark, sweet };
+    }
+    const m = this.mg;
+    m.root.classList.add('show');
+    if (m.t.textContent !== s.title) m.t.textContent = s.title;
+    if (m.s.textContent !== s.sub) m.s.textContent = s.sub;
+    if (m.l.textContent !== (s.left ?? '')) m.l.textContent = s.left ?? '';
+    if (m.r.textContent !== (s.right ?? '')) m.r.textContent = s.right ?? '';
+    const v = s.bar !== undefined ? 0.5 + 0.5 * s.bar : s.meter ?? null;
+    m.mark.style.display = v === null ? 'none' : '';
+    if (v !== null) m.mark.style.left = `${(Math.max(0, Math.min(1, v)) * 100).toFixed(1)}%`;
+    m.sweet.style.display = s.sweet ? '' : 'none';
+    if (s.sweet) { m.sweet.style.left = `${s.sweet[0] * 100}%`; m.sweet.style.width = `${(s.sweet[1] - s.sweet[0]) * 100}%`; }
+    m.root.classList.toggle('balance', s.bar !== undefined);
+  }
+
+  /** Small one-line help at the bottom (e.g. 'Click to control the camera'). */
+  setControlHint(text: string | null): void {
+    if (!this.ctlHint) this.ctlHint = el('div', 'hud-ctlhint', this.root);
+    if (this.ctlHint.textContent !== (text ?? '')) this.ctlHint.textContent = text ?? '';
+    this.ctlHint.classList.toggle('show', !!text);
   }
 
   setSkipHint(text: string | null): void {

@@ -290,8 +290,10 @@ export class Chapter3 extends Chapter {
     kit.wall(white, hx + 4.5, hz - 4, hx + 4.5, hz + 4, fy + 0.4, 5.6, 0.25, [{ at: 4, width: 1.2, bottom: 1.0, top: 2.2 }]);
     this.gableMat = white;
     this.roofHalves(roof, hx, fy + 6.0, hz, 9.4, 9.0, 2.0);
-    // Porch
+    // Porch (with an old radio on a crate)
     kit.box(dark, [hx, fy + 0.35, hz - 5.2], [6, 0.15, 2.2], 0, { surface: 'wood' });
+    kit.box(L.plain(0x5a4630, 0.8), [hx + 2.2, fy + 0.65, hz - 5.6], [0.5, 0.45, 0.4], 0, {});
+    kit.box(L.plain(0x2c2a26, 0.5, 0.2), [hx + 2.2, fy + 1.0, hz - 5.6], [0.34, 0.22, 0.16], 0, false);
     for (const x of [-2.8, 2.8]) kit.box(dark, [hx + x, fy + 1.6, hz - 6.1], [0.15, 2.5, 0.15], 0, {});
     kit.box(roof, [hx, fy + 2.95, hz - 5.3], [6.4, 0.12, 2.6], 0, false);
     // Glowing windows (on in the evening)
@@ -535,6 +537,16 @@ export class Chapter3 extends Chapter {
     const g = this.g;
     const I = g.interact;
     const lb = this.logBase;
+    g.extras.addMemory({ id: 'c3_river', pos: v3(-1, this.y(-1, -141.5), -141.5), radius: 2.2, label: 'Look at the river', enabled: () => this.flags.phase === 'bank', lines: [
+      { who: 'jax', text: 'You okay? You\'re staring.' },
+      { who: 'elias', text: 'Six years. I forgot rivers make noise.' },
+      { who: 'jax', text: 'Enjoy it on the move. Dogs can\'t smell poetry.' },
+    ] });
+    g.extras.addMemory({ id: 'c3_radio', pos: v3(24.5, this.farmY, 64.2), radius: 1.4, label: 'Listen to the radio', enabled: () => this.flags.phase === 'farm', lines: [
+      { who: 'narrator', radio: true, text: '…two inmates escaped Redmoor overnight. Elias Varga, convicted in the killing of Tom Harlan, and Jax Rourke…', dur: 4.4 },
+      { who: 'narrator', radio: true, text: '…police ask residents not to approach them.', dur: 2.6 },
+      { who: 'jax', text: 'They spelled my name right. That\'s something.' },
+    ] });
     I.add({ id: 'log_a', coop: 'log', role: 'a', pos: v3(lb.x - 0.7, lb.y, lb.z - 0.8), radius: 1.3, label: 'Push the dead pine', icon: 'coop', mode: 'hold', holdTime: 1.4, pose: 'push', facing: 0.3,
       enabled: () => this.flags.phase === 'ravine' && !this.flags.logDown });
     I.add({ id: 'log_b', coop: 'log', role: 'b', pos: v3(lb.x + 0.7, lb.y, lb.z - 0.8), radius: 1.3, label: 'Push the dead pine', icon: 'coop', mode: 'hold', holdTime: 1.4, pose: 'push', facing: -0.3,

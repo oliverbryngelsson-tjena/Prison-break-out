@@ -24,6 +24,19 @@ const ease = (t: number, e: Shot['ease']) => (e === 'linear' ? t : e === 'out' ?
 
 export type CamMode = 'follow' | 'bike' | 'cinematic' | 'fixed';
 
+/**
+ * Field-of-view correction for screens narrower than 16:9 (tablets, portrait phones): widens the vertical
+ * FOV so roughly the same horizontal view stays visible. Returned as a PerspectiveCamera.zoom value.
+ */
+export function aspectZoom(fovDeg: number, aspect: number): number {
+  const design = 16 / 9;
+  if (aspect >= design) return 1;
+  const v = THREE.MathUtils.degToRad(fovDeg);
+  const hDesign = 2 * Math.atan(Math.tan(v / 2) * design);
+  const vWant = Math.min(THREE.MathUtils.degToRad(Math.max(fovDeg, 100)), 2 * Math.atan(Math.tan(hDesign / 2) / aspect));
+  return Math.tan(v / 2) / Math.tan(vWant / 2);
+}
+
 export class CameraRig {
   readonly camera: THREE.PerspectiveCamera;
   mode: CamMode = 'follow';
@@ -126,6 +139,7 @@ export class CameraRig {
       this.camera.rotateZ(Math.sin(t * 2.3 + 2) * 0.015 * s);
       this.trauma = Math.max(0, this.trauma - dt * 1.4);
     }
+    this.camera.zoom = aspectZoom(this.camera.fov, this.camera.aspect);
     this.camera.updateProjectionMatrix();
   }
 
