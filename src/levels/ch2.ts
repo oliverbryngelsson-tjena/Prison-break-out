@@ -459,6 +459,7 @@ export class Chapter2 extends Chapter {
     g.audio.play('vent_crawl', { pos: v3(14, 0.4, z), volume: 0.55 });
   }
 
+  private sentInTunnel = false;
   private climbShaft(down: boolean): void {
     const g = this.g;
     const hx = (HATCH.x1 + HATCH.x2) / 2;
@@ -918,6 +919,15 @@ export class Chapter2 extends Chapter {
     if (this.hatchT !== hT) { this.hatchT = ease(this.hatchT, hT, 1.2); this.applyHatch(hT); }
     if (this.drainT !== dT) { this.drainT = ease(this.drainT, dT, 2.5); this.applyDrain(dT); }
     if (this.grateT !== gT) { this.grateT = ease(this.grateT, gT, 1.5); this.applyGrate(gT); }
+    // Jumped or fell down the shaft instead of using the ladder: count the player as in the tunnel
+    // anyway, so the tunnel cutscene and the valve puzzle still start.
+    const me = g.local;
+    if (this.flags.phase === 'chase' && this.flags.hatchOpen && !this.flags[`tun_${g.localChar}`] && !this.sentInTunnel
+      && !me.scripted && me.body.pos.y < TY + 0.8 && me.body.grounded) {
+      this.sentInTunnel = true;
+      g.session.request('inTunnel', { who: g.localChar });
+    }
+    if (this.flags.phase !== 'chase' || me.body.pos.y > -0.5) this.sentInTunnel = false;
     const ly = this.flags.ladderDown ? 0 : P1Y + 0.1;
     if (this.lowLadder.position.y !== ly) this.lowLadder.position.y = ease(this.lowLadder.position.y, ly, 4);
     // Crawl-height inside the shaft areas.

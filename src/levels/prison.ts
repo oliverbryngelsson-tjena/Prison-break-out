@@ -453,9 +453,12 @@ export async function buildPrison(world: World, mode: 'day' | 'night', opts: { b
   bench(-13.5, -29.5, Math.PI / 2);
   // Tool cage in the east part of the workshop: x [-3.5, 1.2], z [-31.5, -27.2]
   const cageX0 = -3.5, cageX1 = 1.2, cageZ0 = -31.5, cageZ1 = -27.2;
-  kit.fence(steelDark, chain, cageX0, cageZ0, cageX1, cageZ0, 0, 3.0);
+  // The fences run all the way to the walls (the corridor wall at z -26 and the laundry wall at
+  // x 1.5 close the other two sides); they used to stop short and left gaps to walk around the lock.
+  void cageX1; void cageZ1;
+  kit.fence(steelDark, chain, cageX0, cageZ0, 1.4, cageZ0, 0, 3.0);
   kit.fence(steelDark, chain, cageX0, cageZ0, cageX0, -29.6, 0, 3.0);
-  kit.fence(steelDark, chain, cageX0, -28.4, cageX0, cageZ1, 0, 3.0);
+  kit.fence(steelDark, chain, cageX0, -28.4, cageX0, -26.1, 0, 3.0);
   // cage door (chain link on a frame), hinged at z -29.6
   const cageDoor = new THREE.Group();
   cageDoor.position.set(cageX0, 0, -29.6);

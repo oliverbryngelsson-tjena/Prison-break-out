@@ -1,0 +1,11 @@
+[
+ {"on":"AB","until":"window.__app.game.begun && !window.__app.game.cutscenes.current","timeout":120000},
+ {"on":"A","eval":"(window.__app.game.session.emit('coopDone', { group: 'hatch' }), true)"},
+ {"on":"AB","until":"window.__app.game.chapter.flags.hatchOpen === true","timeout":20000},
+ {"wait":1500},
+ {"tpA":[15.0,-1.0,-6.0,0],"tpB":[15.4,-1.0,-6.0,0]},
+ {"on":"AB","until":"window.__app.game.chapter.flags.phase === 'tunnel'","timeout":30000},
+ {"on":"AB","check":{"name":"jumping down the shaft still starts the tunnel phase","expr":"window.__app.game.chapter.flags.phase === 'tunnel' && window.__app.game.chapter.flags.tun_elias && window.__app.game.chapter.flags.tun_jax"}},
+ {"on":"AB","until":"window.__app.game.cutscenes.played.has('cs2_tunnel')","timeout":30000},
+ {"on":"AB","check":{"name":"tunnel cutscene plays for both","expr":"window.__app.game.cutscenes.played.has('cs2_tunnel')"}}
+]
