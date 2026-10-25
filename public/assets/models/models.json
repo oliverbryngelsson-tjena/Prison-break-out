@@ -338,5 +338,75 @@
   ],
   "tris": 4792,
   "kb": 243
+ },
+ "weapon_ak47": {
+  "file": "models/weapon_ak47.glb",
+  "size": [
+   0.04,
+   0.258,
+   0.877
+  ],
+  "tris": 4803,
+  "kb": 125
+ },
+ "weapon_m4": {
+  "file": "models/weapon_m4.glb",
+  "size": [
+   0.064,
+   0.266,
+   0.859
+  ],
+  "tris": 9256,
+  "kb": 150
+ },
+ "weapon_sniper": {
+  "file": "models/weapon_sniper.glb",
+  "size": [
+   0.057,
+   0.397,
+   1.12
+  ],
+  "tris": 4808,
+  "kb": 73
+ },
+ "weapon_shotgun": {
+  "file": "models/weapon_shotgun.glb",
+  "size": [
+   0.056,
+   0.241,
+   1.219
+  ],
+  "tris": 1740,
+  "kb": 83
+ },
+ "weapon_pistol": {
+  "file": "models/weapon_pistol.glb",
+  "size": [
+   0.026,
+   0.125,
+   0.168
+  ],
+  "tris": 3821,
+  "kb": 114
+ },
+ "weapon_smg": {
+  "file": "models/weapon_smg.glb",
+  "size": [
+   0.063,
+   0.334,
+   0.627
+  ],
+  "tris": 7721,
+  "kb": 152
+ },
+ "weapon_suomi": {
+  "file": "models/weapon_suomi.glb",
+  "size": [
+   0.139,
+   0.2,
+   0.875
+  ],
+  "tris": 9198,
+  "kb": 196
  }
 }

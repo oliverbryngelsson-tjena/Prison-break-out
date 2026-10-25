@@ -1,4 +1,5 @@
-// Dialogue playback: subtitles, speaker animation, jaw movement and optional speech synthesis.
+// Dialogue playback: subtitles, speaker animation, jaw movement and recorded voices.
+// Never uses the device's speech synthesis: a line without a recording is shown as a subtitle only.
 import type { Body } from './body';
 import type { VoiceBank, VoicePlayback } from './voicebank';
 import { lineDuration } from './voices';
@@ -29,18 +30,6 @@ export interface SpeakerInfo {
 }
 
 
-const VOICES: SpeechSynthesisVoice[] = [];
-let voicesHooked = false;
-function loadVoicesOnce(): void {
-  if (voicesHooked) return;
-  voicesHooked = true;
-  try {
-    const load = () => { VOICES.length = 0; VOICES.push(...(window.speechSynthesis?.getVoices() ?? [])); };
-    load();
-    window.speechSynthesis?.addEventListener?.('voiceschanged', load);
-  } catch { /* no TTS */ }
-}
-
 export class DialogueRunner {
   queue: Line[] = [];
   current: Line | null = null;
@@ -50,23 +39,41 @@ export class DialogueRunner {
   speakers: (id: string) => SpeakerInfo = (id) => ({ name: id, color: '#fff' });
   onSubtitle: ((speaker: SpeakerInfo | null, text: string, radio: boolean) => void) | null = null;
   tts = false;
-  /** Recorded voices (used when 'tts' is on; device speech is the fallback for unrecorded lines). */
+  /** Recorded voices (played when voice acting is on). */
   bank: VoiceBank | null = null;
   private clip: ReturnType<VoiceBank['find']> = null;
   private playback: VoicePlayback | null = null;
-  private voices: SpeechSynthesisVoice[] = [];
-  /** Ambient barks that do not block. */
-  private barkTimer = 0;
   active = false;
+  /** What is playing: a cutscene/scripted scene, in-game talk, or a short NPC shout. */
+  kind: 'scene' | 'talk' | 'bark' | null = null;
+  /** Seconds since the last line ended (shouts wait for some quiet). */
+  private quietT = 99;
 
-  constructor() {
-    // One module-level listener (a per-instance one kept every finished chapter's game alive).
-    loadVoicesOnce();
-  }
-  private get voicesNow(): SpeechSynthesisVoice[] { return VOICES.length ? VOICES : this.voices; }
-
+  /** Scene dialogue (cutscenes, scripted moments): replaces whatever is playing. */
   play(lines: Line[], onDone?: () => void, startOffset = 0): void {
+    this.start(lines, 'scene', onDone, startOffset);
+  }
+
+  /** In-game conversation: waits for the current one to finish instead of talking over it. */
+  talk(lines: Line[], startOffset = 0): void {
+    if (this.active && this.kind !== 'bark') {
+      // Already talking: queue it (but never pile up a backlog of chatter).
+      if (this.queue.length < 4) this.queue.push(...lines);
+      return;
+    }
+    this.start(lines, 'talk', undefined, startOffset);
+  }
+
+  /** A short shout from an NPC: only into silence, and not right after someone else spoke. */
+  bark(line: Line, minQuiet = 4): boolean {
+    if (this.active || this.quietT < minQuiet) return false;
+    this.start([line], 'bark');
+    return true;
+  }
+
+  private start(lines: Line[], kind: 'scene' | 'talk' | 'bark', onDone?: () => void, startOffset = 0): void {
     this.stop();
+    this.kind = kind;
     this.queue = lines.slice();
     this.onDone = onDone ?? null;
     this.active = true;
@@ -94,6 +101,8 @@ export class DialogueRunner {
     this.t = 0;
     if (!l) {
       this.active = false;
+      this.kind = null;
+      this.quietT = 0;
       this.onSubtitle?.(null, '', false);
       const cb = this.onDone;
       this.onDone = null;
@@ -113,25 +122,6 @@ export class DialogueRunner {
         if (t) body.model.lookTarget = t.head();
       }
     }
-    if (this.tts && !this.clip) this.speak(l, sp);
-  }
-
-  private speak(l: Line, sp: SpeakerInfo): void {
-    try {
-      const synth = window.speechSynthesis;
-      if (!synth) return;
-      synth.cancel();
-      const u = new SpeechSynthesisUtterance(l.text.replace(/\([^)]*\)/g, ' ').replace(/[*_]/g, ''));
-      const v = sp.voice;
-      if (v) {
-        u.pitch = v.pitch;
-        u.rate = v.rate;
-        const en = this.voicesNow.filter((x) => /^en/i.test(x.lang));
-        u.voice = en.find((x) => v.prefer.test(x.name)) ?? en[0] ?? null;
-      }
-      u.volume = l.radio ? 0.7 : 1;
-      synth.speak(u);
-    } catch { /* ignore */ }
   }
 
   private endSpeaking(): void {
@@ -153,13 +143,14 @@ export class DialogueRunner {
     this.endSpeaking();
     this.queue = [];
     this.current = null;
+    if (this.active) this.quietT = 0;
     this.active = false;
+    this.kind = null;
     this.onSubtitle?.(null, '', false);
-    try { window.speechSynthesis?.cancel(); } catch { /* ignore */ }
   }
 
   update(dt: number): void {
-    if (!this.current) return;
+    if (!this.current) { this.quietT += dt; return; }
     this.t += dt;
     const l = this.current;
     const body = this.speakers(l.who).body;
@@ -169,6 +160,5 @@ export class DialogueRunner {
       if (body) body.model.mouth = this.playback.mouth(this.t);
     } else if (body) body.model.speaking = this.t < lineDuration(l) - 0.2 ? 1 : 0;
     if (this.t >= this.lineDur) this.next();
-    this.barkTimer -= dt;
   }
 }

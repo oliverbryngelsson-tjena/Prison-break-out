@@ -1,6 +1,6 @@
 # Redmoor: Break Out
 
-A two-player online co-op 3D prison-escape adventure that runs in the browser: phones, tablets and computers. Two friends, Elias and Jax, break out of Redmoor State Correctional Facility, go on the run, take revenge on the man who framed Elias, escape the police on dirt bikes, and face a betrayal neither of them can walk away from.
+A two-player online co-op 3D prison-escape adventure that runs in the browser: phones, tablets and computers. Two friends, Elias and Jax, break out of Redmoor State Correctional Facility, get picked up by Jax's cousin, buy guns from a dealer, make the framer's brother talk, shoot their way into his garage, and escape the police through the forest on his dirt bikes.
 
 Every player controls their own character on their own device. There is no split screen and no AI partner.
 
@@ -23,21 +23,22 @@ The room creator's browser hosts the room. The partner connects to it directly o
 |---|---|---|
 | 1 | Prison Life | Arrival, the yard fight, stealing a screwdriver, a co-op boost/pull through the laundry duct, the evening count |
 | 2 | The Breakout | Night: vents, the maintenance hatch (lifted together), the steam tunnel, the drain, the searchlit yard, the wall, the river |
-| 3 | On the Run | Dawn manhunt in the woods (hide in bushes), pushing a dead pine across a ravine, stealing clothes at a farm, crossing a patrolled road, a campfire about the past |
-| 4 | The Revenge | Mia's scrapyard, a night quarry, both breakers at once to kill the floodlights, Crane's office, the fight, the conveyor |
-| 5 | The Chase | Two dirt bikes (each rider controls their own) chased by police across fields, a river, the highway and a climb |
-| 6 | The Betrayal | The dam at dawn: the truth comes out, and one of the two must win the final fight. Two endings |
+| 3 | On the Run | Dawn manhunt in the woods, pushing a dead pine across a ravine, stealing clothes at a farm, Ray's car at dusk, Jax's trailer and his hidden cash (lifted together), a ride out on dirt bikes and the arms deal: each player picks a weapon from the table behind Dutch's car |
+| 4 | The Brother | A working construction site in daylight: find Julius Crane in the pit, chase him up the stairs, fight his two biggest workers, drag him out of his car and make him talk in the site office |
+| 5 | The Garage | Crane Motors at midnight: two lookouts, an ambush and a shootout, Victor running for the dock, his safe (opened together), and police at the front door |
+| 6 | The Getaway | Victor's dirt bikes (each rider controls their own) chased by police through fields, a river, the highway and the forest with plenty of jumps, to the ridge and the ending |
 
 Progress saves at every checkpoint. **Continue** resumes from the last one.
 
 **Optional extras.**
 
-- **Mini-games.** Arm wrestling at a dayroom table in chapter 1 (mash Use), and a shooting contest at Mia's hoop in chapter 4 (time the meter, 5 shots each). Both players stand at the two spots and hold Use to start; the game runs on the host and both see the same result.
-- **Memories.** Eight objects to examine in chapters 1–4 (a photo, wall marks, the TV news, a letter, a radio, the river, Mia's photos, a quarry sign), each with a short conversation that fills in the story. Either player can trigger one, both hear it, and the found count is shared.
+- **Mini-games.** Arm wrestling at a dayroom table in chapter 1 (mash Use), and a shooting contest at the hoop by Jax's trailer in chapter 3 (time the meter, 5 shots each). Both players stand at the two spots and hold Use to start; the game runs on the host and both see the same result.
+- **Weapons.** At the end of chapter 3 each player picks one from Dutch's table: M3 Grease Gun or Suomi KP (fast, wide SMGs), AK-47 (hard-hitting), M4A1 (accurate on full auto), pump shotgun (eight pellets, close range), hunting rifle (one shot) or Makarov pistol. Aiming is automatic; hold Shoot for automatic weapons. The pick carries into chapters 4–6.
+- **Memories.** Objects to examine in chapters 1–4 (a photo, wall marks, the TV news, a letter, a radio, the river, a site sign and more), each with a short conversation that fills in the story. Either player can trigger one, both hear it, and the found count is shared.
 
 ## Controls
 
-**Touch (phones, tablets).** Left side: floating joystick (push far to run). Right side: drag to look. On-screen buttons change with the situation: Use, Hit, Block, Dodge, Jump, Crouch, Run. On the bike they are Gas, Brake and Boost. Hold anywhere to skip a cutscene.
+**Touch (phones, tablets).** Left side: a fixed joystick (push far to run). Settings → Controls → **Edit HUD & controls** moves and resizes the joystick, every button and the HUD. Right side: drag to look. On-screen buttons change with the situation: Use, Hit, Block, Dodge, Jump, Crouch, Run. On the bike they are Gas, Brake and Boost. Hold anywhere to skip a cutscene.
 
 The button layout, size and opacity can be changed under **Settings → Controls → Edit button layout**. Landscape and portrait keep separate layouts.
 
@@ -183,15 +184,15 @@ Developer solo mode (not in the menus): `?dev=solo&ch=3&cp=farm` loads a checkpo
 - The two-player tests pass:
   - Chapter 1: 23/23
   - Chapter 2: 26/26
-  - Chapter 3: 22/22
-  - Chapter 4: 18/18
-  - Chapter 5: 8/8
-  - Chapter 6: 10/10
+  - Chapter 3: 38/38 (plus the arms deal on its own: 11/11)
+  - Chapter 4: 20/20
+  - Chapter 5: 20/20
+  - Chapter 6: 12/12 (to the ending)
   - Lobby/reconnect end-to-end: 17/17, over both the WebSocket server and peer-to-peer
   - Server protocol: 11/11
   - Host reload in peer-to-peer: 5/5
   - Mini-games: arm wrestling 8/8, hoops 6/6
-  - Memories: 6/6 (and all eight can be reached in their chapters)
+  - Memories: 6/6
 - No falling through the ground in the steep-slope test at 8 fps. The previous build failed it in chapters 3, 4 and 6.
 - Memory stays flat across six chapter loads.
 - The UI was checked at phone (portrait and landscape), tablet and 1080p sizes.

@@ -389,9 +389,9 @@ export class Menus {
       row('Camera follows movement', toggle(s.autoCamera, (v) => { s.autoCamera = v; }));
       row('Touch button size', slider(0.7, 1.5, 0.05, s.touchScale, (v) => { s.touchScale = v; }));
       row('Touch button opacity', slider(0.25, 1, 0.05, s.touchOpacity, (v) => { s.touchOpacity = v; }));
-      const b = h('<button class="btn small">Edit button layout</button>');
+      const b = h('<button class="btn small">Edit HUD & controls</button>');
       b.addEventListener('click', () => this.cb.onEditLayout());
-      row('Move and resize buttons', b);
+      row('Move and resize the joystick, buttons and HUD', b);
       body.appendChild(h(`<div class="hint" style="line-height:1.6;margin-top:0.75rem">
         <b>Keyboard + mouse</b> — click the game to capture the mouse · WASD move · Mouse look · Wheel zoom · Shift run · C crouch · E use (hold for co-op actions) · Space jump · Left click hit · Right click block · Q dodge · Enter skip · Esc pause.<br>
         <b>Bike</b> — W gas · S brake · A/D steer · X boost.<br>

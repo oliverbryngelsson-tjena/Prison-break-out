@@ -11,6 +11,8 @@ import { Foliage, scatter, type FoliageItem, type Placement } from './foliage';
 import { Flashlight, coneLight } from './lights';
 import { Car, Path } from './vehicles';
 import { BikeSystem } from '../game/bike';
+import { SHOP, WEAPONS } from '../game/weapons';
+import { SPEAKERS } from '../game/game';
 import { cylinderBetween } from '../engine/geometry';
 import { canvasTexture } from '../engine/materials';
 import type { Line } from '../game/dialogue';
@@ -62,7 +64,7 @@ export class Chapter3 extends Chapter {
   readonly checkpoints: Record<string, CheckpointDef> = {
     bank: { spawn: { elias: { pos: [-2, 0, -139], yaw: 0.1 }, jax: { pos: [1.5, 0, -138.5], yaw: -0.2 } }, objective: 'Get away from the river before the search teams arrive', intro: 'cs3_wake', outfit: 'prison' },
     ravine: { spawn: { elias: { pos: [LOG_X - 1, 0, -23], yaw: 0 }, jax: { pos: [LOG_X + 1, 0, -22.5], yaw: 0 } }, objective: 'Head north through the woods', outfit: 'prison' },
-    farm: { spawn: { elias: { pos: [18, 0, 26], yaw: 0.6 }, jax: { pos: [20, 0, 25], yaw: 0.6 } }, objective: 'Steal clothes from the line — don\'t let the farmer see you', intro: 'cs3_farm', outfit: 'prison' },
+    farm: { spawn: { elias: { pos: [18, 0, 26], yaw: 0.6 }, jax: { pos: [20, 0, 25], yaw: 0.6 } }, objective: 'Steal clothes from the line — don\'t let the farmer see you', outfit: 'prison' },
     road: { spawn: { elias: { pos: [46, 0, 92], yaw: 0 }, jax: { pos: [48, 0, 91], yaw: 0 } }, objective: 'Get to the mile marker on the county road — stay out of the patrol\'s headlights', outfit: 'civil' },
     cabin: { spawn: { elias: { pos: [-28.5, 0, 146.5], yaw: -0.4 }, jax: { pos: [-26.8, 0, 147.2], yaw: -0.6 } }, objective: 'Find the cash Jax hid under his trailer', intro: 'cs3_trailer', outfit: 'civil' },
   };
@@ -80,12 +82,35 @@ export class Chapter3 extends Chapter {
       patrol: [[-40, -60, 4, Math.PI / 2], [-14, -56, 2], [-4, -70, 3, Math.PI], [-26, -74, 1]] });
     d.push({ id: 'walt', char: 'thug2', role: 'guard', name: 'Walt Ashby', pos: [56, 0, 62], yaw: Math.PI / 2, catches: true, vision: { range: 17, fov: 100 }, walk: 0.9,
       patrol: [[56, 62, 7, Math.PI / 2], [44, 72, 5, 0], [30, 56, 6, -Math.PI / 2], [46, 52, 2]] });
-    d.push({ id: 'dutch', char: 'thug1', role: 'story', name: 'Dutch', pos: [36, 0, 40], yaw: Math.PI, passive: true, idleClip: 'idle_wait' });
+    d.push({ id: 'dutch', char: 'dealer', role: 'story', name: 'Dutch', pos: [36, 0, 40], yaw: Math.PI, passive: true, idleClip: 'idle_wait' });
     this.defineDialogue();
   }
 
   private defineDialogue(): void {
     const D = this.dialogues;
+    // Walk-and-talk (you keep control while they talk).
+    D.plan = [
+      { who: 'elias', text: 'We can\'t walk to Harlow in prison orange. We need a car, a phone, a miracle.' },
+      { who: 'jax', text: 'We need Ray.', anim: 'talk' },
+      { who: 'elias', text: 'Who\'s Ray?' },
+      { who: 'jax', text: 'Visiting day, three weeks ago. The guy in the Raiders cap who cried a little.' },
+      { who: 'elias', text: 'That was your cousin?' },
+      { who: 'jax', text: 'I told him: if I ever get out, the county road past the Ashby farm, dusk. He\'s been watching the news every night since.', anim: 'talk_cool' },
+      { who: 'elias', text: 'You planned this before you even met me.' },
+      { who: 'jax', text: 'I planned to get out. You were the bonus. The guy with the map.', anim: 'laugh' },
+          { who: 'elias', text: 'Then let\'s not keep Ray waiting.' },
+    ];
+    D.farm_arrive = [
+      { who: 'elias', text: 'A farm. Clothes on the line, a barn, and one old man with very good eyes.' },
+      { who: 'jax', text: 'We can\'t walk into town looking like a pumpkin patch.' },
+      { who: 'elias', text: 'One each. Keep the hay bales between you and him. Then the barn.' },
+    ];
+    D.trailer_talk = [
+      { who: 'jax', text: 'Home sweet home. Rent\'s cheap when you never pay it.' },
+      { who: 'elias', text: 'Ray didn\'t want to come in?' },
+      { who: 'jax', text: 'Ray doesn\'t want to know anything. Smartest man in our family.' },
+      { who: 'jax', text: 'Cash is under the floor at the back. Panel\'s heavy — give me a hand.' },
+    ];
     D.bank = [
       { who: 'elias', text: 'They\'ll walk the banks first. Dogs, deputies, the works. We need trees between us and the water.' },
       { who: 'jax', text: 'Lead the way, professor. You\'re the one who reads maps for fun.' },
@@ -122,7 +147,6 @@ export class Chapter3 extends Chapter {
     ];
     D.bikes_go = [{ who: 'jax', text: 'Dutch doesn\'t wait. Bikes are by the tarp — keys are in them, nobody comes out here.' }];
     D.walt_spot = [{ who: 'walt', text: 'Hey! Who\'s out there? Martha, call the sheriff!', dur: 2.6 }];
-    D.plan = [];
   }
 
   // ================================================================== build
@@ -472,10 +496,31 @@ export class Chapter3 extends Chapter {
     this.fireLight = new THREE.PointLight(0xff8a3a, 0, 14, 2);
     this.fireLight.position.copy(this.firePos).add(v3(0, 0.8, 0));
     w.scene.add(this.fireLight);
+    // Jax's old basketball hoop by the trailer (mini-game): pole, backboard, rim and net.
+    {
+      const hx = x - 6.5, hz = z - 9.5, hy = this.y(hx, hz);
+      const steelH = L.plain(0x55595c, 0.5, 0.6);
+      kit.batch.add(cylinderBetween(v3(hx, hy, hz - 0.5), v3(hx, hy + 3.25, hz - 0.5), 0.07, 10), steelH);
+      kit.batch.add(cylinderBetween(v3(hx, hy + 3.1, hz - 0.5), v3(hx, hy + 3.1, hz - 0.3), 0.05, 8), steelH);
+      kit.box(L.plain(0xd8d4c8, 0.7), [hx, hy + 3.35, hz - 0.28], [1.6, 1.0, 0.05], 0, false);
+      kit.box(L.plain(0xb0402a, 0.6), [hx, hy + 3.18, hz - 0.25], [0.5, 0.35, 0.02], 0, false);
+      const rim = new THREE.TorusGeometry(0.23, 0.017, 6, 22);
+      rim.rotateX(Math.PI / 2);
+      rim.translate(hx, hy + 3.05, hz);
+      kit.batch.add(rim, L.plain(0xc04020, 0.5, 0.4));
+      const net = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.15, 0.4, 12, 3, true), new THREE.MeshStandardMaterial({ color: 0xeeeeee, wireframe: true, transparent: true, opacity: 0.6 }));
+      net.position.set(hx, hy + 2.84, hz);
+      w.root.add(net);
+      w.physics.addBox({ x: hx, y: hy + 1.6, z: hz - 0.5 }, { x: 0.2, y: 3.2, z: 0.2 }, 0, { surface: 'metal' });
+      kit.batch.add(cylinderBetween(v3(hx, hy + 3.25, hz - 0.5), v3(hx, hy + 4.1, hz - 0.5), 0.04, 8), steelH);
+      kit.bulb(L.emissive(0xffe0b0, 3), steelH, hx, hy + 4.15, hz - 0.3, 0xffdcaa, 2.6, 13, 'trailer');
+      this.hoop = { rim: v3(hx, hy + 3.05, hz), spots: [v3(hx - 1.1, this.y(hx - 1.1, hz + 4.3), hz + 4.3), v3(hx + 1.1, this.y(hx + 1.1, hz + 4.3), hz + 4.3)] };
+    }
     // Logs to sit on
     for (const [ox, oz, yaw] of [[-1.6, 0.3, 0.3], [1.5, -0.4, -0.2]] as const) this.kit.batch.add(cylinderBetween(v3(fx + ox - Math.cos(yaw) * 0.8, this.firePos.y + 0.22, fz + oz + Math.sin(yaw) * 0.8), v3(fx + ox + Math.cos(yaw) * 0.8, this.firePos.y + 0.22, fz + oz - Math.sin(yaw) * 0.8), 0.22, 8), bark);
   }
   private firePos = new THREE.Vector3();
+  private hoop = { rim: v3(0, 0, 0), spots: [v3(0, 0, 0), v3(0, 0, 0)] as [THREE.Vector3, THREE.Vector3] };
 
   private updateFire(dt: number): void {
     if (!this.fire.visible) { this.fireLight.intensity = 0; return; }
@@ -636,6 +681,11 @@ export class Chapter3 extends Chapter {
         enabled: () => this.flags.phase === 'cabin' && !!this.flags.talked && !this.bikes.mounted,
         onUse: () => { this.bikes.parkedLocal = false; this.bikes.mount(bp.pos.clone(), bp.yaw); g.session.request('mounted', { who: c }); } });
     }
+    // One game of HORSE before the bikes (optional).
+    g.minigames.addHoops({ id: 'hoops_jax', rim: this.hoop.rim, spots: this.hoop.spots, enabled: () => this.flags.phase === 'cabin' && !this.bikes.mounted });
+    // Dutch's guns, laid out behind his car: each of you picks one.
+    I.add({ id: 'deal_guns', pos: this.dealPos, radius: 1.8, label: () => (this.flags[`picked_${g.localChar}`] ? 'Swap your weapon' : 'Pick a weapon'), icon: 'hand', priority: 4,
+      enabled: () => this.flags.phase === 'dealer' && !g.hud.shopOpen, onUse: () => g.openWeaponShop('Dutch\'s guns — take one') });
     for (const c of ['elias', 'jax'] as CharacterId[]) {
       I.add({ id: `clothes_${c}`, who: c, pos: v3(c === 'elias' ? 36.2 : 38.8, this.farmY, 58.6), radius: 1.4, label: 'Take clothes off the line', icon: 'hand', facing: Math.PI,
         enabled: () => this.flags.phase === 'farm' && !this.flags[`clothes_${c}`], onUse: () => { g.local.body.setPose('pick_low', {}, { restart: true }); g.session.request('clothes', { who: c }); } });
@@ -680,13 +730,14 @@ export class Chapter3 extends Chapter {
       case 'ravine_cross':
         this.saveCheckpoint('ravine');
         g.session.emit('flag', { k: 'phase', v: 'north' });
-        this.objective('Keep heading north — there\'s a farm past the ridge', [FARM.x, this.farmY + 2, FARM.z - 20]);
-        this.cutscene('cs3_plan');
+        this.objective('Keep heading north — get clothes at the farm past the ridge, then meet Ray', [FARM.x, this.farmY + 2, FARM.z - 20]);
+        this.say('plan');
         break;
       case 'farm':
         this.saveCheckpoint('farm');
         g.session.emit('flag', { k: 'phase', v: 'farm' });
-        this.cutscene('cs3_farm');
+        this.say('farm_arrive');
+        this.objective('Steal clothes from the line — don\'t let the farmer see you', [38, this.farmY + 1.6, 58]);
         break;
       case 'barn': this.cutscene('cs3_barn'); break;
       case 'pickup': this.cutscene('cs3_pickup'); break;
@@ -721,21 +772,6 @@ export class Chapter3 extends Chapter {
           lines: [{ who: 'elias', text: 'Dogs. Upriver. We move.', dur: 2.6 }] },
       ],
       end: () => { lookChar(g, 'jax', null); if (this.authority) this.objective('Get away from the river before the search teams arrive', [0, 2, -110]); },
-    };
-    C.cs3_farm = {
-      id: 'cs3_farm', music: 'music_explore',
-      start: () => { this.setTOD('day'); },
-      beats: [
-        { dur: 5, shot: () => shot(v3(14, this.farmY + 6, 30), v3(40, this.farmY + 1.5, 62), 5, { fov: 42, toEnd: v3(42, this.farmY + 1.5, 64) }),
-          lines: [{ who: 'elias', text: 'A farm. Clothes on the line, a barn, and one old man with very good eyes.', dur: 4.4 }] },
-        { dur: 3.6, shot: () => shot(v3(52, this.farmY + 1.8, 56), v3(58, this.farmY + 1.4, 62), 3.6, { fov: 36 }), run: () => npcPlace(g, 'walt', v3(56, this.farmY, 62), Math.PI / 2),
-          lines: [{ who: 'walt', text: '(whistling)', dur: 2 }] },
-        { shot: () => twoShot(g, 'elias', 'jax', 8, 2.4, 1.4, -1), lines: [
-          { who: 'jax', text: 'We can\'t walk into town looking like a pumpkin patch.' },
-          { who: 'elias', text: 'One each. Keep the hay bales between you and him. Then the barn.' },
-        ] },
-      ],
-      end: () => { if (this.authority) this.objective('Steal clothes from the line — don\'t let the farmer see you', [38, this.farmY + 1.6, 58]); },
     };
     C.cs3_barn = {
       id: 'cs3_barn', music: 'music_sad',
@@ -844,30 +880,6 @@ export class Chapter3 extends Chapter {
     const g = this.g;
     const C = this.cutscenes;
     // After the log: walking north, Jax reveals the plan he made on visiting day.
-    C.cs3_plan = {
-      id: 'cs3_plan', music: 'music_explore', skippable: true,
-      start: () => {
-        const z = ravZ(LOG_X) + 12;
-        placeChar(g, 'elias', v3(LOG_X - 0.8, this.y(LOG_X - 0.8, z), z), 0);
-        placeChar(g, 'jax', v3(LOG_X + 0.8, this.y(LOG_X + 0.8, z), z), 0);
-        run(g, 'elias', [{ to: v3(LOG_X - 0.6, this.y(LOG_X - 0.6, z + 14), z + 14), dur: 16, anim: 1.0 }]);
-        run(g, 'jax', [{ to: v3(LOG_X + 1.0, this.y(LOG_X + 1.0, z + 14), z + 14), dur: 16, anim: 1.0 }]);
-      },
-      beats: [
-        { shot: () => twoShot(g, 'elias', 'jax', 16, 3.0, 1.5, 1), lines: [
-          { who: 'elias', text: 'We can\'t walk to Harlow in prison orange. We need a car, a phone, a miracle.' },
-          { who: 'jax', text: 'We need Ray.', anim: 'talk' },
-          { who: 'elias', text: 'Who\'s Ray?' },
-          { who: 'jax', text: 'Visiting day, three weeks ago. The guy in the Raiders cap who cried a little.' },
-          { who: 'elias', text: 'That was your cousin?' },
-          { who: 'jax', text: 'I told him: if I ever get out, the county road past the Ashby farm, dusk. He\'s been watching the news every night since.', anim: 'talk_cool' },
-          { who: 'elias', text: 'You planned this before you even met me.' },
-          { who: 'jax', text: 'I planned to get out. You were the bonus. The guy with the map.', anim: 'laugh' },
-          { who: 'elias', text: 'Then let\'s not keep Ray waiting.' },
-        ] },
-      ],
-      end: () => { if (this.authority) this.objective('Keep heading north — get clothes at the farm past the ridge, then meet Ray', [FARM.x, this.farmY + 2, FARM.z - 20]); },
-    };
     // County road at dusk: Ray's car comes round the bend and picks them up.
     C.cs3_pickup = {
       id: 'cs3_pickup', music: 'music_explore',
@@ -901,39 +913,41 @@ export class Chapter3 extends Chapter {
       beats: [
         { dur: 4.5, fade: 'in', shot: () => shot(v3(CABIN.x + 10, this.baseAt(CABIN.x, CABIN.z) + 4, CABIN.z - 12), v3(CABIN.x, this.baseAt(CABIN.x, CABIN.z) + 1.5, CABIN.z), 4.5, { fov: 44, fromEnd: v3(CABIN.x + 7, this.baseAt(CABIN.x, CABIN.z) + 2.6, CABIN.z - 9) }),
           lines: [{ who: 'narrator', text: 'Later. Black Hollow.', dur: 2.6 }] },
-        { shot: () => twoShot(g, 'jax', 'elias', 9, 2.4, 1.45, -1), lines: [
-          { who: 'jax', text: 'Home sweet home. Rent\'s cheap when you never pay it.', anim: 'talk_cool' },
-          { who: 'elias', text: 'Ray didn\'t want to come in?' },
-          { who: 'jax', text: 'Ray doesn\'t want to know anything. Smartest man in our family.' },
-          { who: 'jax', text: 'Cash is under the floor at the back. Panel\'s heavy — give me a hand.' },
-        ] },
       ],
-      end: () => { if (this.authority) this.objective('Find the cash Jax hid under his trailer — lift the floor panel together', [CABIN.x, this.baseAt(CABIN.x, CABIN.z) + 1, CABIN.z + 2.2]); },
+      end: () => { if (this.authority) this.say('trailer_talk'); if (this.authority) this.objective('Find the cash Jax hid under his trailer — lift the floor panel together', [CABIN.x, this.baseAt(CABIN.x, CABIN.z) + 1, CABIN.z + 2.2]); },
     };
     // Later: the arms deal at the old Ashby barn.
     C.cs3_dealer = {
       id: 'cs3_dealer', music: 'music_tension',
-      start: () => {
-        this.setTOD('night');
-        if (this.bikes.mounted) this.bikes.dismount();
-        const b = this.barn, y = this.farmY;
-        this.bikes.park('elias', v3(b.x - 4.5, y, b.z - 11), 0.4);
-        this.bikes.park('jax', v3(b.x - 3.0, y, b.z - 12), 0.2);
-        placeChar(g, 'elias', v3(b.x - 1.6, y, b.z - 9.4), 0.3);
-        placeChar(g, 'jax', v3(b.x - 0.4, y, b.z - 9.0), 0.1);
-        const d = g.npcs.get('dutch');
-        if (d) { d.enabled = true; d.body.visible = true; d.body.solid = true; npcPlace(g, 'dutch', v3(b.x - 0.6, y, b.z - 6.8), Math.PI); }
-        this.dutchVan.root.visible = true;
-        this.dutchVan.setPose(v3(b.x + 2.6, y, b.z - 7.5), Math.PI * 0.55, g.world.physics);
-      },
+      start: () => {},
       beats: [
-        { dur: 4, fade: 'in', shot: () => shot(v3(this.barn.x - 9, this.farmY + 3.2, this.barn.z - 16), v3(this.barn.x, this.farmY + 1.4, this.barn.z - 8), 4, { fov: 42 }),
+        // Fade out from the ride...
+        { dur: 1.2, fade: 'out' },
+        { dur: 4, fade: 'in', run: () => this.setupDeal(), shot: () => shot(v3(this.barn.x - 9, this.farmY + 3.2, this.barn.z - 16), v3(this.barn.x, this.farmY + 1.4, this.barn.z - 8), 4, { fov: 42 }),
           lines: [{ who: 'narrator', text: 'Later that night. The old Ashby barn.', dur: 3 }] },
         { shot: () => twoShot(g, 'jax', 'dutch', 30, 2.6, 1.5, 1), lines: [
           { who: 'dutch', text: 'The famous two. You\'re on every channel.', anim: 'talk_cool' },
           { who: 'jax', text: 'Then you know we\'re in a hurry, Dutch. It\'s all there.', anim: 'talk' },
-          { who: 'dutch', text: '(counting) ...Two nines. Four magazines each. A box of shells.' },
-          { who: 'dutch', text: 'Don\'t point them at anything you\'re not ready to bury.' },
+          { who: 'dutch', text: '(counting) ...It\'s all there. Back of the car. Have a look, take what you like.', anim: 'talk' },
+        ] },
+      ],
+      end: () => {
+        this.setupDeal();
+        this.flags.phase = 'dealer';
+        if (this.authority) this.objective('Pick your weapons from the back of Dutch\'s car', [this.dealPos.x, this.dealPos.y + 1.2, this.dealPos.z]);
+      },
+    };
+    C.cs3_deal_done = {
+      id: 'cs3_deal_done', music: 'music_tension', skippable: true,
+      start: () => {
+        const b = this.barn, y = this.farmY;
+        placeChar(g, 'elias', v3(b.x - 1.6, y, b.z - 9.4), 0.3);
+        placeChar(g, 'jax', v3(b.x - 0.4, y, b.z - 9.0), 0.1);
+        npcPlace(g, 'dutch', v3(b.x - 0.6, y, b.z - 6.8), Math.PI);
+      },
+      beats: [
+        { shot: () => twoShot(g, 'dutch', 'jax', 20, 2.6, 1.5, -1), lines: [
+          { who: 'dutch', text: 'Good choices. Don\'t point them at anything you\'re not ready to bury.', anim: 'talk_cool' },
           { who: 'elias', text: 'We won\'t.' },
           { who: 'dutch', text: 'And boys — you never met me.' },
           { who: 'jax', text: 'Never met who?', anim: 'laugh' },
@@ -945,6 +959,54 @@ export class Chapter3 extends Chapter {
       end: () => { if (this.authority) g.session.emit('chapterEnd', { next: 4 }); },
     };
   }
+
+  /** Night at the barn: bikes parked, Dutch and his car, the guns laid out behind it. */
+  private setupDeal(): void {
+    const g = this.g;
+    this.setTOD('night');
+    if (this.bikes.mounted) this.bikes.dismount();
+    const b = this.barn, y = this.farmY;
+    this.bikes.park('elias', v3(b.x - 4.5, y, b.z - 11), 0.4);
+    this.bikes.park('jax', v3(b.x - 3.0, y, b.z - 12), 0.2);
+    placeChar(g, 'elias', v3(b.x - 1.6, y, b.z - 9.4), 0.3);
+    placeChar(g, 'jax', v3(b.x - 0.4, y, b.z - 9.0), 0.1);
+    const d = g.npcs.get('dutch');
+    if (d) { d.enabled = true; d.body.visible = true; d.body.solid = true; npcPlace(g, 'dutch', v3(b.x - 0.6, y, b.z - 6.8), Math.PI); }
+    this.dutchVan.root.visible = true;
+    const carYaw = Math.PI * 0.55;
+    const carP = v3(b.x + 2.6, y, b.z - 7.5);
+    this.dutchVan.setPose(carP, carYaw, g.world.physics);
+    // Open crate behind the car with the guns laid out on it.
+    const back = v3(-Math.sin(carYaw), 0, -Math.cos(carYaw));
+    this.dealPos.copy(carP).addScaledVector(back, 3.4);
+    this.dealPos.y = y;
+    if (!this.dealTable) {
+      const w = g.world;
+      const grp = new THREE.Group();
+      const wood = w.mats.plain(0x6a4a2a, 0.8);
+      const top = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.08, 1.3), wood); top.position.y = 0.78; grp.add(top);
+      for (const [x, z] of [[-0.9, -0.58], [0.9, -0.58], [-0.9, 0.58], [0.9, 0.58]]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.78, 0.07), wood); l.position.set(x, 0.39, z); grp.add(l); }
+      const cloth = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.01, 1.2), w.mats.plain(0x24282c, 0.95)); cloth.position.y = 0.825; grp.add(cloth);
+      w.physics.addBox({ x: this.dealPos.x, y: this.dealPos.y + 0.4, z: this.dealPos.z }, { x: 2.0, y: 0.8, z: 1.3 }, carYaw + Math.PI / 2, { surface: 'wood' });
+      w.root.add(grp);
+      this.dealTable = grp;
+      // The guns, side by side across the cloth.
+      SHOP.forEach((id, i) => {
+        const gm = g.guns.displayModel(id);
+        // Side by side across the cloth, full size, barrels along the table, lying on their sides.
+        const L = WEAPONS[id].length;
+        gm.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2).premultiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2));
+        gm.position.set(-L / 2, 0.87, -0.51 + i * 0.17);
+        grp.add(gm);
+      });
+    }
+    this.dealTable.position.copy(this.dealPos);
+    this.dealTable.rotation.y = carYaw + Math.PI / 2;
+    // Dutch waits at the end of his table.
+    if (d) npcPlace(g, 'dutch', this.dealPos.clone().addScaledVector(v3(Math.cos(carYaw), 0, -Math.sin(carYaw)), 1.8), carYaw + Math.PI);
+  }
+  private dealPos = new THREE.Vector3();
+  private dealTable: THREE.Group | null = null;
   /** Ray's car driving in for the pickup (cutscene). */
   private rayDrive: { start: number; dur: number } | null = null;
   private rayCar!: Car;
@@ -997,7 +1059,8 @@ export class Chapter3 extends Chapter {
       for (const v of this.bikes.visuals.values()) v.root.visible = false;
       this.bikes.parkedLocal = this.bikes.parkedRemote = false;
     }
-    for (const k of ['cash', 'talked', 'mounted_elias', 'mounted_jax']) delete this.flags[k];
+    for (const k of ['cash', 'talked', 'mounted_elias', 'mounted_jax', 'picked_elias', 'picked_jax', 'dealDone']) delete this.flags[k];
+    if (this.dealTable) this.dealTable.position.y = -100;
     this.rideT = -1;
     this.rayDrive = null;
     if (this.rayCar) this.rayCar.root.visible = false;
@@ -1049,6 +1112,18 @@ export class Chapter3 extends Chapter {
           return true;
         }
         return false;
+      case 'weaponPicked': {
+        if (this.flags.phase !== 'dealer') return true;
+        this.flags[`picked_${a.who}`] = true;
+        const name = (a.who === g.localChar ? 'You' : SPEAKERS[String(a.who)]?.name ?? 'Your partner');
+        g.hud.notify(`${name} took the ${WEAPONS[a.w as keyof typeof WEAPONS]?.name ?? 'gun'}`, 2.4);
+        g.audio.play('switch', { pos: this.dealPos, volume: 0.6 });
+        if (this.authority) {
+          if (this.flags.picked_elias && this.flags.picked_jax) setTimeout(() => { if (this.flags.phase === 'dealer' && !this.flags.dealDone) { this.flags.dealDone = true; this.cutscene('cs3_deal_done'); } }, 1500);
+          else g.session.emit('dlg', { lines: [{ who: 'dutch', text: 'Take your time. But not too much time.', dur: 2.4 }], at: g.session.sharedNow() + 600 });
+        }
+        return true;
+      }
       case 'mounted': {
         this.flags[`mounted_${a.who}`] = true;
         if (this.authority && this.flags.mounted_elias && this.flags.mounted_jax && this.rideT < 0) { this.rideT = 0; this.objective('Ride out to meet Dutch'); }
@@ -1100,8 +1175,10 @@ export class Chapter3 extends Chapter {
     if (!this.authority) return;
     // A short ride from the trailer, then 'Later…' at the arms deal.
     if (this.rideT >= 0 && this.flags.phase === 'cabin' && !g.inCutscene) {
-      this.rideT += dt;
-      if (this.rideT > 9) { this.rideT = -2; this.cutscene('cs3_dealer'); }
+      // A few seconds of riding out (time only counts while moving), then the fade to the deal.
+      const moving = this.bikes.mounted && Math.abs(this.bikes.ctrl.speed) > 3;
+      this.rideT += moving ? dt : dt * 0.15;
+      if (this.rideT > 5) { this.rideT = -2; this.cutscene('cs3_dealer'); }
     }
     // Road: the patrol car spots anyone in its headlights or right next to it.
     if (this.flags.phase === 'road' && g.state === 'playing') {

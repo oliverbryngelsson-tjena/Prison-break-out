@@ -38,7 +38,7 @@ export class Extras {
     const m = this.memories.get(id);
     if (!m || g.chapter.flags[`mem_${id}`]) return true;
     g.chapter.flags[`mem_${id}`] = true;
-    g.dialogue.play(m.lines);
+    g.dialogue.talk(m.lines);
     g.hud.notify(`Memory ${this.found}/${this.total}`, 2.5);
     g.audio.play('ui_tick', { volume: 0.5 });
     return true;

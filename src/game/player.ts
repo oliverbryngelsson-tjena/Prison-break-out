@@ -38,6 +38,8 @@ export interface PlayerCtx {
   onShoot(target: Combatant | null, dir: THREE.Vector3): void;
   pickTarget(list: Combatant[]): Combatant | null;
   canShoot(): boolean;
+  /** Fire rate and trigger mode of the current weapon. */
+  weapon(): { rate: number; auto: boolean };
   flags: { jump: boolean; sprint: boolean; combat: boolean; crouch: boolean };
 }
 
@@ -571,10 +573,13 @@ export class PlayerController {
     } else if (this.aimTarget && !this.aimTarget.alive) this.aimTarget = null;
     this.shotCd -= dt;
     this.aimT = Math.max(0, this.aimT - dt);
-    const fire = inp.buttons.attack.pressed || (inp.buttons.attack.down && this.aimT > 0);
+    const wpn = this.ctx.weapon();
+    // Automatic weapons fire while the trigger is held; others need a new press each shot
+    // (holding a pistol still repeats, but at a slower, deliberate pace).
+    const fire = inp.buttons.attack.pressed || (inp.buttons.attack.down && this.aimT > 0 && (wpn.auto || this.shotCd <= -0.12));
     if (fire && this.shotCd <= 0 && !this.takedownTarget) {
       if (this.ctx.canShoot()) {
-        this.shotCd = 0.32;
+        this.shotCd = wpn.rate;
         this.aimT = 1.6;
         const t = this.aimTarget;
         const dir = t ? t.body.chest().sub(b.chest()).normalize() : this.ctx.cam.forward.clone().setY(0).normalize();
@@ -588,7 +593,7 @@ export class PlayerController {
       const t = this.aimTarget;
       const pitch = t ? THREE.MathUtils.clamp((t.body.pos.y - b.pos.y) / Math.max(1, t.body.pos.distanceTo(b.pos)), -0.5, 0.5) : 0;
       if (b.poseName !== 'aim') b.setPose('aim', { k: { pitch } });
-      else b.updatePoseCtx({ k: { pitch } });
+      else b.updatePoseCtx({ ...(b.poseCtx() ?? {}), k: { ...(b.poseCtx()?.k ?? {}), pitch } });
     } else if (b.poseName === 'aim' || b.poseName === 'guard') b.clearPose(0.3);
   }
 

@@ -74,6 +74,7 @@ export class Hud {
     this.skipHint = el('div', 'hud-skip', this.root);
     this.fadeEl = el('div', 'hud-fade', this.root);
     this.stats = el('div', 'hud-stats', this.root);
+    this.setAmmo(null);
   }
 
   setVisible(v: boolean): void {
@@ -248,7 +249,48 @@ export class Hud {
     else this.stats.style.display = 'none';
   }
 
+  // ---- ammo counter (bottom right)
+  private ammoEl: HTMLElement | null = null;
+  private ammoText = '';
+  setAmmo(text: string | null): void {
+    if (!this.ammoEl) this.ammoEl = el('div', 'hud-ammo', this.root);
+    const t = text ?? '';
+    if (t === this.ammoText) return;
+    this.ammoText = t;
+    this.ammoEl.textContent = t;
+    this.ammoEl.classList.toggle('show', !!text);
+  }
+
+  // ---- weapon shop (Dutch's van)
+  private shop: HTMLElement | null = null;
+  /** Shows a list of weapons with stat bars; `onPick` gets the chosen id. Returns false if already open. */
+  showShop(title: string, items: Array<{ id: string; name: string; blurb: string; stats: Array<[string, number]>; taken?: string }>, onPick: (id: string) => void, onClose: () => void): boolean {
+    if (this.shop) return false;
+    const root = el('div', 'hud-shop', this.root);
+    const head = el('div', 'shop-head', root, `<b>${escapeHtml(title)}</b>`);
+    const close = el('button', 'btn small', head, 'Close') as HTMLButtonElement;
+    close.addEventListener('click', () => { this.hideShop(); onClose(); });
+    const list = el('div', 'shop-list', root);
+    for (const it of items) {
+      const card = el('button', 'shop-item' + (it.taken ? ' taken' : ''), list) as HTMLButtonElement;
+      card.innerHTML = `<div class="nm">${escapeHtml(it.name)}${it.taken ? `<em>${escapeHtml(it.taken)}</em>` : ''}</div><div class="bl">${escapeHtml(it.blurb)}</div>` +
+        it.stats.map(([k, v]) => `<div class="st"><span>${escapeHtml(k)}</span><i><b style="width:${Math.round(Math.max(0.04, Math.min(1, v)) * 100)}%"></b></i></div>`).join('');
+      card.addEventListener('click', () => { this.hideShop(); onPick(it.id); });
+    }
+    this.shop = root;
+    (list.querySelector('.shop-item') as HTMLElement | null)?.focus();
+    return true;
+  }
+
+  hideShop(): void {
+    this.shop?.remove();
+    this.shop = null;
+  }
+
+  get shopOpen(): boolean { return !!this.shop; }
+
   dispose(): void {
+    this.hideShop();
     this.root.remove();
   }
 }

@@ -13,429 +13,101 @@
  },
  {
   "on": "AB",
-  "until": "!window.__app.game.cutscenes.current && window.__app.game.chapter.flags.pvp === true",
+  "until": "window.__app.game.local.state === 'bike' && window.__app.game.chapter.flags.phase === 'race'",
   "timeout": 90000
  },
  {
   "on": "AB",
   "check": {
-   "name": "final fight starts on both (PvP enabled)",
-   "expr": "window.__app.game.chapter.flags.pvp === true && window.__app.game.flags.combat === true"
+   "name": "both riders mounted on their bikes",
+   "expr": "window.__app.game.local.state === 'bike'"
   }
  },
  {
-  "tpA": [
-   -41.2,
-   -10,
-   -61,
-   1.5708
-  ],
-  "tpB": [
-   -40.2,
-   -10,
-   -61,
-   -1.5708
-  ]
- },
- {
-  "wait": 1200
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "tpA": [
-   -41.2,
-   -10,
-   -61,
-   1.5708
-  ],
-  "tpB": [
-   -40.2,
-   -10,
-   -61,
-   -1.5708
-  ]
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "tpA": [
-   -41.2,
-   -10,
-   -61,
-   1.5708
-  ],
-  "tpB": [
-   -40.2,
-   -10,
-   -61,
-   -1.5708
-  ]
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "tpA": [
-   -41.2,
-   -10,
-   -61,
-   1.5708
-  ],
-  "tpB": [
-   -40.2,
-   -10,
-   -61,
-   -1.5708
-  ]
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "tpA": [
-   -41.2,
-   -10,
-   -61,
-   1.5708
-  ],
-  "tpB": [
-   -40.2,
-   -10,
-   -61,
-   -1.5708
-  ]
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "on": "A",
-  "press": "KeyJ"
- },
- {
-  "wait": 420
- },
- {
-  "tpA": [
-   -41.2,
-   -10,
-   -61,
-   1.5708
-  ],
-  "tpB": [
-   -40.2,
-   -10,
-   -61,
-   -1.5708
-  ]
- },
- {
-  "on": "AB",
-  "until": "window.__app.game.chapter.flags.winner === 'elias' || window.__app.game.cutscenes.current",
-  "timeout": 30000,
-  "critical": false
- },
- {
-  "on": "AB",
-  "eval": "(() => { const g = window.__app.game; return { me: g.localChar, hp: Math.round(g.local.body.hp), remoteHp: Math.round(g.remote.body.hp), winner: g.chapter.flags.winner, cs: g.cutscenes.current && g.cutscenes.current.id, ls: g.local.state }; })()"
+  "wait": 1500
  },
  {
   "on": "AB",
   "check": {
-   "name": "Elias wins the fight: winner agreed on both clients",
-   "expr": "window.__app.game.chapter.flags.winner === 'elias'"
+   "name": "partner is seen riding (bike sync bit + bike state)",
+   "expr": "window.__app.game.remote.onBike === true && Array.isArray(window.__app.game.remote.bike)"
   }
  },
  {
   "on": "AB",
-  "until": "window.__app.game.cutscenes.played.has('cs6_end_elias')",
+  "eval": "(() => { const g = window.__app.game; window.__s0 = g.chapter.trackPath.project(g.local.body.pos); return window.__s0; })()"
+ },
+ {
+  "on": "AB",
+  "hold": "KeyW",
+  "ms": 6000
+ },
+ {
+  "on": "AB",
+  "eval": "(() => { const g = window.__app.game; return { me: g.localChar, travelled: Math.round(g.chapter.trackPath.project(g.local.body.pos) - window.__s0), speed: +g.chapter.bikes.ctrl.speed.toFixed(1), crashed: g.chapter.bikes.ctrl.crashed, cops: g.chapter.cops.map(c => Math.round(c.s)) }; })()"
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "riders make progress along the route",
+   "expr": "window.__app.game.chapter.trackPath.project(window.__app.game.local.body.pos) - window.__s0 > 25"
+  }
+ },
+ {
+  "on": "A",
+  "eval": "(() => { const g = window.__app.game; return { remote: g.remote.body.pos.toArray().map(x => +x.toFixed(1)) }; })()"
+ },
+ {
+  "on": "B",
+  "eval": "(() => { const g = window.__app.game; return { self: g.local.body.pos.toArray().map(x => +x.toFixed(1)) }; })()"
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "police cruisers are chasing (visible on both)",
+   "expr": "window.__app.game.chapter.cops.some(c => c.car.root.visible && c.s > 0)"
+  }
+ },
+ {
+  "on": "AB",
+  "press": "Enter"
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.local.state === 'bike' && window.__app.game.chapter.flags.phase === 'race' && !window.__app.game.cutscenes.current",
+  "timeout": 90000
+ },
+ {
+  "on": "AB",
+  "eval": "(() => { const g = window.__app.game; const c = g.chapter; const total = c.trackS[c.trackS.length - 1]; const a = c.trackPath.at(total - 40); const side = c.side(total - 40); const p = a.pos.clone().addScaledVector(side, g.localChar === 'elias' ? -1.5 : 1.5); p.y = c.terrain.height(p.x, p.z) + 0.3; c.bikes.ctrl.place(p, a.yaw); return Math.round(total); })()"
+ },
+ {
+  "on": "AB",
+  "hold": "KeyW",
+  "ms": 7000
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.cutscenes.current && window.__app.game.cutscenes.current.id === 'cs6_free'",
   "timeout": 30000
  },
  {
   "on": "AB",
   "check": {
-   "name": "Elias's ending cutscene plays on both",
-   "expr": "window.__app.game.cutscenes.played.has('cs6_end_elias')"
+   "name": "both reach the ridge: the getaway ending",
+   "expr": "window.__app.game.cutscenes.current.id === 'cs6_free'"
   }
  },
  {
   "on": "AB",
-  "until": "window.__app.state === 'end'",
-  "timeout": 150000
+  "until": "window.__app.state === 'end' || (window.__app.game && window.__app.game.state === 'ended')",
+  "timeout": 120000
  },
  {
   "on": "AB",
   "check": {
-   "name": "game ends on both with the final screen",
-   "expr": "document.querySelector('[data-screen=end].show') !== null"
-  }
- },
- {
-  "on": "AB",
-  "check": {
-   "name": "ending saved",
-   "expr": "JSON.parse(localStorage.getItem('pbo.save')||'{}').endings?.includes('elias_lives')"
+   "name": "the game is won (ending saved)",
+   "expr": "(JSON.parse(localStorage.getItem('pbo.save') || '{}').endings || []).includes('free')"
   }
  }
 ]

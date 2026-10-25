@@ -60,6 +60,13 @@ Generated from `public/assets/credits.json` by `node tools/credits-md.mjs`. The 
 | [Generated hornbeam c tree (EZ-Tree, ambientCG/Poly Haven textures)](https://github.com/openzigs/onyourleft) | onyourleft contributors; textures ambientCG / Poly Haven | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | github.com/openzigs/onyourleft (redistributed copy) |
 | [Generated fir a tree (EZ-Tree, ambientCG/Poly Haven textures)](https://github.com/openzigs/onyourleft) | onyourleft contributors; textures ambientCG / Poly Haven | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | github.com/openzigs/onyourleft (redistributed copy) |
 | [Generated fir b tree (EZ-Tree, ambientCG/Poly Haven textures)](https://github.com/openzigs/onyourleft) | onyourleft contributors; textures ambientCG / Poly Haven | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | github.com/openzigs/onyourleft (redistributed copy) |
+| [AK-47](https://3dmodelscc0.itch.io/free-cc0-guns-explosives-pack) | 3dmodelscc0 | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | github.com/Paumen/lp-sources (repacked copy) |
+| [M4A1](https://3dmodelscc0.itch.io/free-cc0-guns-explosives-pack) | 3dmodelscc0 | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | github.com/Paumen/lp-sources (repacked copy) |
+| [Sniper](https://3dmodelscc0.itch.io/free-cc0-guns-explosives-pack) | 3dmodelscc0 | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | github.com/Paumen/lp-sources (repacked copy) |
+| [Shotgun](https://3dmodelscc0.itch.io/free-cc0-guns-explosives-pack) | 3dmodelscc0 | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | github.com/Paumen/lp-sources (repacked copy) |
+| [Makarov](https://3dmodelscc0.itch.io/free-cc0-guns-explosives-pack) | 3dmodelscc0 | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | github.com/Paumen/lp-sources (repacked copy) |
+| [Grease Gun](https://3dmodelscc0.itch.io/free-cc0-guns-explosives-pack) | 3dmodelscc0 | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | github.com/Paumen/lp-sources (repacked copy) |
+| [Suomi KP](https://3dmodelscc0.itch.io/free-cc0-guns-explosives-pack) | 3dmodelscc0 | [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/) | github.com/Paumen/lp-sources (repacked copy) |
 
 ## Textures
 

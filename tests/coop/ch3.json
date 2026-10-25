@@ -120,20 +120,15 @@
  },
  {
   "on": "AB",
-  "until": "window.__app.game.cutscenes.played.has('cs3_plan')",
+  "until": "window.__app.game.dialogue.active && !window.__app.game.cutscenes.current",
   "timeout": 20000
  },
  {
-  "wait": 1200
- },
- {
   "on": "AB",
-  "press": "Enter"
- },
- {
-  "on": "AB",
-  "until": "!window.__app.game.cutscenes.current",
-  "timeout": 60000
+  "check": {
+   "name": "plan: walk-and-talk, no cutscene (you keep control)",
+   "expr": "!window.__app.game.cutscenes.current && window.__app.game.local.state === 'free'"
+  }
  },
  {
   "tpA": [
@@ -151,15 +146,15 @@
  },
  {
   "on": "AB",
-  "until": "window.__app.game.cutscenes.played.has('cs3_farm')",
-  "timeout": 30000
- },
- {
-  "wait": 1000
+  "until": "window.__app.game.dialogue.active && !window.__app.game.cutscenes.current",
+  "timeout": 20000
  },
  {
   "on": "AB",
-  "press": "Enter"
+  "check": {
+   "name": "farm: walk-and-talk, no cutscene (you keep control)",
+   "expr": "!window.__app.game.cutscenes.current && window.__app.game.local.state === 'free'"
+  }
  },
  {
   "on": "AB",
@@ -429,6 +424,22 @@
  {
   "on": "AB",
   "press": "Enter"
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.chapter.flags.phase === 'dealer' && !window.__app.game.cutscenes.current",
+  "timeout": 90000
+ },
+ {
+  "on": "AB",
+  "eval": "(() => { const g = window.__app.game; g.local.teleport(g.chapter.dealPos.clone().add({ x: g.localChar === 'elias' ? 1.5 : -1.5, y: 0.05, z: 0 }), 0); return 1; })()"
+ },
+ {
+  "wait": 1000
+ },
+ {
+  "on": "AB",
+  "eval": "(() => { const g = window.__app.game; g.openWeaponShop('test'); const it = [...document.querySelectorAll('.hud-shop .shop-item')].find(e => (g.localChar === 'elias' ? /M4A1/ : /AK-47/).test(e.textContent)); it.click(); return 1; })()"
  },
  {
   "on": "AB",

@@ -1,71 +1,41 @@
 [
- {
-  "on": "AB",
-  "until": "window.__app.game.begun",
-  "timeout": 120000
- },
- {
-  "wait": 2000
- },
- {
-  "on": "AB",
-  "press": "Enter"
- },
- {
-  "on": "AB",
-  "until": "window.__app.game.local.state === 'bike' && window.__app.game.chapter.flags.phase === 'race'",
-  "timeout": 90000
- },
- {
-  "on": "AB",
-  "check": {
-   "name": "both riders mounted on their bikes",
-   "expr": "window.__app.game.local.state === 'bike'"
-  }
- },
- {
-  "wait": 1500
- },
- {
-  "on": "AB",
-  "check": {
-   "name": "partner is seen riding (bike sync bit + bike state)",
-   "expr": "window.__app.game.remote.onBike === true && Array.isArray(window.__app.game.remote.bike)"
-  }
- },
- {
-  "on": "AB",
-  "eval": "(() => { const g = window.__app.game; window.__s0 = g.chapter.trackPath.project(g.local.body.pos); return window.__s0; })()"
- },
- {
-  "on": "AB",
-  "hold": "KeyW",
-  "ms": 6000
- },
- {
-  "on": "AB",
-  "eval": "(() => { const g = window.__app.game; return { me: g.localChar, travelled: Math.round(g.chapter.trackPath.project(g.local.body.pos) - window.__s0), speed: +g.chapter.bikes.ctrl.speed.toFixed(1), crashed: g.chapter.bikes.ctrl.crashed, cops: g.chapter.cops.map(c => Math.round(c.s)) }; })()"
- },
- {
-  "on": "AB",
-  "check": {
-   "name": "riders make progress along the route",
-   "expr": "window.__app.game.chapter.trackPath.project(window.__app.game.local.body.pos) - window.__s0 > 25"
-  }
- },
- {
-  "on": "A",
-  "eval": "(() => { const g = window.__app.game; return { remote: g.remote.body.pos.toArray().map(x => +x.toFixed(1)) }; })()"
- },
- {
-  "on": "B",
-  "eval": "(() => { const g = window.__app.game; return { self: g.local.body.pos.toArray().map(x => +x.toFixed(1)) }; })()"
- },
- {
-  "on": "AB",
-  "check": {
-   "name": "police cruisers are chasing (visible on both)",
-   "expr": "window.__app.game.chapter.cops.some(c => c.car.root.visible && c.s > 0)"
-  }
- }
+ {"on":"AB","until":"window.__app.game.begun && !window.__app.game.cutscenes.current","timeout":120000},
+ {"on":"AB","check":{"name":"street: armed, two lookouts out front","expr":"window.__app.game.guns.playersArmed && ['look1','look2'].every(id => window.__app.game.npcs.get(id).enabled)"}},
+ {"on":"A","eval":"(async () => { const g = window.__app.game; for (const id of ['look1','look2']) { const n = g.npcs.get(id); g.local.teleport(n.body.pos.clone().add({x: -6, y: 0, z: -1}), Math.PI / 2); for (let i = 0; i < 20 && n.alive; i++) { g.guns.reloadT = 0; g.guns.ammo = 30; g['localShoot'](n, n.body.chest().sub(g.local.body.chest()).normalize()); await new Promise(r => setTimeout(r, 160)); } } return ['look1','look2'].map(id => g.npcs.get(id).alive); })()"},
+ {"on":"AB","until":"!window.__app.game.npcs.get('look1').alive && !window.__app.game.npcs.get('look2').alive","timeout":15000},
+ {"on":"AB","check":{"name":"lookouts shot down (seen on both)","expr":"!window.__app.game.npcs.get('look1').alive && !window.__app.game.npcs.get('look2').alive"}},
+ {"tpA":[25,null,12.5,0],"tpB":[26.4,null,12.2,0]},
+ {"on":"AB","until":"window.__app.game.cutscenes.current && window.__app.game.cutscenes.current.id === 'cs5_ambush'","timeout":15000},
+ {"on":"AB","until":"window.__app.game.chapter.flags.phase === 'shootout' && !window.__app.game.cutscenes.current","timeout":60000},
+ {"wait":1500},
+ {"on":"AB","check":{"name":"ambush: seven gunmen in combat, lights on","expr":"['kessler','moreno1','moreno2','g4','g5','g6','g7'].every(id => { const n = window.__app.game.npcs.get(id); return n.enabled && n.hostile; }) && window.__app.game.chapter.checkpoint === 'shootout'"}},
+ {"wait":5000},
+ {"on":"AB","check":{"name":"they shoot back (someone got hit or shots fired)","expr":"window.__app.game.session.log.some(e => e.type === 'gunshot') || window.__app.game.local.body.hp < 100 || window.__app.game.remote.body.hp < 100"}},
+ {"on":"AB","eval":"(async () => { const g = window.__app.game; g.local.regen = true; const ids = ['kessler','moreno1','moreno2','g4','g5','g6','g7']; for (let k = 0; k < 6; k++) for (const id of ids) { const n = g.npcs.get(id); if (!n.alive) continue; g.local.body.hp = 100; const offs = [{x: 0, y: 0, z: -2.2}, {x: -2.2, y: 0, z: 0}, {x: 2.2, y: 0, z: 0}, {x: 0, y: 0, z: 2.2}]; g.local.teleport(n.body.pos.clone().add(offs[k % 4]), 0); await new Promise(r => setTimeout(r, 120)); for (let i = 0; i < 12 && n.alive; i++) { g.guns.reloadT = 0; g.guns.ammo = 30; g['localShoot'](n, n.body.chest().sub(g.local.body.chest()).normalize()); await new Promise(r => setTimeout(r, 120)); } } return ids.map(id => g.npcs.get(id).alive); })()"},
+ {"on":"AB","until":"window.__app.game.cutscenes.current && window.__app.game.cutscenes.current.id === 'cs5_crane'","timeout":30000},
+ {"on":"AB","check":{"name":"all of Crane's men down: Victor's scene","expr":"window.__app.game.cutscenes.current.id === 'cs5_crane'"}},
+ {"on":"AB","until":"window.__app.game.chapter.flags.phase === 'chase' && !window.__app.game.cutscenes.current","timeout":40000},
+ {"wait":3000},
+ {"on":"AB","check":{"name":"Victor runs for the back door (synced)","expr":"(() => { const n = window.__app.game.npcs.get('crane'); return n.state === 'scripted' && n.hostile; })()"}},
+ {"on":"A","eval":"(async () => { const g = window.__app.game; const n = g.npcs.get('crane'); for (let i = 0; i < 30 && g.chapter.flags.phase === 'chase'; i++) { g.local.body.hp = 100; g.local.teleport(n.body.pos.clone().add({x: 0, y: 0, z: -3}), 0); await new Promise(r => setTimeout(r, 100)); g.guns.reloadT = 0; g.guns.ammo = 30; g['localShoot'](n, n.body.chest().sub(g.local.body.chest()).normalize()); await new Promise(r => setTimeout(r, 200)); } return g.chapter.flags.phase; })()"},
+ {"on":"AB","until":"window.__app.game.cutscenes.current && window.__app.game.cutscenes.current.id === 'cs5_end'","timeout":30000},
+ {"on":"AB","until":"window.__app.game.chapter.flags.phase === 'safe' && !window.__app.game.cutscenes.current","timeout":90000},
+ {"on":"AB","check":{"name":"after the end of Crane: back in his office at the safe","expr":"window.__app.game.local.body.pos.y > 3 && window.__app.game.chapter.checkpoint === 'safe'"}},
+ {"on":"AB","eval":"(() => { const g = window.__app.game; const it = g.interact.items.get(g.localChar === 'elias' ? 'safe_a' : 'safe_b'); g.local.teleport(it.pos.clone().add({x: 0.2, y: 0.05, z: 0}), -Math.PI / 2); return it.id; })()"},
+ {"wait":1000},
+ {"on":"AB","hold":"KeyE","ms":4200},
+ {"on":"AB","until":"window.__app.game.chapter.flags.safeOpen === true","timeout":10000},
+ {"on":"AB","check":{"name":"both together: the safe opens","expr":"window.__app.game.chapter.flags.safeOpen === true"}},
+ {"on":"A","eval":"(() => { const g = window.__app.game; const it = g.interact.items.get('take_money'); g.local.teleport(it.pos.clone().add({x: 0.3, y: 0.05, z: 0}), -Math.PI / 2); return 1; })()"},
+ {"wait":800},
+ {"on":"A","press":"KeyE"},
+ {"on":"AB","until":"window.__app.game.cutscenes.current && window.__app.game.cutscenes.current.id === 'cs5_police'","timeout":15000},
+ {"on":"AB","until":"window.__app.game.chapter.flags.phase === 'escape' && !window.__app.game.cutscenes.current","timeout":40000},
+ {"on":"AB","check":{"name":"police at the front, run for the bikes","expr":"window.__app.game.chapter.checkpoint === 'escape' && window.__app.game.npcs.get('cop_a').enabled"}},
+ {"on":"AB","eval":"(() => { const g = window.__app.game; const it = g.interact.items.get('bike_' + g.localChar); g.local.teleport(it.pos.clone().add({x: 0, y: 0.05, z: -1.0}), 0); return it.id; })()"},
+ {"wait":900},
+ {"on":"AB","press":"KeyE"},
+ {"on":"AB","until":"window.__app.game.cutscenes.current && window.__app.game.cutscenes.current.id === 'cs5_ride'","timeout":20000},
+ {"on":"AB","until":"window.__app.state === 'end' || (window.__app.game && window.__app.game.state === 'ended')","timeout":60000},
+ {"on":"AB","check":{"name":"chapter 5 complete: on Crane's bikes, on to the getaway","expr":"window.__app.state === 'end' || window.__app.game.state === 'ended'"}}
 ]

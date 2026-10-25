@@ -56,7 +56,7 @@
   "on": "AB",
   "check": {
    "name": "Elias (good timing) wins hoops on both screens",
-   "expr": "(window.__app.game.minigames.wins.hoops_mia || {}).elias === 1"
+   "expr": "(window.__app.game.minigames.wins.hoops_jax || {}).elias === 1"
   }
  },
  {
