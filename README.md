@@ -30,6 +30,11 @@ The room creator's browser hosts the room. The partner connects to it directly o
 
 Progress saves at every checkpoint. **Continue** resumes from the last one.
 
+**Optional extras.**
+
+- **Mini-games.** Arm wrestling at a dayroom table in chapter 1 (mash Use), and a shooting contest at Mia's hoop in chapter 4 (time the meter, 5 shots each). Both players stand at the two spots and hold Use to start; the game runs on the host and both see the same result.
+- **Memories.** Eight objects to examine in chapters 1–4 (a photo, wall marks, the TV news, a letter, a radio, the river, Mia's photos, a quarry sign), each with a short conversation that fills in the story. Either player can trigger one, both hear it, and the found count is shared.
+
 ## Controls
 
 **Touch (phones, tablets).** Left side: floating joystick (push far to run). Right side: drag to look. On-screen buttons change with the situation: Use, Hit, Block, Dodge, Jump, Crouch, Run. On the bike they are Gas, Brake and Boost. Hold anywhere to skip a cutscene.
@@ -161,7 +166,7 @@ Each command below runs real, separate browser instances (Chromium with software
 |---|---|
 | `npm run test:server` | Room server protocol: create, join, full rooms, codes, ready/start, resume, leave, version mismatch |
 | `npm run test:e2e [url]` | Two browsers: lobby, invite link, character swap, ready/start, both load and begin together, authority, cutscene skip voting, movement and NPC sync, guest reload resume, socket drop, leaving. `Q='peer=host:port'` runs it over peer-to-peer |
-| `node tools/coop.mjs <ch> <checkpoint> @tests/coop/chN.json [url]` | Scripted two-player playthroughs of each chapter's co-op puzzles, fights and chapter ends (`tests/coop/ch1…ch6.json`, `p2p-host-reload.json`) |
+| `node tools/coop.mjs <ch> <checkpoint> @tests/coop/chN.json [url]` | Scripted two-player playthroughs of each chapter's co-op puzzles, fights and chapter ends (`tests/coop/ch1…ch6.json`), plus `minigame-arm.json`, `minigame-hoops.json`, `memory.json` and `p2p-host-reload.json` |
 | `node tools/soak.mjs [url] [secs]` | Random play in every checkpoint, reporting crashes, NaNs and long falls. `FPS=8` simulates a slow phone |
 | `node tools/cliff.mjs [url] [fps]` | Sprints into the steepest slopes of each level and measures sinking below the ground |
 | `node tools/leak.mjs` / `tools/memory.mjs` | Live game objects and GPU textures, geometry and shaders across chapter loads |
@@ -185,6 +190,8 @@ Developer solo mode (not in the menus): `?dev=solo&ch=3&cp=farm` loads a checkpo
   - Lobby/reconnect end-to-end: 17/17, over both the WebSocket server and peer-to-peer
   - Server protocol: 11/11
   - Host reload in peer-to-peer: 5/5
+  - Mini-games: arm wrestling 8/8, hoops 6/6
+  - Memories: 6/6 (and all eight can be reached in their chapters)
 - No falling through the ground in the steep-slope test at 8 fps. The previous build failed it in chapters 3, 4 and 6.
 - Memory stays flat across six chapter loads.
 - The UI was checked at phone (portrait and landscape), tablet and 1080p sizes.
