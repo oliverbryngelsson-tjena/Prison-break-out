@@ -35,6 +35,8 @@ export interface NpcDef {
   damage?: number;
   /** Cannot be taken down from behind. */
   noTakedown?: boolean;
+  /** Carries a pistol: fights at range instead of punching. */
+  gun?: { dmg?: number; range?: number; rate?: number; acc?: number };
   /** Ignore players completely (ambient). */
   passive?: boolean;
   look?: boolean;
@@ -59,6 +61,8 @@ export interface NpcHooks {
   /** NPC attacks a player (authority decides, game applies locally or sends to peer). */
   onAttackPlayer(npc: Npc, who: CharacterId, dmg: number, kind: 'punch' | 'heavy'): void;
   onKO(npc: Npc): void;
+  /** Gunman fires at a player (authority); `hit` already decided. */
+  onShoot(npc: Npc, who: CharacterId, hit: boolean, dmg: number): void;
   bark(npc: Npc, kind: 'suspicious' | 'alert' | 'lost' | 'hit' | 'search' | 'attack'): void;
   /** Light level at a point (0..1). */
   lightAt(p: THREE.Vector3): number;
@@ -102,6 +106,8 @@ export class Npc implements Combatant {
   private stuckT = 0;
   private barkT = 0;
   enabled = true;
+  /** Walk straight at script targets (no nav graph): scripted runs over stairs and ramps. */
+  direct = false;
   /** Last pose name/time for snapshots. */
   pose: string | null = null;
   poseAt = 0;
@@ -146,6 +152,10 @@ export class Npc implements Combatant {
     this.wp = 0;
     this.path = [];
     this.windup = -1;
+    // Drop buffered network positions from before the reset (proxies would replay them).
+    this.buf = [];
+    this.fireCd = 1.2;
+    this.aimT = 0;
     this.scriptTarget = null;
     this.body.clearPose(0);
     this.state = this.def.patrol?.length ? 'patrol' : 'idle';
@@ -197,7 +207,7 @@ export class Npc implements Combatant {
     }
     // Enemies sometimes block frontal punches.
     const faceDot = Math.sin(this.body.yaw) * -dir[0] + Math.cos(this.body.yaw) * -dir[1];
-    if (this.state === 'combat' && this.windup < 0 && faceDot > 0.5 && kind !== 'heavy' && Math.random() < 0.25) {
+    if (this.state === 'combat' && this.windup < 0 && faceDot > 0.5 && kind === 'punch' && !this.def.gun && Math.random() < 0.25) {
       this.setPose('block');
       return false;
     }
@@ -210,6 +220,7 @@ export class Npc implements Combatant {
       this.hooks.onKO(this);
       return true;
     }
+    if (kind === 'shot') this.fireCd = Math.max(this.fireCd, 0.6);
     if (kind === 'heavy' && Math.random() < 0.6) {
       this.setState('stunned');
       this.setPose('stagger');
@@ -337,9 +348,55 @@ export class Npc implements Combatant {
   private combatMove: THREE.Vector3 | null = null;
   private combatSpeed = 0;
 
+  private fireCd = 1.2;
+  private aimT = 0;
+
+  /** Gunmen: get a clear line within range, settle the aim, then fire every second or two. */
+  private updateGunCombat(dt: number, tgt: Body): void {
+    const b = this.body;
+    const gun = this.def.gun!;
+    const range = gun.range ?? 22;
+    const d = b.pos.distanceTo(tgt.pos);
+    const faceYaw = Math.atan2(tgt.pos.x - b.pos.x, tgt.pos.z - b.pos.z);
+    b.yaw = lerpAngle(b.yaw, faceYaw, dt * 5);
+    const eye = tmp.set(b.pos.x, b.pos.y + 1.5, b.pos.z);
+    const clear = d < range && this.world.physics.lineOfSight(eye, tgt.chest());
+    if (!clear) {
+      this.aimT = 0;
+      if (this.pose === 'aim') { this.pose = null; b.clearPose(0.3); }
+      this.combatMove = tgt.pos;
+      this.combatSpeed = d > 8 ? (this.def.run ?? 3.6) : 2.2;
+      return;
+    }
+    const pitch = THREE.MathUtils.clamp((tgt.pos.y - b.pos.y) / Math.max(1, d), -0.5, 0.5);
+    if (this.pose !== 'aim') { this.pose = 'aim'; this.poseAt = this.world.time; b.setPose('aim', { k: { pitch } }); }
+    else b.updatePoseCtx({ k: { pitch } });
+    // Back off a little when the player is right on top of them.
+    if (d < 2.2) {
+      tmp2.set(b.pos.x - tgt.pos.x, 0, b.pos.z - tgt.pos.z).normalize().multiplyScalar(2).add(b.pos);
+      this.combatMove = tmp2.clone();
+      this.combatSpeed = 1.6;
+    }
+    this.aimT += dt;
+    this.fireCd -= dt;
+    if (this.aimT < 0.7 || this.fireCd > 0 || Math.cos(b.yaw - faceYaw) < 0.9) return;
+    const rate = gun.rate ?? 1.6;
+    this.fireCd = rate * (0.75 + Math.random() * 0.6);
+    let acc = (gun.acc ?? 0.5) * (d < 8 ? 1 : Math.max(0.35, 1 - (d - 8) / range));
+    if (tgt.crouched) acc *= 0.6;
+    if (tgt.speed > 3) acc *= 0.65;
+    this.hooks.onShoot(this, this.target!, Math.random() < acc, gun.dmg ?? 11);
+  }
+
   private updateCombat(dt: number): void {
     const b = this.body;
     const tgt = this.targetBody();
+    if (this.def.gun && tgt) {
+      this.combatMove = null;
+      this.combatSpeed = 0;
+      this.updateGunCombat(dt, tgt);
+      return;
+    }
     this.combatMove = null;
     this.combatSpeed = 0;
     if (!tgt) { this.setState('search'); return; }
@@ -456,7 +513,7 @@ export class Npc implements Combatant {
     // Re-plan every second or when the path is empty.
     this.pathT -= dt;
     if (!this.path.length || this.pathT <= 0) {
-      this.path = this.hooks.nav ? this.hooks.nav.path(b.pos, target) : [target.clone()];
+      this.path = this.hooks.nav && !this.direct ? this.hooks.nav.path(b.pos, target) : [target.clone()];
       this.pathT = this.state === 'alert' || this.state === 'combat' ? 0.4 : 1.5;
     }
     let next = this.path[0];

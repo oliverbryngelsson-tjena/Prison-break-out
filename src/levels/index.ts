@@ -11,7 +11,7 @@ export const CHAPTERS: Array<{ num: number; title: string; make: () => Chapter }
   { num: 1, title: 'Prison Life', make: () => new Chapter1() },
   { num: 2, title: 'The Breakout', make: () => new Chapter2() },
   { num: 3, title: 'On the Run', make: () => new Chapter3() },
-  { num: 4, title: 'The Revenge', make: () => new Chapter4() },
+  { num: 4, title: 'The Brother', make: () => new Chapter4() },
   { num: 5, title: 'The Chase', make: () => new Chapter5() },
   { num: 6, title: 'The Betrayal', make: () => new Chapter6() },
 ];
@@ -25,7 +25,7 @@ export const CHAPTER_TITLES: Record<number, string> = {
   1: 'Prison Life',
   2: 'The Breakout',
   3: 'On the Run',
-  4: 'The Revenge',
+  4: 'The Brother',
   5: 'The Chase',
   6: 'The Betrayal',
 };

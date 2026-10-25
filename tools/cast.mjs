@@ -40,6 +40,13 @@ export const CAST = [
   { id: 'thug2', src: 'Avatars/Adults/Male_Adult_17', sex: 'm', role: 'thug', tex: 512 },
   { id: 'thug3', src: 'Avatars/Adults/Male_Adult_18', sex: 'm', role: 'thug', tex: 512 },
   { id: 'bodyguard', src: 'Avatars/Professions/Business_Male_01', sex: 'm', role: 'thug', tex: 512 },
+  // Victor's brother and the construction crew
+  { id: 'julius', src: 'Avatars/Professions/Business_Male_02', sex: 'm', role: 'villain', tex: 1024 },
+  { id: 'worker1', src: 'Avatars/Professions/Construction_Male_01', sex: 'm', role: 'worker', tex: 512 },
+  { id: 'worker2', src: 'Avatars/Professions/Construction_Male_02', sex: 'm', role: 'worker', tex: 512 },
+  { id: 'worker3', src: 'Avatars/Professions/Construction_Male_04', sex: 'm', role: 'worker', tex: 512 },
+  { id: 'worker4', src: 'Avatars/Professions/Construction_Male_07', sex: 'm', role: 'worker', tex: 512 },
+  { id: 'dealer', src: 'Avatars/Adults/Male_Adult_11', sex: 'm', role: 'thug', tex: 512 },
   // Inmates
   inmate('inmate1', 'Avatars/Adults/Male_Adult_07'),
   inmate('inmate2', 'Avatars/Adults/Male_Adult_09', ORANGE_FADED),

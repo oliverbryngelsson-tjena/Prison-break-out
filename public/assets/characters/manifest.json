@@ -236,5 +236,53 @@
   "defaultVariant": "prison",
   "hipY": 0.895184814929962,
   "height": 1.842
+ },
+ "julius": {
+  "file": "julius.glb",
+  "sex": "m",
+  "role": "villain",
+  "variants": {},
+  "hipY": 0.895184814929962,
+  "height": 1.822
+ },
+ "worker1": {
+  "file": "worker1.glb",
+  "sex": "m",
+  "role": "worker",
+  "variants": {},
+  "hipY": 0.895184814929962,
+  "height": 1.848
+ },
+ "worker2": {
+  "file": "worker2.glb",
+  "sex": "m",
+  "role": "worker",
+  "variants": {},
+  "hipY": 0.895184814929962,
+  "height": 1.841
+ },
+ "worker3": {
+  "file": "worker3.glb",
+  "sex": "m",
+  "role": "worker",
+  "variants": {},
+  "hipY": 0.895184814929962,
+  "height": 1.846
+ },
+ "worker4": {
+  "file": "worker4.glb",
+  "sex": "m",
+  "role": "worker",
+  "variants": {},
+  "hipY": 0.895184814929962,
+  "height": 1.838
+ },
+ "dealer": {
+  "file": "dealer.glb",
+  "sex": "m",
+  "role": "thug",
+  "variants": {},
+  "hipY": 0.895184814929962,
+  "height": 1.802
  }
 }

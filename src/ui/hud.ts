@@ -13,7 +13,7 @@ const el = (tag: string, cls: string, parent?: HTMLElement, html?: string): HTML
 export interface Marker {
   id: string;
   pos: () => THREE.Vector3 | null;
-  kind: 'partner' | 'objective' | 'guard' | 'item';
+  kind: 'partner' | 'objective' | 'guard' | 'item' | 'target';
   label?: string;
   /** 0..1 fill (guard awareness) */
   value?: () => number;
@@ -193,7 +193,7 @@ export class Hud {
 
   addMarker(m: Marker): void {
     this.removeMarker(m.id);
-    const e = el('div', `marker ${m.kind}`, this.markerLayer, m.kind === 'guard' ? '<i></i><b></b>' : `<i></i><span>${escapeHtml(m.label ?? '')}</span>`);
+    const e = el('div', `marker ${m.kind}`, this.markerLayer, m.kind === 'guard' ? '<i></i><b></b>' : m.kind === 'target' ? '<i></i>' : `<i></i><span>${escapeHtml(m.label ?? '')}</span>`);
     this.markers.set(m.id, { m, el: e });
   }
 
@@ -225,6 +225,12 @@ export class Hud {
         e.classList.toggle('alert', val >= 1);
         (e.querySelector('b') as HTMLElement).style.height = `${Math.round(val * 100)}%`;
         (e.querySelector('i') as HTMLElement).textContent = val >= 1 ? '!' : '?';
+        e.style.transform = `translate(${x}px, ${y}px)`;
+        continue;
+      }
+      if (m.kind === 'target') {
+        if (behind) { e.style.display = 'none'; continue; }
+        e.style.display = '';
         e.style.transform = `translate(${x}px, ${y}px)`;
         continue;
       }
