@@ -93,7 +93,12 @@ export class Hud {
     if (text) this.objective.classList.add('flash');
   }
 
+  private partnerKey = '';
   setPartner(name: string, char: string, status: 'ok' | 'lag' | 'away', ping: number, hp: number): void {
+    // Rebuilding this every frame was a measurable cost; only touch the DOM when something changed.
+    const key = `${name}|${char}|${status}|${Math.round(ping / 10)}|${Math.round(hp)}`;
+    if (key === this.partnerKey) return;
+    this.partnerKey = key;
     this.partner.innerHTML = `<span class="dot ${status}"></span><span class="pname">${escapeHtml(name)}</span><span class="pchar">${char === 'elias' ? 'Elias' : 'Jax'}</span>` +
       `<span class="ping">${status === 'away' ? 'offline' : ping ? ping + ' ms' : ''}</span><span class="php"><i style="width:${Math.max(0, Math.min(100, hp))}%"></i></span>`;
   }

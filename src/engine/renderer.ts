@@ -237,8 +237,17 @@ export class Renderer {
     }
   }
 
+  private heapMB: number | undefined;
+  private heapAt = 0;
   stats() {
     const i = this.gl.info;
+    // performance.memory is slow to read: sample it once a second.
+    const now = performance.now();
+    if (now - this.heapAt > 1000) {
+      this.heapAt = now;
+      const m = (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory;
+      this.heapMB = m ? Math.round(m.usedJSHeapSize / 1048576) : undefined;
+    }
     return {
       fps: Math.round(this.fps),
       ms: +this.frameMs.toFixed(1),
@@ -249,9 +258,7 @@ export class Renderer {
       scale: +this.scale.toFixed(2),
       quality: this.q.level,
       gpu: this.device.gpu,
-      heapMB: (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory
-        ? Math.round((performance as Performance & { memory: { usedJSHeapSize: number } }).memory.usedJSHeapSize / 1048576)
-        : undefined,
+      heapMB: this.heapMB,
     };
   }
 }

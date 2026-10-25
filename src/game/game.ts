@@ -902,9 +902,9 @@ export class Game implements SessionHandlers, CutsceneHost {
         hud.addMarker({ id: 'npc:' + n.id, kind: 'guard', pos: () => n.body.head().add(new THREE.Vector3(0, 0.35, 0)), value: () => (n.alive && !this.inCutscene ? n.awareness[this.localChar] : 0) });
       }
     }
-    const r = this.deps.renderer.stats();
     hud.showStats = this.deps.settings.showFps;
-    hud.update(dt, this.cam.camera, `${r.fps} fps · ${r.ms} ms · ${r.calls} calls · ${(r.tris / 1000).toFixed(0)}k tris · scale ${r.scale} · ${r.quality}${r.heapMB ? ` · ${r.heapMB} MB` : ''} · rtt ${Math.round(this.deps.net?.rtt ?? 0)} ms`);
+    const r = hud.showStats ? this.deps.renderer.stats() : null;
+    hud.update(dt, this.cam.camera, !r ? '' : `${r.fps} fps · ${r.ms} ms · ${r.calls} calls · ${(r.tris / 1000).toFixed(0)}k tris · scale ${r.scale} · ${r.quality}${r.heapMB ? ` · ${r.heapMB} MB` : ''} · rtt ${Math.round(this.deps.net?.rtt ?? 0)} ms`);
   }
   private markersMade = false;
   private loadedTimer = 1.5;
