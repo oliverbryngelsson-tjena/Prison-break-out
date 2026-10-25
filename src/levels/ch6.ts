@@ -235,7 +235,7 @@ export class Chapter6 extends Chapter {
     // Pipes, control panels, oil drums for cover
     for (const [dx, dz] of [[-11, -5], [11, -5], [-11, 2], [11, 2]] as const) kit.box(steel, [x + dx, y + 0.8, z + dz], [1.2, 1.6, 0.6], 0, {});
     const barrels = await w.model('oil_barrels');
-    for (const [dx, dz, yaw] of [[-6, -5.5, 0.3], [5, -6.2, 1.1]] as const) { kit.place(barrels, [x + dx, y, z + dz], yaw); w.physics.addBox({ x: x + dx, y: y + 0.45, z: z + dz }, { x: 1.1, y: 0.9, z: 1.4 }, yaw, {}); }
+    for (const [dx, dz, yaw] of [[-6, -5.5, 0.3], [5, -6.2, 1.1]] as const) { kit.place(barrels, [x + dx, y, z + dz], yaw); w.physics.addBox({ x: x + dx, y: y + 0.45, z: z + dz }, { x: 0.6, y: 0.9, z: 1.4 }, yaw, {}); }
     for (const dx of [-9, -3, 3, 9]) kit.fixture(L.emissive(0xeef4ff, 3), steel, x + dx, y + H - 0.4, z - 2, 0, 0xdde8ff, 2.4, 14, 1.6, 'hall');
     // Dawn light shafts through the high windows
     for (const at of [4, 10, 16, 22]) kit.shaft([x - W / 2 + at, y + 8, z - D / 2 + 0.3], new THREE.Vector3(-0.25, -0.75, 1).normalize(), 2.2, 12, 0xffd8b0, 0.07);

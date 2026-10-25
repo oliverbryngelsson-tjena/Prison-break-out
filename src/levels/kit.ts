@@ -278,6 +278,10 @@ export class Kit {
 
   /** Adds a single model instance to the scene. */
   place(model: THREE.Object3D, p: [number, number, number], yaw = 0, s = 1, parent?: THREE.Object3D): THREE.Object3D {
+    // Placing a model that is already in the scene places a copy (geometry and materials are
+    // shared). Re-placing the same object used to just move it, leaving earlier spots with a
+    // collider but nothing visible: invisible walls.
+    if (model.parent) model = model.clone();
     model.position.set(...p);
     model.rotation.y = yaw;
     model.scale.setScalar(s);

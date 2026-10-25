@@ -9,6 +9,7 @@ import { Terrain, fbm, distToPath, smooth } from './terrain';
 import { Water } from './water';
 import { Foliage, scatter, type FoliageItem } from './foliage';
 import { Flashlight, Searchlight, coneLight, inSearchlight } from './lights';
+import { SPEAKERS } from '../game/game';
 import { cylinderBetween } from '../engine/geometry';
 import type { Line } from '../game/dialogue';
 
@@ -33,6 +34,7 @@ export class Chapter2 extends Chapter {
   private steamOn = true;
   private steamT = 0;
   private spotT: Record<CharacterId, number> = { elias: 0, jax: 0 };
+  private spotHint: string | null = null;
   private shotT = 2;
   private hatchT = 0;
   private drainT = 0;
@@ -80,6 +82,7 @@ export class Chapter2 extends Chapter {
       { who: 'jax', text: 'That pipe\'s cooking. We\'re not walking through that.' },
       { who: 'elias', text: 'There are valves on both sides. One holds, one runs.' },
     ];
+    D.spot_warn = [{ who: 'towerguard', text: 'Huh? Thought I saw something by the wall…', dur: 2.6 }];
     D.steam_tip = [{ who: 'narrator', text: 'Hold Use on a valve to shut off the steam while your partner gets past.', dur: 4 }];
     D.water = [{ who: 'jax', text: 'Of course it\'s flooded. Why wouldn\'t it be flooded.' }];
     D.grate = [
@@ -256,7 +259,7 @@ export class Chapter2 extends Chapter {
     kit.instance(crate, [{ p: [14.5, TY, 18.6], yaw: 0.4 }, { p: [14.6, TY + 0.3, 18.9], yaw: 1.2 }, { p: [22.6, TY, 21.0], yaw: 0.2 }]);
     const barrels = await w.model('oil_barrels');
     kit.place(barrels, [14.7, TY, -6.5], 0.3);
-    w.physics.addBox({ x: 14.7, y: TY + 0.45, z: -6.5 }, { x: 0.9, y: 0.9, z: 1.3 }, 0.3, {});
+    w.physics.addBox({ x: 14.7, y: TY + 0.45, z: -6.5 }, { x: 0.6, y: 0.9, z: 1.4 }, 0.3, {});
   }
 
   /** Visual ladder (two rails + rungs) against a wall; yaw = facing direction of the climber. */
@@ -314,10 +317,12 @@ export class Chapter2 extends Chapter {
     const barrels = await w.model('oil_barrels');
     for (const [x, z, yaw] of [[22.9, 18.5, 0.1], [22.7, 31.0, 1.4], [16.5, 42.9, 0.3], [9.0, 43.0, -0.2]] as const) {
       kit.place(barrels, [x, 0, z], yaw);
-      w.physics.addBox({ x, y: 0.45, z }, { x: 1.1, y: 0.9, z: 1.4 }, yaw, {});
+      w.physics.addBox({ x, y: 0.45, z }, { x: 0.6, y: 0.9, z: 1.4 }, yaw, {}); // fitted to the oil_barrels model (0.55 x 1.37)
     }
-    kit.instance(crate, [{ p: [22.0, 0, 26.5], yaw: 0.2 }, { p: [22.1, 0.3, 26.6], yaw: 1.0 }, { p: [22.9, 0, 36.2], yaw: 0.5 }, { p: [12.0, 0, 43.0], yaw: 0.1 }, { p: [12.4, 0.3, 43.1], yaw: 0.7 }]);
-    for (const [x, z] of [[22.1, 26.5], [22.9, 36.2], [12.2, 43.0]] as const) w.physics.addBox({ x, y: 0.4, z }, { x: 0.9, y: 0.8, z: 0.6 }, 0, {});
+    const crates: Array<{ p: [number, number, number]; yaw: number }> = [{ p: [22.0, 0, 26.5], yaw: 0.2 }, { p: [22.1, 0.34, 26.6], yaw: 1.0 }, { p: [22.9, 0, 36.2], yaw: 0.5 }, { p: [12.0, 0, 43.0], yaw: 0.1 }, { p: [12.4, 0.34, 43.1], yaw: 0.7 }];
+    kit.instance(crate, crates);
+    // One collider per crate, matching its size (0.82 x 0.34 x 0.4) and rotation.
+    for (const c of crates) w.physics.addBox({ x: c.p[0], y: c.p[1] + 0.17, z: c.p[2] }, { x: 0.84, y: 0.34, z: 0.42 }, c.yaw, {});
     // Generator box with a hum
     kit.box(L.plain(0x46524a, 0.6, 0.3), [22.8, 0.7, 39.2], [1.2, 1.4, 1.8], 0, {});
     w.ambientLoop('amb_fan', 0.25, v3(22.8, 1, 39.2));
@@ -653,7 +658,8 @@ export class Chapter2 extends Chapter {
     sl.track = null; sl.period = 22; sl.on = true;
     this.searchlights[1].on = false;
     this.steamOn = true;
-    this.spotT = { elias: 0, jax: 0 };
+    // A few seconds' grace: the yard spawn is on the searchlight's sweep path.
+    this.spotT = { elias: -4, jax: -4 };
     // Physical state by progress
     const ph = id;
     this.flags.phase = ph === 'cells' ? 'cells' : ph === 'chase' ? 'chase' : ph === 'tunnel' ? 'tunnel' : ph === 'yard' ? 'yard' : 'outside';
@@ -729,6 +735,16 @@ export class Chapter2 extends Chapter {
     const g = this.g;
     const a = (args ?? {}) as Record<string, unknown>;
     switch (type) {
+      case 'spotWarn': {
+        // First time in the light standing: a warning, not a catch.
+        const who = a.who as CharacterId;
+        g.audio.play('ui_hit', { volume: 0.7 });
+        g.cam.addShake(0.15);
+        if (who === g.localChar) g.hud.notify('The searchlight saw you! Crouch when it\'s on you — next time you\'ll be caught.', 5);
+        else g.hud.notify(`${SPEAKERS[who].name} was in the light! Next time you'll both be caught.`, 4);
+        this.say('spot_warn');
+        return true;
+      }
       case 'ventOpen': {
         const who = a.who as CharacterId;
         this.flags[`vent_${who}`] = true;
@@ -958,15 +974,33 @@ export class Chapter2 extends Chapter {
         if (sun) { const base = sun.intensity; sun.intensity = 3.5; setTimeout(() => { sun.intensity = base; }, 120); }
       }
     }
+    // Tell the local player right away when the searchlight is on them.
+    if (this.flags.phase === 'yard' && !g.inCutscene && g.state === 'playing') {
+      const me = g.local.body;
+      const lit = me.pos.y <= 1 && !g.local.scripted && inSearchlight(this.searchlights[0], me.pos);
+      const key = g.input.device === 'touch' ? 'tap CROUCH' : `crouch (${g.input.glyph('crouch')})`;
+      const msg = !lit ? null : me.crouched ? 'In the searchlight — stay down until it passes' : `Searchlight! ${key[0].toUpperCase()}${key.slice(1)} or you'll be caught`;
+      if (msg !== this.spotHint) { g.hud.setBanner(msg, me.crouched ? 'info' : 'danger'); this.spotHint = msg; }
+    } else if (this.spotHint) { g.hud.setBanner(null); this.spotHint = null; }
     if (!this.authority) return;
-    // Searchlight detection
-    if (this.flags.phase === 'yard') {
+    // Searchlight: standing in the light is spotted; crouching keeps you hidden. The first time a
+    // player is spotted standing it's a warning, the second time they're caught.
+    if (this.flags.phase === 'yard' && g.state === 'playing' && !g.inCutscene) {
+      const sl = this.searchlights[0];
       for (const c of ['elias', 'jax'] as CharacterId[]) {
         const b = g.body(c);
-        const sl = this.searchlights[0];
+        const climbing = c === g.localChar ? g.local.scripted : g.remote.scripted;
+        // Climbing or up on the scaffolding (behind the tarp) can't be caught by the light.
+        if (climbing || b.pos.y > 1.0) { this.spotT[c] = 0; continue; }
         const lit = inSearchlight(sl, b.pos) && g.world.physics.lineOfSight(sl.pos, b.chest());
-        this.spotT[c] = lit ? this.spotT[c] + dt : Math.max(0, this.spotT[c] - dt * 0.5);
-        if (this.spotT[c] > 0.7 && g.state === 'playing') {
+        if (lit && !b.crouched) this.spotT[c] += dt;
+        else this.spotT[c] = Math.max(0, this.spotT[c] - dt);
+        const warned = !!this.flags[`spotWarn_${c}`];
+        if (!warned && this.spotT[c] > 0.35) {
+          this.spotT[c] = -2.0; // a moment to get down before it counts again
+          g.session.emit('flag', { k: `spotWarn_${c}`, v: true });
+          g.session.emit('spotWarn', { who: c });
+        } else if (warned && this.spotT[c] > 0.7) {
           this.spotT[c] = 0;
           g.session.emit('dlg', { lines: [{ who: 'towerguard', text: 'Light on the north side! Hold it right there!', dur: 2 } satisfies Line], at: g.session.sharedNow() });
           g.session.emit('caught', { who: c, by: 'searchlight' });
@@ -1014,7 +1048,8 @@ export class Chapter2 extends Chapter {
       return p.x > 10.4 ? (b.poseName === 'kneel' ? 1.6 : 0.8) : 1.5;
     }
     if (ph === 'chase' && npc === 'vance') return 0; // walls block the chase anyway
-    if (ph === 'yard') return 1.2;
+    // Yard: up on the scaffolding behind the tarp is hard to see; on the ground, a fair chance.
+    if (ph === 'yard') return p.y > 1.0 ? 0.2 : 0.9;
     return ph === 'tunnel' ? 0 : 1;
   }
 

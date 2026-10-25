@@ -506,7 +506,7 @@ export async function buildPrison(world: World, mode: 'day' | 'night', opts: { b
   P.addBox({ x: -15.0, y: 0.4, z: -40.9 }, { x: 1.6, y: 0.8, z: 0.9 }, 0, { surface: 'wood' });
   const barrels = await world.model('oil_barrels');
   kit.place(barrels, [0.4, 0, -40.9], 0.4);
-  P.addBox({ x: 0.4, y: 0.45, z: -40.9 }, { x: 1.4, y: 0.9, z: 0.8 }, 0.4, { surface: 'metal' });
+  P.addBox({ x: 0.4, y: 0.45, z: -40.9 }, { x: 0.6, y: 0.9, z: 1.4 }, 0.4, { surface: 'metal' });
   // workshop door from corridor (open frame) + shop->laundry door
   const workshopDoor = new THREE.Group();
   const wdp = new THREE.Group();
@@ -722,7 +722,7 @@ export async function buildPrison(world: World, mode: 'day' | 'night', opts: { b
   P.addBox({ x: 16.5, y: 0.75, z: 8.4 }, { x: 1.95, y: 1.5, z: 1.2 }, 0, { surface: 'metal' });
   const barrels2 = await world.model('oil_barrels');
   kit.place(barrels2, [-17, 0, 15], 1.2);
-  P.addBox({ x: -17, y: 0.45, z: 15 }, { x: 1.4, y: 0.9, z: 1.4 }, 0, { surface: 'metal' });
+  P.addBox({ x: -17, y: 0.45, z: 15 }, { x: 0.6, y: 0.9, z: 1.4 }, 1.2, { surface: 'metal' });
   const tire = await world.model('tire');
   kit.instance(tire, [{ p: [-16.8, 0, 32], yaw: 0.3 }, { p: [-16.2, 0, 32.6], yaw: 1.3 }, { p: [-17.0, 0, 33.4], yaw: 2.2 }]);
   // Exterior of the cell block (yard side) — brick facade
