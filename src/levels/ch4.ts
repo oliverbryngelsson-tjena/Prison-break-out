@@ -110,10 +110,10 @@ export class Chapter4 extends Chapter {
     const w = g.world;
     await w.setEnvironment({
       hdr: 'env/quarry.hdr', envIntensity: 0.12, background: 0x080b10,
-      fog: { color: 0x0c1016, density: 0.012 },
-      hemi: { sky: 0x2a3650, ground: 0x0e0c0a, intensity: 0.3 },
-      sun: { color: 0x8ea6d8, intensity: 0.5, dir: [0.4, 0.8, -0.3], shadows: true },
-      grade: { saturation: 0.82, contrast: 1.1, lift: [0.0, 0.005, 0.014], gain: [1.0, 1.0, 1.04], shadowTint: [0.9, 0.96, 1.12], highlightTint: [1.08, 1.0, 0.9], exposure: 1.12, bloom: 1.0, vignette: 0.6 },
+      fog: { color: 0x10151d, density: 0.011 },
+      hemi: { sky: 0x3a4a68, ground: 0x13110e, intensity: 0.62 },
+      sun: { color: 0x9ab2e0, intensity: 0.9, dir: [0.4, 0.8, -0.3], shadows: true },
+      grade: { saturation: 0.82, contrast: 1.1, lift: [0.0, 0.005, 0.014], gain: [1.0, 1.0, 1.04], shadowTint: [0.9, 0.96, 1.12], highlightTint: [1.08, 1.0, 0.9], exposure: 1.22, bloom: 1.0, vignette: 0.6 },
       reverb: 0.35,
     });
     this.kit = new Kit(w);
@@ -272,6 +272,9 @@ export class Chapter4 extends Chapter {
     net.position.set(hx, yy + 2.84, hz);
     w.root.add(net);
     w.physics.addBox({ x: hx, y: yy + 1.6, z: hz - 0.5 }, { x: 0.2, y: 3.2, z: 0.2 }, 0, { surface: 'metal' });
+    // Lamp clamped above the backboard so the court is playable at night.
+    kit.batch.add(cylinderBetween(v3(hx, yy + 3.25, hz - 0.5), v3(hx, yy + 4.1, hz - 0.5), 0.04, 8), steelH);
+    kit.bulb(L.emissive(0xffe0b0, 3), steelH, hx, yy + 4.15, hz - 0.3, 0xffdcaa, 2.6, 13, 'yard');
     this.hoop = { rim: v3(hx, yy + 3.05, hz), spots: [v3(hx - 1.1, yy, hz + 4.3), v3(hx + 1.1, yy, hz + 4.3)] };
   }
   private hoop = { rim: v3(0, 0, 0), spots: [v3(0, 0, 0), v3(0, 0, 0)] as [THREE.Vector3, THREE.Vector3] };
