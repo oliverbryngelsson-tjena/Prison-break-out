@@ -58,15 +58,20 @@ try {
   await A.page.evaluate(() => window.__app.net.start());
   await Promise.all([A, B].map((c) => c.page.waitForFunction(() => window.__app.state === 'game', null, { timeout: 600000, polling: 500 })));
   console.log(stamp(), `both in game: chapter ${CH} @ ${CP || 'start'} (room ${code})`);
-  for (const s of steps) {
+  for (const [i, s] of steps.entries()) {
     const targets = (s.on || 'AB').split('').map((k) => P[k]);
     try {
+      // The checkpoint's intro cutscene is scheduled ~400 ms after the chapter begins, so the first
+      // "begun and no cutscene" wait must also see that intro played, or it can return too early.
+      if (s.until && i === 0 && s.until.includes('cutscenes.current')) s.until = `(${s.until}) && (() => { const g = window.__app.game, d = g.chapter.checkpoints[g.chapter.checkpoint]; return !d || !d.intro || g.cutscenes.played.has(d.intro); })()`;
       if (s.until) { await Promise.all(targets.map((c) => c.page.waitForFunction(s.until, null, { timeout: s.timeout ?? 120000, polling: 300 }))); console.log(stamp(), s.on || 'AB', 'until ok:', s.until.slice(0, 70)); }
       else if (s.wait) await new Promise((r) => setTimeout(r, s.wait));
       else if (s.reload) for (const c of targets) await c.page.reload({ timeout: 120000 });
       else if (s.eval) for (const c of targets) console.log(stamp(), c.label, 'eval =>', JSON.stringify(await c.page.evaluate(s.eval)).slice(0, 400));
       else if (s.hold) { await Promise.all(targets.map((c) => c.page.keyboard.down(s.hold))); await new Promise((r) => setTimeout(r, s.ms ?? 1000)); await Promise.all(targets.map((c) => c.page.keyboard.up(s.hold))); }
       else if (s.press) await Promise.all(targets.map((c) => c.page.keyboard.press(s.press)));
+      else if (s.down) await Promise.all(targets.map((c) => c.page.keyboard.down(s.down)));
+      else if (s.up) await Promise.all(targets.map((c) => c.page.keyboard.up(s.up)));
       else if (s.down) await Promise.all(targets.map((c) => c.page.keyboard.down(s.down)));
       else if (s.up) await Promise.all(targets.map((c) => c.page.keyboard.up(s.up)));
       else if (s.tp) for (const c of targets) await c.page.evaluate(teleport, s.tp);
