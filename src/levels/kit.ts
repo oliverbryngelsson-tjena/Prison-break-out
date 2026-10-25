@@ -106,6 +106,7 @@ export class Kit {
 
   /** Straight staircase rising along +dir from (x,z) at y0 to y1. */
   stairs(mat: THREE.Material, x: number, z: number, yaw: number, width: number, y0: number, y1: number, run: number, surface: Surface = 'metal'): void {
+    this.world.stairsBuilt.push({ x, z, yaw, width, y0, y1, run });
     const steps = Math.round((y1 - y0) / 0.19);
     const rise = (y1 - y0) / steps;
     const depth = run / steps;

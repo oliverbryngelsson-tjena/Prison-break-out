@@ -178,7 +178,9 @@ export class Chapter4 extends Chapter {
       const out = Math.max(STAIR_X - 2.2 - x, x - (STAIR_X + 2.2), 0);
       if (out < 2.2) {
         const s = this.stairProfile(Math.min(Math.max(z, STAIR_Z0), STAIR_Z1));
-        h = THREE.MathUtils.lerp(h, Math.min(h, s - 0.3), smooth(2.2, 0, out));
+        // Cut 0.3 m below the steps (flush at the foot so there's no lip to step onto).
+        const depth = 0.3 * Math.min(1, Math.max(0, (z - STAIR_Z0) / 1.5));
+        h = THREE.MathUtils.lerp(h, Math.min(h, s - depth), smooth(2.2, 0, out));
       }
     }
     return h;
@@ -348,6 +350,11 @@ export class Chapter4 extends Chapter {
       w.physics.addBox({ x, y: (y0 + y1) / 2 + 0.6, z: (STAIR_Z0 + STAIR_Z1) / 2 }, { x: 0.08, y: y1 - y0 + 1.6, z: STAIR_Z1 - STAIR_Z0 }, 0, { blocksSight: false, blocksCamera: false, walkable: false, surface: 'metal' });
     }
     this.stairTop = v3(sx, y1, STAIR_Z1);
+    // Platform at the top, level with the last step, so there's no lip onto the rim.
+    kit.box(steel, [sx, y1 - 0.06, STAIR_Z1 + 1.25], [W + 0.4, 0.12, 2.5], 0, false);
+    // Slopes gently from the last step down to the rim's ground just beyond it.
+    const rimY = this.height(sx, STAIR_Z1 + 2.6, false);
+    w.physics.addRamp({ x: sx, y: (y1 + rimY) / 2 - 0.2, z: STAIR_Z1 + 1.3 }, { x: W + 0.4, y: Math.abs(y1 - rimY) + 0.4, z: 2.6 }, 0, 'z', y1, rimY, { surface: 'metal' });
     // Work lamps on the handrail so the stairs read at night.
     for (const t of [0.12, 0.5, 0.88]) {
       const zz = STAIR_Z0 + (STAIR_Z1 - STAIR_Z0) * t, yy = y0 + (y1 - y0) * t;
@@ -461,9 +468,11 @@ export class Chapter4 extends Chapter {
     kit.wall(wall, x + 6, z - 4, x + 6, z + 4, UP, 3.0, 0.15, [{ at: 4, width: 1.0, bottom: 0, top: 2.2 }]);
     kit.ceiling(wall, x - 6.1, z - 4.1, x + 6.1, z + 4.1, UP + 3.0, 0.2);
     // Exterior stairs to the upper door (south face, east end)
-    kit.stairs(steel, x + 2.6, z - 9.6, 0, 1.2, Y, UP, 4.8);
-    kit.slab(steel, x + 1.9, z - 4.8, x + 4.2, z - 4.05, UP, 0.12, 'metal');
-    kit.railing(steel, x + 1.9, z - 4.8, x + 4.2, z - 4.8, UP);
+    // Lined up with the upper door (x + 3.5); railings on the landing's sides, not across the stairs.
+    kit.stairs(steel, x + 3.5, z - 9.6, 0, 1.2, Y, UP, 4.8);
+    kit.slab(steel, x + 2.75, z - 4.8, x + 4.25, z - 4.05, UP, 0.12, 'metal');
+    kit.railing(steel, x + 2.75, z - 4.8, x + 2.75, z - 4.05, UP);
+    kit.railing(steel, x + 4.25, z - 4.8, x + 4.25, z - 4.05, UP);
     // Rear stairs from the east door down to the conveyor top
     kit.slab(steel, x + 6.05, z - 0.8, x + 8, z + 0.8, UP, 0.12, 'metal');
     // Interior: desk, chairs, sofa, cabinets, lamps
