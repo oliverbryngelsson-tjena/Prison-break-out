@@ -17,6 +17,7 @@ import { MenuScene } from './ui/menuScene';
 import { Game } from './game/game';
 import { clearSave, loadSave, loadSettings, saveSettings, type SaveData, type Settings } from './game/settings';
 import { CHAPTER_TITLES } from './levels';
+import { updateIfNewer } from './ui/version';
 
 type AppState = 'boot' | 'menu' | 'lobby' | 'loading' | 'game' | 'end';
 
@@ -66,6 +67,10 @@ export class App {
 
   // ------------------------------------------------------------------ boot
   async boot(): Promise<void> {
+    // Load a newer deploy if this copy of the page is old (only from the boot screen or main menu).
+    const canUpdate = () => this.state === 'boot' || (this.state === 'menu' && this.menus?.current === 'main');
+    void updateIfNewer(canUpdate);
+    setInterval(() => void updateIfNewer(canUpdate), 10 * 60 * 1000);
     setUserUiScale(this.settings.uiScale);
     initUiScale();
     const bar = document.getElementById('boot-bar');
