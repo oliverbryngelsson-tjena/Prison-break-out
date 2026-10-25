@@ -145,12 +145,27 @@ export class AudioManager {
     return null;
   }
 
+  /** While a chapter loads, big files (music, ambience) wait so they don't compete with the level's
+   *  own downloads; short sound effects still load right away. */
+  holdLongFiles(on: boolean): void {
+    this.holding = on;
+    if (!on) { const r = this.releaseHold; this.releaseHold = null; this.holdGate = null; r?.(); }
+  }
+  private holding = false;
+  private holdGate: Promise<void> | null = null;
+  private releaseHold: (() => void) | null = null;
+  private gate(file: string): Promise<void> {
+    if (!this.holding || !/^(music_|amb_)/.test(file)) return Promise.resolve();
+    this.holdGate ??= new Promise((r) => { this.releaseHold = r; });
+    return this.holdGate;
+  }
+
   load(file: string): Promise<AudioBuffer | null> {
     const have = this.buffers.get(file);
     if (have) return Promise.resolve(have);
     let p = this.loading.get(file);
     if (!p) {
-      p = fetch(assetUrl('audio/' + file))
+      p = this.gate(file).then(() => fetch(assetUrl('audio/' + file)))
         .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error('404 ' + file))))
         .then((ab) => {
           if (!this.ctx) this.unlockSilently();

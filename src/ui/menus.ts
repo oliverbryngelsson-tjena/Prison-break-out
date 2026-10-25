@@ -456,6 +456,7 @@ export class Menus {
       <div class="tip" data-tip></div>
       <div class="bar"><i data-bar></i></div>
       <div class="st" data-st>Loading</div>
+      <div class="patience">Sometimes it can take a while — just be patient.</div>
     </div>`));
   }
 

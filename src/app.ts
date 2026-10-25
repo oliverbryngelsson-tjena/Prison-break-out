@@ -12,6 +12,7 @@ import type { QualityLevel } from './engine/quality';
 import { NetClient, defaultServerUrl } from './net/client';
 import { Hud } from './ui/hud';
 import { HudLayout } from './ui/hudlayout';
+import { prefetchChapter } from './game/prefetch';
 import { TouchControls } from './ui/touch';
 import { Menus } from './ui/menus';
 import { MenuScene } from './ui/menuScene';
@@ -151,6 +152,8 @@ export class App {
     }
     (window as unknown as { __app: App }).__app = this;
     (window as unknown as { __ready: boolean }).__ready = true;
+    // While you're in the menus and lobby, start downloading the chapter you'll most likely play.
+    if (!this.soloDev) setTimeout(() => { if (this.state !== 'loading' && this.state !== 'game') void prefetchChapter(loadSave().progress?.chapter ?? 1); }, 2500);
   }
 
   private refreshSaveInfo(): void {
