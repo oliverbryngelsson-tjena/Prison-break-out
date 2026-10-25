@@ -52,6 +52,8 @@ export interface EnvSettings {
 interface ModelMeta { file: string; size: [number, number, number]; tris: number }
 
 export class World {
+  /** Every staircase built (tests walk each one). */
+  readonly stairsBuilt: Array<{ x: number; z: number; yaw: number; width: number; y0: number; y1: number; run: number }> = [];
   readonly scene = new THREE.Scene();
   readonly physics = new CollisionWorld();
   readonly root = new THREE.Group();

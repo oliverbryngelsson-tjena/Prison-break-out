@@ -246,7 +246,8 @@ export async function buildPrison(world: World, mode: 'day' | 'night', opts: { b
     for (let z = -21; z <= -3; z += 4.5) B.box(steelDark, { x: x1 + s * 0.1, y: TIER_Y / 2, z }, { x: 0.2, y: TIER_Y, z: 0.2 }, 0, null), P.addBox({ x: x1 + s * 0.1, y: TIER_Y / 2, z }, { x: 0.22, y: TIER_Y, z: 0.22 }, 0, { surface: 'metal' });
     // stairs from the catwalk north end down toward +z
     const sx = s * (14 - CELL_D - 0.85);
-    kit.stairs(steelM, sx, -3.0, Math.PI, 1.3, TIER_Y, 0, 5.3);
+    // Down toward +z, away from the catwalk (it was built facing -z, under the catwalk itself).
+    kit.stairs(steelM, sx, -3.0, 0, 1.3, TIER_Y, 0, 5.3);
     kit.railing(steelDark, sx - s * 0.68, -3.0, sx - s * 0.68, 2.3, 0, 1.0, false);
     // stair rail (sloped) as cylinders
     B.add(cylinderBetween(new THREE.Vector3(sx - s * 0.7, TIER_Y + 1, -3.0), new THREE.Vector3(sx - s * 0.7, 1.0, 2.3), 0.03, 6), steelDark);

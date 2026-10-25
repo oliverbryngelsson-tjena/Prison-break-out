@@ -227,8 +227,11 @@ export class Chapter6 extends Chapter {
     }
     // Catwalk on the front wall
     kit.slab(steel, x - W / 2 + 0.2, z - D / 2 + 0.2, x + W / 2 - 0.2, z - D / 2 + 1.8, y + 5, 0.12, 'metal');
-    kit.railing(steel, x - W / 2 + 0.2, z - D / 2 + 1.8, x + W / 2 - 0.2, z - D / 2 + 1.8, y + 5);
-    kit.stairs(steel, x + W / 2 - 2, z - D / 2 + 9, Math.PI, 1.2, y, y + 5, 7);
+    // Catwalk railing with a gap where the stairs arrive (it used to block the top step).
+    const sxw = x + W / 2 - 2;
+    kit.railing(steel, x - W / 2 + 0.2, z - D / 2 + 1.8, sxw - 0.75, z - D / 2 + 1.8, y + 5);
+    kit.railing(steel, sxw + 0.75, z - D / 2 + 1.8, x + W / 2 - 0.2, z - D / 2 + 1.8, y + 5);
+    kit.stairs(steel, sxw, z - D / 2 + 9, Math.PI, 1.2, y, y + 5, 7);
     // Gantry crane rail
     for (const zz of [z - D / 2 + 0.6, z + D / 2 - 0.6]) kit.box(rust, [x, y + H - 1.2, zz], [W, 0.5, 0.4], 0, false);
     kit.box(rust, [x + 3, y + H - 1.6, z], [0.6, 0.6, D - 1.2], 0, false);
