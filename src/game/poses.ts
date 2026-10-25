@@ -238,6 +238,18 @@ export const POSES: Record<string, PoseDef> = {
       void t;
     },
   },
+  balance: {
+    // Arms out to the sides, walking a beam.
+    dur: Infinity, canMove: true, lockTurn: false, fade: 0.3,
+    apply(m, t, w) {
+      const fr = frame(m);
+      const sway = Math.sin(t * 2.3) * 0.08;
+      for (const [side, k] of [['R', 1], ['L', -1]] as const) {
+        const tgt = fr.chest.clone().addScaledVector(fr.right, k * 0.62).add(new THREE.Vector3(0, 0.05 + k * sway, 0));
+        arm(m, side, tgt, w, new THREE.Vector3(0, -1, 0));
+      }
+    },
+  },
   cuffed: {
     // Pinned face down with the hands behind the back (getting handcuffed).
     dur: Infinity, canMove: false, lockTurn: true, fade: 0.2,
