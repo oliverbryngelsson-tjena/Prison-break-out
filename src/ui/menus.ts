@@ -4,6 +4,7 @@ import type { Settings } from '../game/settings';
 import { escapeHtml } from './hud';
 import { CHAPTER_TITLES } from '../levels';
 import { loadJSON } from '../engine/assets';
+import { BUILD, BUILD_DATE } from './version';
 
 type Handler = () => void;
 
@@ -113,7 +114,7 @@ export class Menus {
         </div>
       </div>
       <div class="net-pill"><span class="dot" data-net></span><span data-net-text>Offline</span></div>
-      <div class="foot">Online co-op only — two players, two devices.</div>
+      <div class="foot">Online co-op only — two players, two devices.<span class="ver">Version ${BUILD} · ${BUILD_DATE}</span></div>
     </div>`));
     this.click('[data-a=continue]', el, () => this.cb.onContinue());
     this.click('[data-a=create]', el, () => this.show('create'));
