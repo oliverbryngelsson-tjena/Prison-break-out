@@ -8,7 +8,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { voiceFor, voiceKey, lineDuration, BARKS, BARK_DUR, QUIPS, QUIP_DUR, CAST, POOLS } from '../src/game/voices.ts';
+import { voiceFor, voiceKey, lineDuration, BARKS, BARK_DUR, QUIPS, QUIP_DUR, CAST, POOLS, CAPTURE_LINES } from '../src/game/voices.ts';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const OUT = path.join(ROOT, 'public/assets/audio/voice');
@@ -124,7 +124,7 @@ for (const [role, set] of Object.entries(roleVoices)) {
   if (role === 'story' || role === 'dog') continue;
   for (const v of set) {
     const alert = BARKS.alert[role] ?? BARKS.alert.other;
-    for (const text of [...BARKS.suspicious, ...alert, ...BARKS.lost, ...BARKS.search, ...BARKS.hit, ...BARKS.attack]) {
+    for (const text of [...BARKS.suspicious, ...alert, ...BARKS.lost, ...BARKS.search, ...BARKS.hit, ...BARKS.attack, ...CAPTURE_LINES]) {
       if (!text) continue;
       const key = voiceKey(v, text);
       if (!jobs.has(key)) jobs.set(key, { key, voice: v, speed: 1, lang: v[0] === 'b' ? 'en-gb' : 'en-us', text, target: BARK_DUR, ch: 0 });

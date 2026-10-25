@@ -1,0 +1,11 @@
+[
+ {"on":"AB","until":"window.__app.game.begun && !window.__app.game.cutscenes.current","timeout":120000},
+ {"wait":5000},
+ {"on":"A","eval":"(window.__app.game.session.emit('caught', { who: window.__app.game.remoteChar, by: 'briggs' }), true)"},
+ {"on":"AB","until":"window.__app.game.state === 'failed' && window.__app.game.capture.active","timeout":10000},
+ {"on":"AB","check":{"name":"capture sequence runs for both players","expr":"window.__app.game.state === 'failed' && window.__app.game.capture.active"}},
+ {"on":"B","until":"window.__app.game.local.body.poseName === 'cuffed'","timeout":15000},
+ {"on":"B","check":{"name":"caught player is pinned and cuffed","expr":"window.__app.game.local.body.poseName === 'cuffed'"}},
+ {"on":"AB","until":"window.__app.game.state === 'playing' && !window.__app.game.capture.active","timeout":30000},
+ {"on":"AB","check":{"name":"both restart at the checkpoint afterwards","expr":"window.__app.game.state === 'playing' && window.__app.game.local.state === 'free' && !window.__app.game.local.body.poseName"}}
+]

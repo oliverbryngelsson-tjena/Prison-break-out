@@ -2,6 +2,7 @@
 import { Extras } from './extras';
 import { BARKS, BARK_DUR } from './voices';
 import { VoiceBank } from './voicebank';
+import { Capture } from './capture';
 import { MiniGames } from './minigames';
 import * as THREE from 'three';
 import type { CharacterId, NpcSnap, PlayerSnap, Progress } from '../../shared/protocol';
@@ -103,6 +104,8 @@ export class Game implements SessionHandlers, CutsceneHost {
   readonly minigames: MiniGames = new MiniGames(this);
   /** Optional memories to examine (story extras). */
   readonly extras: Extras = new Extras(this);
+  /** Caught: tackle, handcuffs and the fail screen. */
+  readonly capture: Capture = new Capture(this);
   /** Loading screen status callback. */
   onLoadStatus: ((s: string) => void) | null = null;
   /** Local bike state for snapshots [lean, pitch, steer, rpm, spin] (set by BikeSystem). */
@@ -447,9 +450,12 @@ export class Game implements SessionHandlers, CutsceneHost {
         this.chapter.onEvent('coop', { group });
         return;
       }
-      case 'caught':
-        this.fail(a.who === this.localChar ? 'You were caught.' : `${SPEAKERS[String(a.who)]?.name ?? 'Your partner'} was caught.`);
+      case 'caught': {
+        if (this.state !== 'playing') return;
+        const extra = this.capture.start(a.who as CharacterId, String(a.by ?? ''));
+        this.fail('', extra);
         return;
+      }
       case 'fail':
         this.fail(String(a.reason ?? 'Mission failed.'));
         return;
@@ -669,16 +675,20 @@ export class Game implements SessionHandlers, CutsceneHost {
   }
 
   // ------------------------------------------------------------------ fail / restart / progress
-  private fail(reason: string): void {
+  private failDelay = 0;
+  /** Mission failed: banner, then fade and restart. `delay` gives a capture sequence time to play. */
+  private fail(reason: string, delay = 0): void {
     if (this.state === 'failed') return;
     this.state = 'failed';
-    this.hud.setBanner(reason, 'danger');
-    this.audio.play('sting', { bus: 'ui', volume: 0.6 });
+    if (reason) this.hud.setBanner(reason, 'danger');
+    if (!delay) this.audio.play('sting', { bus: 'ui', volume: 0.6 });
     this.failTimer = 0;
+    this.failDelay = delay;
     this.local.state = 'busy';
   }
 
   private restartAt(cp: string): void {
+    this.capture.reset();
     this.chapter.flags = { ...this.checkpointFlags };
     this.chapter.checkpoint = cp;
     for (const t of this.chapter.triggers) t.fired = false;
@@ -784,6 +794,7 @@ export class Game implements SessionHandlers, CutsceneHost {
       }
       this.chapter.updateDoors(dt);
       for (const u of this.updaters) u(dt);
+      this.capture.update(dt);
       if (this.authority) for (const [g, t0] of this.coopSince) {
         if (this.world.time - t0 >= this.coopNeed(g)) { this.coopSince.delete(g); this.session.emit('coopDone', { group: g }); }
       }
@@ -807,8 +818,8 @@ export class Game implements SessionHandlers, CutsceneHost {
     // Fail timer
     if (this.failTimer >= 0) {
       this.failTimer += dt;
-      this.hud.setFade(Math.min(1, Math.max(0, (this.failTimer - 1) / 1.2)));
-      if (this.authority && this.failTimer > 2.8 && this.state === 'failed') {
+      this.hud.setFade(Math.min(1, Math.max(0, (this.failTimer - 1 - this.failDelay) / 1.2)));
+      if (this.authority && this.failTimer > 2.8 + this.failDelay && this.state === 'failed') {
         this.failTimer = -2;
         this.session.emit('restart', { checkpoint: this.chapter.checkpoint });
       }
@@ -932,6 +943,7 @@ export class Game implements SessionHandlers, CutsceneHost {
     for (const n of this.npcs.values()) n.dispose();
     this.npcs.clear();
     this.minigames.dispose();
+    this.capture.dispose();
     this.dialogue.stop();
     this.dialogue.bank?.clear();
     try { this.chapter?.dispose(); } catch (e) { console.warn('chapter dispose', e); }
