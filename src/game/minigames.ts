@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import type { CharacterId } from '../../shared/protocol';
 import type { Game } from './game';
 import { SPEAKERS } from './game';
+import { QUIPS, QUIP_DUR } from './voices';
 
 export interface ArmSpot { id: string; center: THREE.Vector3; /** table top height */ table: number; /** players face along this axis */ axis: 'x' | 'z'; enabled?: () => boolean }
 export interface HoopSpot { id: string; rim: THREE.Vector3; spots: [THREE.Vector3, THREE.Vector3]; enabled?: () => boolean }
@@ -171,21 +172,20 @@ export class MiniGames {
     if (!m || m.id !== id) return;
     this.active = null;
     this.endedAt = performance.now();
-    if (g.local.state === 'minigame') g.local.state = 'free';
-    g.local.body.clearPose(0.4);
-    g.cam.endCinematic(0.8);
     g.hud.setMiniGame(null);
+    // Only undo what the mini-game set up (a cutscene or restart may already have taken over).
+    if (g.local.state === 'minigame') {
+      g.local.state = 'free';
+      g.local.body.clearPose(0.4);
+      if (!g.inCutscene) g.cam.endCinematic(0.8);
+    }
     if (winner && winner !== 'tie') {
       (this.wins[id] ??= { elias: 0, jax: 0 })[winner]++;
       const name = SPEAKERS[winner].name;
       g.hud.notify(winner === g.localChar ? `You win! (${this.wins[id][g.localChar]}–${this.wins[id][g.remoteChar]})` : `${name} wins (${this.wins[id][g.remoteChar]}–${this.wins[id][g.localChar]})`, 3);
       g.audio.play(winner === g.localChar ? 'ui_rise' : 'ui_hit', { volume: 0.6 });
-      const quips: Record<string, string[]> = {
-        elias: ['Patience. That\'s all it takes.', 'Six years of push-ups in a cell. You didn\'t stand a chance.', 'Again? You sure?'],
-        jax: ['Told you. Quick hands.', 'Don\'t feel bad. Everybody loses to me.', 'Want to go again, old man?'],
-      };
-      const q = quips[winner][Math.floor(Math.random() * quips[winner].length)];
-      if (g.authority) g.session.emit('dlg', { lines: [{ who: winner, text: q, dur: 2.6 }], at: g.session.sharedNow() + 300 });
+      const q = QUIPS[winner][Math.floor(Math.random() * QUIPS[winner].length)];
+      if (g.authority) g.session.emit('dlg', { lines: [{ who: winner, text: q, dur: QUIP_DUR }], at: g.session.sharedNow() + 300 });
     } else if (winner === 'tie') g.hud.notify('A tie!', 2.5);
     else g.hud.notify('Game cancelled', 2);
     this.resultT = 0;
@@ -219,6 +219,15 @@ export class MiniGames {
     const inp = g.input;
     // Partner left: cancel.
     if (g.authority && g.partnerAway && !m.ended) { m.ended = true; g.session.emit('mgEnd', { id: m.id, winner: null }); }
+    // Safety net: something else took the player out of the game (cutscene, checkpoint restart,
+    // reconnect), or it ran far too long. End it here so its panel can never stay on screen.
+    const lost = now > m.at + 1500 && g.local.state !== 'minigame';
+    const stale = now - m.at > (m.kind === 'arm' ? 40000 : 150000);
+    if (lost || stale) {
+      if (g.authority && !m.ended) { m.ended = true; g.session.emit('mgEnd', { id: m.id, winner: null }); }
+      if (this.active === m) this.end(m.id, null);
+      return;
+    }
     if (m.kind === 'arm') {
       const go = now >= m.at;
       const pressed = inp.buttons.interact.pressed || inp.buttons.attack.pressed || inp.buttons.jump.pressed;
@@ -257,6 +266,8 @@ export class MiniGames {
   }
 
   dispose(): void {
+    // The HUD outlives the game (it is shared across chapters), so clear the panel here.
+    this.g.hud.setMiniGame(null);
     for (const b of this.balls) { b.mesh.removeFromParent(); b.mesh.geometry.dispose(); }
     this.balls = [];
     this.ballMat?.dispose();

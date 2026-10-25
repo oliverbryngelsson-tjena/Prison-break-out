@@ -1,5 +1,7 @@
 // The running game: owns the world, both player characters, NPCs, story events and the frame loop.
 import { Extras } from './extras';
+import { BARKS, BARK_DUR } from './voices';
+import { VoiceBank } from './voicebank';
 import { MiniGames } from './minigames';
 import * as THREE from 'three';
 import type { CharacterId, NpcSnap, PlayerSnap, Progress } from '../../shared/protocol';
@@ -125,6 +127,7 @@ export class Game implements SessionHandlers, CutsceneHost {
       deps.audio.setDucking(!!text);
     };
     this.dialogue.tts = deps.settings.tts;
+    this.dialogue.bank = new VoiceBank(deps.audio);
     if (deps.net) {
       this.unsubs.push(deps.net.on('peer', (ev) => this.onPeerEvent(ev)));
       this.unsubs.push(deps.net.on('status', (s) => {
@@ -159,7 +162,7 @@ export class Game implements SessionHandlers, CutsceneHost {
     else body = this.npcs.get(id)?.body ?? null;
     const npc = this.npcs.get(id);
     const name = npc?.def.name ?? base.name;
-    return { ...base, name, body };
+    return { ...base, name, body, role: npc?.def.role };
   }
 
   bodies(): Record<CharacterId, Body> {
@@ -215,6 +218,8 @@ export class Game implements SessionHandlers, CutsceneHost {
     } catch { /* ignore */ }
     // Upload textures and draw once so the first visible frame is cheap.
     try { this.deps.renderer.render(0.016); } catch { /* ignore */ }
+    void this.dialogue.bank?.prefetchChapter(0);
+    void this.dialogue.bank?.prefetchChapter(chapterNum);
     this.session.loaded(chapterNum, cp);
     if (!this.session.online) this.begin(cp);
   }
@@ -369,15 +374,8 @@ export class Game implements SessionHandlers, CutsceneHost {
     const last = this.barkCooldown.get(npc.id) ?? -99;
     if (now - last < (kind === 'alert' ? 2 : 4)) return;
     this.barkCooldown.set(npc.id, now);
-    const lines: Record<string, string[]> = {
-      suspicious: ['Hm? Who\'s there?', 'What was that?', 'Somebody there?', 'I heard something…'],
-      alert: npc.def.role === 'guard' ? ['Hey! You! Stop right there!', 'Inmate out of bounds!', 'Don\'t move!'] : npc.def.role === 'police' ? ['Police! Get on the ground!', 'Suspect spotted!'] : ['There they are!', 'Get them!', 'You\'re dead!'],
-      lost: ['Must have been nothing.', 'Damn rats.', 'Lost them…'],
-      search: ['Where did you go?', 'Come out, come out…', 'I know you\'re here.'],
-      hit: ['Argh!', 'Son of a—', 'Ugh!'],
-      attack: ['Come here!', 'Take this!', ''],
-    };
-    const opts = lines[kind];
+    const alert = BARKS.alert[npc.def.role as 'guard' | 'police'] ?? BARKS.alert.other;
+    const opts: string[] = kind === 'alert' ? alert : BARKS[kind];
     const text = opts[Math.floor(Math.random() * opts.length)];
     if (text) this.session.emit('bark', { id: npc.id, text, kind });
   }
@@ -425,7 +423,7 @@ export class Game implements SessionHandlers, CutsceneHost {
         if (this.dialogue.active || this.inCutscene) return;
         const npc = this.npcs.get(String(a.id));
         if (!npc || npc.body.pos.distanceTo(this.local.body.pos) > 22) return;
-        this.dialogue.play([{ who: String(a.id), text: String(a.text), dur: 1.8 }]);
+        this.dialogue.play([{ who: String(a.id), text: String(a.text), dur: BARK_DUR }]);
         return;
       }
       case 'door': {
@@ -934,6 +932,8 @@ export class Game implements SessionHandlers, CutsceneHost {
     for (const n of this.npcs.values()) n.dispose();
     this.npcs.clear();
     this.minigames.dispose();
+    this.dialogue.stop();
+    this.dialogue.bank?.clear();
     try { this.chapter?.dispose(); } catch (e) { console.warn('chapter dispose', e); }
     try { this.world?.dispose(); } catch (e) { console.warn('world dispose', e); }
     this.audio.stopMusic(1.5);
