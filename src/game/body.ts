@@ -43,6 +43,8 @@ export class Body implements Actor {
   private lastPhase = 0;
   private shadow: THREE.Mesh | null = null;
   visible = true;
+  /** Too far from the camera to draw (set by the game each frame; separate from `visible`). */
+  culled = false;
   /** Called on each footstep (with surface). */
   onStep: ((b: Body, surface: Surface, loud: number) => void) | null = null;
 
@@ -130,7 +132,7 @@ export class Body implements Actor {
     const r = this.model.root;
     r.position.copy(this.pos);
     r.rotation.set(-this.pitch, this.yaw, this.roll, 'YXZ');
-    r.visible = this.visible && !this.hidden;
+    r.visible = this.visible && !this.hidden && !this.culled;
     this.model.setLocomotion(this.speed, this.crouched);
     if (r.visible) this.model.update(animDt);
     if (this.shadow) {

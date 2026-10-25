@@ -32,6 +32,12 @@ export interface PlayerCtx {
   onAttack(targetId: string, dmg: number, dir: [number, number], kind: 'punch' | 'heavy' | 'takedown'): void;
   onInteract(def: InteractDef, phase: 'press' | 'holdStart' | 'holdEnd' | 'complete'): void;
   onDowned(): void;
+  /** Pistols drawn (later chapters). */
+  armed(): boolean;
+  /** Local player fires: target (or null) and the aim direction. */
+  onShoot(target: Combatant | null, dir: THREE.Vector3): void;
+  pickTarget(list: Combatant[]): Combatant | null;
+  canShoot(): boolean;
   flags: { jump: boolean; sprint: boolean; combat: boolean; crouch: boolean };
 }
 
@@ -86,6 +92,11 @@ export class PlayerController {
   variant = 'prison';
   private wallNormal = new THREE.Vector3();
   takedownTarget: Combatant | null = null;
+  /** Gun: seconds left holding the aim, the enemy aimed at, time until the next shot. */
+  aimT = 0;
+  aimTarget: Combatant | null = null;
+  private shotCd = 0;
+  private pickT = 0;
 
   constructor(readonly char: CharacterId, body: Body, ctx: PlayerCtx) {
     this.body = body;
@@ -138,7 +149,7 @@ export class PlayerController {
     // Attack comes from direction fromYaw (attacker facing). Blocking works if we face the attacker.
     const toAttacker = fromYaw + Math.PI;
     const facing = Math.cos(b.yaw - toAttacker) > 0.3;
-    if (this.blocking && facing && kind !== 'heavy') {
+    if (this.blocking && facing && kind !== 'heavy' && kind !== 'shot') {
       this.ctx.audio.play('hit_soft', { pos: b.chest(), volume: 0.7, jitter: 0.1 });
       this.ctx.cam.addShake(0.12);
       b.hp -= dmg * 0.12;
@@ -146,8 +157,8 @@ export class PlayerController {
     }
     b.hp -= dmg;
     this.sinceHit = 0;
-    this.ctx.cam.addShake(kind === 'heavy' ? 0.45 : 0.28);
-    this.ctx.audio.play(kind === 'heavy' ? 'punch_heavy' : 'punch', { pos: b.chest(), volume: 0.9, jitter: 0.1 });
+    this.ctx.cam.addShake(kind === 'heavy' ? 0.45 : kind === 'shot' ? 0.35 : 0.28);
+    this.ctx.audio.play(kind === 'heavy' ? 'punch_heavy' : kind === 'shot' ? 'hit_soft' : 'punch', { pos: b.chest(), volume: 0.9, jitter: 0.1 });
     if (Math.random() < 0.6) this.ctx.audio.play('grunt', { pos: b.head(), volume: 0.6, jitter: 0.12 });
     this.attackT = -1;
     if (b.hp <= 0) {
@@ -158,7 +169,7 @@ export class PlayerController {
     const side = Math.sin(b.yaw - toAttacker) > 0 ? 1 : -1;
     b.setPose(kind === 'heavy' ? 'stagger' : 'hit_react', { k: { side } }, { restart: true });
     // knockback
-    const kb = new THREE.Vector3(Math.sin(fromYaw), 0, Math.cos(fromYaw)).multiplyScalar(kind === 'heavy' ? 1.2 : 0.5);
+    const kb = new THREE.Vector3(Math.sin(fromYaw), 0, Math.cos(fromYaw)).multiplyScalar(kind === 'heavy' ? 1.2 : kind === 'shot' ? 0.2 : 0.5);
     this.moveVel.add(kb.multiplyScalar(3));
     return true;
   }
@@ -316,11 +327,15 @@ export class PlayerController {
       if (depth > 0.15) target *= Math.max(0.45, 1 - depth * 0.6);
     }
     if (attacking) target = 0;
+    if (this.aimT > 0) { target = Math.min(target, 3.2); this.sprinting = false; }
     const curSpeed = Math.hypot(this.moveVel.x, this.moveVel.z);
     const accel = target > curSpeed ? 9 : 14;
     const newSpeed = curSpeed + Math.sign(target - curSpeed) * Math.min(Math.abs(target - curSpeed), accel * dt);
     // Turn toward the wish direction.
-    if (mag > 0.05 && !attacking) {
+    if (this.aimT > 0) {
+      const t = this.aimTarget;
+      if (t) b.yaw = lerpAngle(b.yaw, Math.atan2(t.body.pos.x - b.pos.x, t.body.pos.z - b.pos.z), Math.min(1, dt * 12));
+    } else if (mag > 0.05 && !attacking) {
       const wantYaw = Math.atan2(wish.x, wish.z);
       const turnRate = (b.crouched ? 8 : 11) * dt;
       b.yaw = lerpAngle(b.yaw, wantYaw, Math.min(1, turnRate));
@@ -470,6 +485,7 @@ export class PlayerController {
       const theirFwd = c.body.forward();
       if (c.stunned || theirFwd.dot(toMe) < -0.3) { this.takedownTarget = c; break; }
     }
+    if (this.ctx.armed()) { this.updateGun(dt, enemies); return; }
     // Block
     const wantBlock = inp.buttons.block.down && this.attackT < 0;
     if (wantBlock !== this.blocking) {
@@ -541,6 +557,39 @@ export class PlayerController {
       }
       if (this.attackT >= POSES[this.attackKind].dur) this.attackT = -1;
     }
+  }
+
+  /** Pistol: auto-aim at the best enemy in front, fire on Attack (hold for repeat), reload when empty. */
+  private updateGun(dt: number, enemies: Combatant[]): void {
+    const b = this.body;
+    const inp = this.ctx.input;
+    this.blocking = false;
+    this.pickT -= dt;
+    if (this.pickT <= 0) {
+      this.pickT = 0.15;
+      this.aimTarget = this.ctx.pickTarget(enemies);
+    } else if (this.aimTarget && !this.aimTarget.alive) this.aimTarget = null;
+    this.shotCd -= dt;
+    this.aimT = Math.max(0, this.aimT - dt);
+    const fire = inp.buttons.attack.pressed || (inp.buttons.attack.down && this.aimT > 0);
+    if (fire && this.shotCd <= 0 && !this.takedownTarget) {
+      if (this.ctx.canShoot()) {
+        this.shotCd = 0.32;
+        this.aimT = 1.6;
+        const t = this.aimTarget;
+        const dir = t ? t.body.chest().sub(b.chest()).normalize() : this.ctx.cam.forward.clone().setY(0).normalize();
+        b.yaw = Math.atan2(dir.x, dir.z);
+        this.ctx.onShoot(t, dir);
+      } else this.shotCd = 0.2;
+    }
+    // Hold the aim pose while shooting (arms forward, gun up).
+    if (this.aimT > 0 || inp.buttons.block.down) {
+      if (inp.buttons.block.down) this.aimT = Math.max(this.aimT, 0.3);
+      const t = this.aimTarget;
+      const pitch = t ? THREE.MathUtils.clamp((t.body.pos.y - b.pos.y) / Math.max(1, t.body.pos.distanceTo(b.pos)), -0.5, 0.5) : 0;
+      if (b.poseName !== 'aim') b.setPose('aim', { k: { pitch } });
+      else b.updatePoseCtx({ k: { pitch } });
+    } else if (b.poseName === 'aim' || b.poseName === 'guard') b.clearPose(0.3);
   }
 
   private updateScript(dt: number): void {

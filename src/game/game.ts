@@ -3,6 +3,7 @@ import { Extras } from './extras';
 import { BARKS, BARK_DUR } from './voices';
 import { VoiceBank } from './voicebank';
 import { Capture } from './capture';
+import { Guns, PLAYER_SHOT_DMG, SHOT_RANGE, type ShotEvent } from './guns';
 import { MiniGames } from './minigames';
 import * as THREE from 'three';
 import type { CharacterId, NpcSnap, PlayerSnap, Progress } from '../../shared/protocol';
@@ -41,6 +42,8 @@ export interface GameDeps {
   onExit: (reason: 'quit' | 'partnerLeft' | 'error' | 'finished', detail?: string) => void;
   onChapterComplete: (next: number | null) => void;
 }
+
+const v3a = (p: THREE.Vector3): [number, number, number] => [+p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2)];
 
 export const SPEAKERS: Record<string, Omit<SpeakerInfo, 'body'>> = {
   elias: { name: 'Elias', color: '#e8c27a', voice: { pitch: 0.82, rate: 0.95, prefer: /daniel|george|male|david|arthur|guy/i } },
@@ -109,6 +112,7 @@ export class Game implements SessionHandlers, CutsceneHost {
   readonly extras: Extras = new Extras(this);
   /** Caught: tackle, handcuffs and the fail screen. */
   readonly capture: Capture = new Capture(this);
+  readonly guns: Guns = new Guns(this);
   /** A short help line a chapter wants shown at the bottom (e.g. 'wait for your partner'). */
   chapterHint: string | null = null;
   /** Loading screen status callback. */
@@ -294,6 +298,10 @@ export class Game implements SessionHandlers, CutsceneHost {
       onAttack: (id, dmg, dir, kind) => this.localAttack(id, dmg, dir, kind),
       onInteract: (def, phase) => this.onLocalInteract(def, phase),
       onDowned: () => this.session.request('downed', { who: this.localChar }),
+      armed: () => this.guns.playersArmed && this.flags.combat,
+      onShoot: (t, dir) => this.localShoot(t, dir),
+      pickTarget: (list) => this.guns.pickTarget(this.local.body, list, this.cam.forward),
+      canShoot: () => this.guns.reloadT <= 0,
       flags: this.flags,
     };
   }
@@ -313,6 +321,21 @@ export class Game implements SessionHandlers, CutsceneHost {
         else this.session.hit(who, dmg, dir, kind);
       },
       onKO: (npc) => { this.chapter.onEvent('ko', { npc: npc.id }); },
+      onShoot: (npc, who, hit, dmg) => {
+        if (this.state !== 'playing') return;
+        const tb = this.body(who);
+        const from = this.guns.muzzle(npc.id);
+        let to = tb.chest();
+        if (!hit) {
+          to.add(new THREE.Vector3((Math.random() - 0.5) * 1.8, (Math.random() - 0.35) * 0.9, (Math.random() - 0.5) * 1.8));
+          to = from.clone().addScaledVector(to.sub(from).normalize(), from.distanceTo(tb.pos) + 8);
+        }
+        const tr = this.guns.trace(from, to);
+        const ok = hit && !tr.wall;
+        const ev: ShotEvent = { by: npc.id, from: v3a(from), to: v3a(tr.end), wall: tr.wall };
+        if (ok) { ev.who = who; ev.dmg = dmg; }
+        this.session.emit('shot', ev);
+      },
       bark: (npc, kind) => this.npcBark(npc, kind),
       lightAt: (p) => this.chapter.lightAt(p),
       suspicion: (who, p, npc) => this.chapter.suspicion(who, p, npc.id),
@@ -357,6 +380,37 @@ export class Game implements SessionHandlers, CutsceneHost {
         this.cam.addShake(kind === 'heavy' ? 0.18 : 0.1);
       }
     }
+  }
+
+  /** Local player pulls the trigger: decide hit or miss, show it now, send it to the authority. */
+  private localShoot(t: Combatant | null, dir: THREE.Vector3): void {
+    const gn = this.guns;
+    if (gn.reloadT > 0) return;
+    gn.ammo--;
+    if (gn.ammo <= 0) {
+      gn.reloadT = 1.5;
+      this.audio.play('lock_open', { pos: this.local.body.chest(), volume: 0.5, rate: 1.4, delay: 0.5 });
+      this.hud.notify('Reloading…', 1.4);
+    }
+    const from = this.local.body.chest().addScaledVector(dir, 0.55).add(new THREE.Vector3(0, 0.1, 0));
+    let hit = false;
+    let to: THREE.Vector3;
+    const npc = t ? this.npcs.get(t.id) : undefined;
+    if (t && npc) {
+      const d = t.body.pos.distanceTo(this.local.body.pos);
+      hit = Math.random() < (d < 10 ? 0.95 : Math.max(0.55, 0.95 - ((d - 10) / SHOT_RANGE) * 0.6));
+      to = t.body.chest();
+      if (!hit) {
+        to.add(new THREE.Vector3((Math.random() - 0.5) * 1.4, (Math.random() - 0.3) * 0.7, (Math.random() - 0.5) * 1.4));
+        to = from.clone().addScaledVector(to.sub(from).normalize(), d + 8);
+      }
+    } else to = from.clone().addScaledVector(dir, SHOT_RANGE);
+    const tr = gn.trace(from, to);
+    if (tr.wall) hit = false;
+    gn.fire(this.localChar, from, tr.end, tr.wall);
+    const ev: ShotEvent = { by: this.localChar, from: v3a(from), to: v3a(tr.end), wall: tr.wall };
+    if (hit && npc) { ev.id = npc.id; ev.dmg = PLAYER_SHOT_DMG; }
+    this.session.request('shot', ev);
   }
 
   private onLocalInteract(def: InteractDef, phase: 'press' | 'holdStart' | 'holdEnd' | 'complete'): void {
@@ -467,6 +521,24 @@ export class Game implements SessionHandlers, CutsceneHost {
       case 'restart':
         this.restartAt(String(a.checkpoint));
         return;
+      case 'shot': {
+        const sh = a as unknown as ShotEvent;
+        const from = new THREE.Vector3(...sh.from), to = new THREE.Vector3(...sh.to);
+        if (sh.by !== this.localChar) this.guns.fire(sh.by, from, to, !!sh.wall);
+        const dir = to.clone().sub(from).setY(0).normalize();
+        if (sh.id) {
+          const npc = this.npcs.get(sh.id);
+          if (npc) {
+            if (this.authority) npc.hit(sh.dmg ?? PLAYER_SHOT_DMG, [dir.x, dir.z], 'shot');
+            this.audio.play('punch', { pos: npc.body.chest(), volume: 0.5, rate: 1.3, jitter: 0.1 });
+          }
+        }
+        if (sh.who === this.localChar && this.state === 'playing') {
+          this.local.takeHit(sh.dmg ?? 10, Math.atan2(dir.x, dir.z), 'shot');
+          this.chapter.onEvent('playerHit', { who: this.localChar, dmg: sh.dmg, kind: 'shot' });
+        }
+        return;
+      }
       case 'npcHit': {
         const npc = this.npcs.get(String(a.id));
         if (!npc) return;
@@ -512,6 +584,15 @@ export class Game implements SessionHandlers, CutsceneHost {
 
   validate(type: string, args: unknown, from: 'local' | 'peer'): boolean {
     const a = (args ?? {}) as Record<string, unknown>;
+    if (type === 'shot') {
+      if (from === 'peer' && a.by !== this.remoteChar) return false;
+      if (a.id) {
+        const npc = this.npcs.get(String(a.id));
+        if (!npc || !npc.alive) return false;
+        if (this.body(a.by as CharacterId).pos.distanceTo(npc.body.pos) > SHOT_RANGE + 6) return false;
+      }
+      return true;
+    }
     if (type === 'npcHit') {
       const npc = this.npcs.get(String(a.id));
       if (!npc || !npc.alive) return false;
@@ -694,6 +775,7 @@ export class Game implements SessionHandlers, CutsceneHost {
 
   private restartAt(cp: string): void {
     this.capture.reset();
+    this.guns.reset();
     this.chapter.flags = { ...this.checkpointFlags };
     this.chapter.checkpoint = cp;
     for (const t of this.chapter.triggers) t.fired = false;
@@ -800,6 +882,7 @@ export class Game implements SessionHandlers, CutsceneHost {
       this.chapter.updateDoors(dt);
       for (const u of this.updaters) u(dt);
       this.capture.update(dt);
+      this.guns.update(dt);
       if (this.authority) for (const [g, t0] of this.coopSince) {
         if (this.world.time - t0 >= this.coopNeed(g)) { this.coopSince.delete(g); this.session.emit('coopDone', { group: g }); }
       }
@@ -816,7 +899,7 @@ export class Game implements SessionHandlers, CutsceneHost {
       const far = n.body.pos.distanceTo(camPos) > lod;
       if (this.authority) { if (!frozen) n.updateAuthority(dt); }
       else n.updateProxy(dt, this.session.time);
-      n.body.visible = n.body.pos.distanceTo(camPos) < this.deps.renderer.q.characterDistance;
+      n.body.culled = n.body.pos.distanceTo(camPos) >= this.deps.renderer.q.characterDistance;
       void far;
     }
     this.world.update(frozen ? 0 : dt);
@@ -911,7 +994,8 @@ export class Game implements SessionHandlers, CutsceneHost {
     if (this.chapterHint && !this.inCutscene) ctl = this.chapterHint;
     hud.setControlHint(ctl);
     touch.setLabel('interact', c && !this.inCutscene ? shortLabel(this.interact.label(c)) : null, !!c);
-    touch.setLabel('attack', this.local.takedownTarget ? 'Takedown' : null, !!this.local.takedownTarget);
+    const armed = this.guns.playersArmed && this.flags.combat;
+    touch.setLabel('attack', this.local.takedownTarget ? 'Takedown' : armed ? (this.guns.reloadT > 0 ? 'Reload' : `Shoot ${this.guns.ammo}`) : null, !!this.local.takedownTarget || (armed && !!this.local.aimTarget));
     touch.setActive('crouch', this.local.body.crouched);
     touch.setFlags(this.flags);
     hud.setHealth(this.local.body.hp);
@@ -922,6 +1006,7 @@ export class Game implements SessionHandlers, CutsceneHost {
       this.markersMade = true;
       hud.addMarker({ id: 'partner', kind: 'partner', label: SPEAKERS[this.remoteChar].name, pos: () => this.remote.body.head().add(new THREE.Vector3(0, 0.45, 0)), visible: () => !this.inCutscene && this.remote.body.pos.distanceTo(this.local.body.pos) > 2.5 });
       hud.addMarker({ id: 'objective', kind: 'objective', label: '', pos: () => this.objective.marker, visible: () => !this.inCutscene });
+      hud.addMarker({ id: 'target', kind: 'target', pos: () => this.local.aimTarget?.body.chest() ?? null, visible: () => !this.inCutscene && this.guns.playersArmed && this.flags.combat && !!this.local.aimTarget?.alive });
     }
     for (const n of this.npcs.values()) {
       if ((n.def.role === 'guard' || n.def.role === 'police' || n.def.role === 'thug') && !this.npcMarkers.has(n.id)) {
@@ -950,6 +1035,7 @@ export class Game implements SessionHandlers, CutsceneHost {
     this.npcs.clear();
     this.minigames.dispose();
     this.capture.dispose();
+    this.guns.dispose();
     this.dialogue.stop();
     this.dialogue.bank?.clear();
     try { this.chapter?.dispose(); } catch (e) { console.warn('chapter dispose', e); }
