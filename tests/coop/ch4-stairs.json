@@ -1,0 +1,17 @@
+[
+ {"on":"AB","until":"window.__app.game.begun && !window.__app.game.cutscenes.current","timeout":120000},
+ {"wait":1500},
+ {"tpA":[-10.2,null,25.5,0]},
+ {"wait":1200},
+ {"on":"A","hold":"KeyW","ms":2500},
+ {"on":"A","check":{"name":"alone at the stairs: the chain blocks the way","expr":"window.__app.game.local.body.pos.z < 29.4 && !window.__app.game.chapter.flags.stairsOpen"}},
+ {"on":"A","check":{"name":"alone at the stairs: told to wait for the partner","expr":"/Wait for/.test(window.__app.game.chapterHint || '')"}},
+ {"tpB":[-9.6,null,25.5,0]},
+ {"on":"AB","until":"window.__app.game.chapter.flags.stairsOpen === true","timeout":15000},
+ {"on":"AB","check":{"name":"both at the stairs: the chain comes off","expr":"window.__app.game.chapter.flags.stairsOpen === true"}},
+ {"tpA":[-10.2,null,27.5,0],"tpB":[-9.7,null,27.0,0]},
+ {"wait":800},
+ {"on":"AB","hold":"KeyW","ms":14000},
+ {"on":"AB","until":"window.__app.game.chapter.flags.phase === 'compound'","timeout":30000},
+ {"on":"AB","check":{"name":"both walked up the stairs to the rim","expr":"window.__app.game.local.body.pos.y > 9 && window.__app.game.chapter.flags.phase === 'compound'"}}
+]

@@ -10,6 +10,7 @@ import { Foliage, scatter, type FoliageItem } from './foliage';
 import { Flashlight, Searchlight, coneLight } from './lights';
 import { Car } from './vehicles';
 import { cylinderBetween } from '../engine/geometry';
+import { SPEAKERS } from '../game/game';
 import type { Line } from '../game/dialogue';
 
 const RIM_Y = 10;
@@ -26,6 +27,8 @@ for (let i = 0; i <= 40; i++) {
 const YARD = { x: -112, z: -108 }; // Mia's scrapyard
 const OFFICE = { x: 4, z: 82 };
 const STAIR_X = -10;
+// The stairs start just off the quarry floor (foot at z 27.5) and reach the rim plateau at z 56.7.
+const STAIR_Z0 = 29.5, STAIR_Z1 = 29.5 + 4 * 6.8;
 const BELT_A = v3(30, FLOOR_Y + 1.5, 18); // conveyor bottom (pit floor)
 const BELT_B = v3(40, RIM_Y + 6, 66); // conveyor top (rim, near the office)
 
@@ -55,7 +58,7 @@ export class Chapter4 extends Chapter {
 
   constructor() {
     super();
-    this.flagsDefault = { jump: false, sprint: true, combat: true, crouch: true };
+    this.flagsDefault = { jump: true, sprint: true, combat: true, crouch: true };
     const d = this.npcDefs;
     d.push({ id: 'mia', char: 'mia', role: 'story', name: 'Mia', pos: [YARD.x + 3, 0, YARD.z + 4], yaw: Math.PI + 0.4, idleClip: 'idle', passive: true });
     const thug = (id: string, char: string, name: string, pos: [number, number], patrol?: Array<[number, number, number?, number?]>, extra: Partial<import('../game/npc').NpcDef> = {}) =>
@@ -150,7 +153,7 @@ export class Chapter4 extends Chapter {
   }
 
   /** Terraced pit, rim plateau, haul road and levelled pads. */
-  private height(x: number, z: number): number {
+  private height(x: number, z: number, carve = true): number {
     const r = Math.hypot(x, z) + fbm(x * 0.05, z * 0.05, 2, 4) * 2.5;
     let h = RIM_Y + fbm(x * 0.012, z * 0.012, 3, 9) * 4 * smooth(PIT_R + 6, PIT_R + 30, r);
     if (r < PIT_R + 2) {
@@ -169,7 +172,24 @@ export class Chapter4 extends Chapter {
     if (Math.abs(ox) < 52 && oz > -24 && oz < 34) h = THREE.MathUtils.lerp(h, RIM_Y, smooth(6, 0, Math.max(Math.abs(ox) - 46, -24 - oz + 6, oz - 28, 0)));
     const yd = Math.hypot(x - YARD.x, z - YARD.z);
     h = THREE.MathUtils.lerp(h, RIM_Y - 1, smooth(30, 22, yd));
+    // Cut a channel into the north face for the maintenance stairs, so rock never covers a step.
+    if (carve && z > STAIR_Z0 - 2 && z < STAIR_Z1 + 1) {
+      // Wide enough that every 2 m terrain grid point around the steps is fully cut.
+      const out = Math.max(STAIR_X - 2.2 - x, x - (STAIR_X + 2.2), 0);
+      if (out < 2.2) {
+        const s = this.stairProfile(Math.min(Math.max(z, STAIR_Z0), STAIR_Z1));
+        h = THREE.MathUtils.lerp(h, Math.min(h, s - 0.3), smooth(2.2, 0, out));
+      }
+    }
     return h;
+  }
+  /** Bottom of the quarry stairs (uncarved ground at their foot). */
+  private stairY0Cached: number | null = null;
+  get stairY0(): number { return (this.stairY0Cached ??= this.height(STAIR_X, STAIR_Z0 - 2, false)); }
+  /** Walking height along the stairs (one even flight). */
+  private stairProfile(z: number): number {
+    const t = THREE.MathUtils.clamp((z - STAIR_Z0) / (STAIR_Z1 - STAIR_Z0), 0, 1);
+    return this.stairY0 + (RIM_Y - this.stairY0) * t;
   }
   private haulLenCached = 0;
   private haulLenCalc(): number {
@@ -312,22 +332,34 @@ export class Chapter4 extends Chapter {
       kit.box(L.emissive(0xfff2d8, 5), [x, y0 + 7.1, z], [1.4, 0.4, 0.2], 0, false);
       kit.fixtures.push({ pos: v3(x, y0 + 6.8, z), color: new THREE.Color(0xfff0d8), intensity: 22, range: 20, on: true, zone: 'pit' });
     }
-    // Maintenance stairs up the north face (switchbacks with landings)
-    const sx = STAIR_X;
-    let yv = this.y(sx, 30);
-    let z = 30;
-    const flights = 4;
-    const riseEach = (RIM_Y - yv) / flights;
-    for (let i = 0; i < flights; i++) {
-      const xOff = i % 2 === 0 ? 0 : 1.6;
-      kit.stairs(steel, sx + xOff, z, 0, 1.4, yv, yv + riseEach, 5.2);
-      z += 5.2;
-      yv += riseEach;
-      kit.slab(steel, sx - 0.7, z, sx + 2.3, z + 1.6, yv, 0.12, 'metal');
-      kit.railing(steel, sx - 0.7, z + 1.6, sx + 2.3, z + 1.6, yv);
-      z += 1.6;
+    // Maintenance stairs up the north face: one straight, even flight from the quarry floor to the
+    // rim (a channel is cut into the rock for it). Even slope = no lips where the feet catch.
+    const sx = STAIR_X, W = 1.6;
+    const y0 = this.stairY0, y1 = RIM_Y;
+    kit.stairs(steel, sx, STAIR_Z0, 0, W, y0, y1, STAIR_Z1 - STAIR_Z0);
+    for (const side of [-1, 1]) {
+      const x = sx + side * (W / 2 + 0.06);
+      // Handrail with posts, and an invisible guard so nobody slips off the side.
+      kit.batch.add(cylinderBetween(v3(x, y0 + 1.0, STAIR_Z0), v3(x, y1 + 1.0, STAIR_Z1), 0.03, 8), steel);
+      for (let k = 0; k <= 9; k++) {
+        const t = k / 9, zz = STAIR_Z0 + (STAIR_Z1 - STAIR_Z0) * t, yy = y0 + (y1 - y0) * t;
+        kit.batch.add(cylinderBetween(v3(x, yy, zz), v3(x, yy + 1.0, zz), 0.025, 6), steel);
+      }
+      w.physics.addBox({ x, y: (y0 + y1) / 2 + 0.6, z: (STAIR_Z0 + STAIR_Z1) / 2 }, { x: 0.08, y: y1 - y0 + 1.6, z: STAIR_Z1 - STAIR_Z0 }, 0, { blocksSight: false, blocksCamera: false, walkable: false, surface: 'metal' });
     }
-    this.stairTop = v3(sx + 0.8, yv, z);
+    this.stairTop = v3(sx, y1, STAIR_Z1);
+    // Work lamps on the handrail so the stairs read at night.
+    for (const t of [0.12, 0.5, 0.88]) {
+      const zz = STAIR_Z0 + (STAIR_Z1 - STAIR_Z0) * t, yy = y0 + (y1 - y0) * t;
+      kit.bulb(L.emissive(0xffd29a, 3), steel, sx + W / 2 + 0.06, yy + 1.25, zz, 0xffc890, 1.6, 8, 'pit');
+    }
+    // Chain across the foot of the stairs: it comes off when both of you are there.
+    const gz = STAIR_Z0 - 0.3;
+    for (const side of [-1, 1]) kit.batch.add(cylinderBetween(v3(sx + side * 0.95, y0, gz), v3(sx + side * 0.95, y0 + 1.1, gz), 0.05, 8), steel);
+    this.stairChain = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.05, 0.05), L.plain(0xb8a040, 0.5, 0.6));
+    this.stairChain.position.set(sx, y0 + 0.9, gz);
+    w.root.add(this.stairChain);
+    this.stairGate = w.physics.addBox({ x: sx, y: y0 + 0.8, z: gz }, { x: 1.9, y: 1.6, z: 0.1 }, 0, { blocksSight: false, blocksCamera: false, walkable: false, surface: 'metal' });
     // Nav for the pit + compound
     const NavGraph = (await import('../game/nav')).NavGraph;
     this.nav = new NavGraph(w.physics);
@@ -356,6 +388,8 @@ export class Chapter4 extends Chapter {
     for (const s of [-1, 1]) kit.batch.add(cylinderBetween(v3(a.x + Math.cos(yaw) * 0.85 * s, a.y + 1.0, a.z - Math.sin(yaw) * 0.85 * s), v3(b.x + Math.cos(yaw) * 0.85 * s, b.y + 1.0, b.z - Math.sin(yaw) * 0.85 * s), 0.035, 6), steel);
   }
   private stairTop = new THREE.Vector3();
+  private stairChain: THREE.Mesh | null = null;
+  private stairGate: import('../engine/physics').Box | null = null;
 
   // ------------------------------------------------------------------ compound: fence, containers, generator
   private async buildCompound(): Promise<void> {
@@ -480,7 +514,7 @@ export class Chapter4 extends Chapter {
     const H = (x: number, z: number) => this.y(x, z);
     this.addTrigger({ id: 'haul_mid', min: [-10, -40, -60], max: [70, 40, -20], who: 'any', enabled: () => this.flags.phase === 'rim' });
     this.addTrigger({ id: 'floor', min: [-30, FLOOR_Y - 2, -30], max: [40, FLOOR_Y + 3, 30], who: 'both', enabled: () => this.flags.phase === 'rim' });
-    this.addTrigger({ id: 'stairs', min: [STAIR_X - 3, FLOOR_Y - 2, 26], max: [STAIR_X + 4, FLOOR_Y + 8, 34], who: 'any', enabled: () => this.flags.phase === 'pit' });
+    this.addTrigger({ id: 'stairs', min: [STAIR_X - 3.5, FLOOR_Y - 2, 22.5], max: [STAIR_X + 3.5, FLOOR_Y + 4, STAIR_Z0], who: 'both', enabled: () => this.flags.phase === 'pit' && !this.flags.stairsOpen });
     this.addTrigger({ id: 'top', min: [STAIR_X - 6, RIM_Y - 1, 58], max: [STAIR_X + 8, RIM_Y + 4, 66], who: 'both', enabled: () => this.flags.phase === 'pit' });
     this.addTrigger({ id: 'office_near', min: [OFFICE.x - 8, RIM_Y - 1, OFFICE.z - 14], max: [OFFICE.x + 8, RIM_Y + 3, OFFICE.z - 4.2], who: 'any', enabled: () => this.flags.phase === 'office' });
     this.addTrigger({ id: 'upstairs', min: [OFFICE.x + 1.6, RIM_Y + 2.8, OFFICE.z - 5.2], max: [OFFICE.x + 4.6, RIM_Y + 4.5, OFFICE.z - 3.6], who: 'both', enabled: () => this.flags.phase === 'office' });
@@ -513,7 +547,12 @@ export class Chapter4 extends Chapter {
         g.session.emit('flag', { k: 'phase', v: 'pit' });
         this.objective('Cross the pit to the stairs on the north wall', [STAIR_X, FLOOR_Y + 1.5, 30]);
         break;
-      case 'stairs': this.say('stairs'); break;
+      case 'stairs':
+        // Both at the foot of the stairs: the chain comes off.
+        g.session.emit('flag', { k: 'stairsOpen', v: true });
+        g.audio.play('chain', { pos: v3(STAIR_X, FLOOR_Y + 1, STAIR_Z0), volume: 0.7 });
+        this.say('stairs');
+        break;
       case 'top':
         this.saveCheckpoint('compound');
         g.session.emit('flag', { k: 'phase', v: 'compound' });
@@ -691,6 +730,7 @@ export class Chapter4 extends Chapter {
     const order = ['yard', 'rim', 'pit', 'compound', 'office'];
     const past = (p: string) => order.indexOf(id) > order.indexOf(p);
     if (!past('compound')) delete this.flags.lightsOut; else this.flags.lightsOut = true;
+    if (!past('pit')) delete this.flags.stairsOpen; else this.flags.stairsOpen = true;
     this.applyLights();
     switch (id) {
       case 'yard': on(['mia']); delete this.flags.metMia; g.audio.playMusic('music_sad', 2); break;
@@ -797,6 +837,14 @@ export class Chapter4 extends Chapter {
     const g = this.g;
     // Crouching behind containers/machinery in the dark hides you better: no concealment zones here, light matters.
     g.local.body.concealed = false;
+    // Stair chain: closed until both players reach the foot of the stairs.
+    const open = !!this.flags.stairsOpen || this.flags.phase !== 'pit';
+    if (this.stairGate) this.stairGate.enabled = !open;
+    if (this.stairChain) this.stairChain.visible = !open;
+    const p = g.local.body.pos;
+    const waiting = !open && this.flags.phase === 'pit' && Math.abs(p.x - STAIR_X) < 3.5 && p.z > 22.5 && p.z < STAIR_Z0 + 0.5 && p.y < FLOOR_Y + 4;
+    const hint = waiting ? `Wait for ${SPEAKERS[g.remoteChar].name} — you go up the stairs together` : null;
+    g.chapterHint = hint;
   }
 
   lightAt(p: THREE.Vector3): number {

@@ -1,0 +1,7 @@
+[
+ {"on":"AB","until":"window.__app.game.begun","timeout":120000},
+ {"on":"AB","until":"window.__app.game.chapter.flags.phase === 'morning' && !window.__app.game.cutscenes.current","timeout":240000},
+ {"on":"B","eval":"(window.__app.game.chapter.cutscenes.cs_arrival.end(), true)"},
+ {"wait":3000},
+ {"on":"AB","check":{"name":"cell doors stay open even if the opening cutscene ends late","expr":"window.__app.game.chapter.doors.get('C-16').t > 0.95 && window.__app.game.chapter.doors.get('C-17').t > 0.95"}}
+]

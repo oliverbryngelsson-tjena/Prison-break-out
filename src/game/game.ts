@@ -80,7 +80,7 @@ export class Game implements SessionHandlers, CutsceneHost {
   readonly chars = new CharacterLibrary();
   objective = { text: '', marker: null as THREE.Vector3 | null };
   state: GameState = 'loading';
-  flags = { jump: false, sprint: true, combat: false, crouch: true };
+  flags = { jump: true, sprint: true, combat: false, crouch: true };
   localChar: CharacterId;
   remoteChar: CharacterId;
   peerLoaded = false;
@@ -106,6 +106,8 @@ export class Game implements SessionHandlers, CutsceneHost {
   readonly extras: Extras = new Extras(this);
   /** Caught: tackle, handcuffs and the fail screen. */
   readonly capture: Capture = new Capture(this);
+  /** A short help line a chapter wants shown at the bottom (e.g. 'wait for your partner'). */
+  chapterHint: string | null = null;
   /** Loading screen status callback. */
   onLoadStatus: ((s: string) => void) | null = null;
   /** Local bike state for snapshots [lean, pitch, steer, rpm, spin] (set by BikeSystem). */
@@ -903,6 +905,7 @@ export class Game implements SessionHandlers, CutsceneHost {
           : 'W gas · S brake · A / D steer';
       }
     }
+    if (this.chapterHint && !this.inCutscene) ctl = this.chapterHint;
     hud.setControlHint(ctl);
     touch.setLabel('interact', c && !this.inCutscene ? shortLabel(this.interact.label(c)) : null, !!c);
     touch.setLabel('attack', this.local.takedownTarget ? 'Takedown' : null, !!this.local.takedownTarget);

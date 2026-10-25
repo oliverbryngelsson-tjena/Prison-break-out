@@ -341,8 +341,9 @@ export class PlayerController {
     const before = b.pos.clone();
     // --- jump
     if (f.jump && inp.buttons.jump.pressed && b.grounded && !b.crouched && !attacking) {
-      this.vy = 4.3;
+      this.vy = 5.2; // about 0.75 m with gravity 18 (walls and fences are 3 m+)
       b.grounded = false;
+      if (!b.poseName) b.setPose('jump', {}, { restart: true });
       this.ctx.audio.play('whoosh', { pos: b.pos, volume: 0.25 });
     }
     // --- movement + gravity in small sub-steps: slow frames (phones, background tabs) can't tunnel or fall through.
