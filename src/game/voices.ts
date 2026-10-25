@@ -29,6 +29,11 @@ export const CAST: Record<string, VoiceDef> = {
   ray: { v: 'am_puck', speed: 1.08 },
   dutch: { v: 'bm_daniel', speed: 0.92 },
   julius: { v: 'am_liam', speed: 1.05 },
+  // Chapter 4 site crew
+  sal: { v: 'am_santa', speed: 0.92 },
+  boone: { v: 'am_eric', speed: 0.96 },
+  wk_flag: { v: 'bm_lewis', speed: 1.04 },
+  wk_pit2: { v: 'am_adam', speed: 1.06 },
   guard: { v: 'am_adam' },
   inmate: { v: 'am_echo' },
   cop: { v: 'am_eric' },

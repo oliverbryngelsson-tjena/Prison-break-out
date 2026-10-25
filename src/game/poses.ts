@@ -427,16 +427,35 @@ export const POSES: Record<string, PoseDef> = {
     },
   },
   aim: {
-    // Pointing a pistol forward with both hands.
+    // Aiming a gun. With points.gripR/gripL (from the gun system) both hands go onto the weapon;
+    // without them (cutscene props) the arms point forward with both hands together.
     dur: Infinity, canMove: true, fade: 0.25,
     apply(m, _t, w, c) {
       const fr = frame(m);
       const pitch = c.k?.pitch ?? 0;
       spine(m, fr, 0.05 * w, 0.1 * w);
       const fr2 = frame(m);
-      const tgt = fr2.chest.clone().addScaledVector(fr2.fwd, 0.62).add(new THREE.Vector3(0, 0.2 + pitch, 0));
-      arm(m, 'R', tgt.clone().addScaledVector(fr2.right, 0.02), w, new THREE.Vector3(0, -1, 0).addScaledVector(fr2.right, 0.6));
-      arm(m, 'L', tgt.clone().addScaledVector(fr2.fwd, -0.06).addScaledVector(fr2.right, -0.04).add(new THREE.Vector3(0, -0.04, 0)), w, new THREE.Vector3(0, -1, 0).addScaledVector(fr2.right, -0.6));
+      const gr = c.points?.gripR, gl = c.points?.gripL;
+      if (gr && gl) {
+        arm(m, 'R', gr, w, new THREE.Vector3(0, -1, 0).addScaledVector(fr2.right, 0.9));
+        arm(m, 'L', gl, w, new THREE.Vector3(0, -1, 0).addScaledVector(fr2.right, -0.5));
+      } else {
+        const tgt = fr2.chest.clone().addScaledVector(fr2.fwd, 0.62).add(new THREE.Vector3(0, 0.2 + pitch, 0));
+        arm(m, 'R', tgt.clone().addScaledVector(fr2.right, 0.02), w, new THREE.Vector3(0, -1, 0).addScaledVector(fr2.right, 0.6));
+        arm(m, 'L', tgt.clone().addScaledVector(fr2.fwd, -0.06).addScaledVector(fr2.right, -0.04).add(new THREE.Vector3(0, -0.04, 0)), w, new THREE.Vector3(0, -1, 0).addScaledVector(fr2.right, -0.6));
+      }
+      fist(m, 'R', 0.7 * w); fist(m, 'L', 0.6 * w);
+    },
+  },
+  gun: {
+    // Carrying a long gun at low ready while walking/running (hands on the grips).
+    dur: Infinity, canMove: true, fade: 0.3,
+    apply(m, _t, w, c) {
+      const gr = c.points?.gripR, gl = c.points?.gripL;
+      if (!gr || !gl) return;
+      const fr = frame(m);
+      arm(m, 'R', gr, w, new THREE.Vector3(0, -1, 0).addScaledVector(fr.right, 0.8).addScaledVector(fr.fwd, -0.3));
+      arm(m, 'L', gl, w, new THREE.Vector3(0, -1, 0).addScaledVector(fr.right, -0.7));
       fist(m, 'R', 0.7 * w); fist(m, 'L', 0.6 * w);
     },
   },
@@ -479,10 +498,11 @@ export const POSES: Record<string, PoseDef> = {
       hipB.position.x += (local.x - curL.x) * w;
       hipB.position.y += (local.y - curL.y + stand * 0.32) * w;
       hipB.position.z += (local.z - curL.z - stand * 0.05) * w;
-      spine(m, frame(m), (0.55 - 0.2 * stand) * w, (c.k?.steer ?? 0) * 0.3 * w, -lean * 0.2 * w);
+      // Lean over the bars (attack position), elbows out to the sides and slightly down.
+      spine(m, frame(m), (0.78 - 0.25 * stand) * w, (c.k?.steer ?? 0) * 0.3 * w, -lean * 0.2 * w);
       const fr2 = frame(m);
-      arm(m, 'R', p.gripR, w, fr2.right.clone().multiplyScalar(0.7).add(new THREE.Vector3(0, -0.6, 0)).addScaledVector(fr2.fwd, -0.4));
-      arm(m, 'L', p.gripL, w, fr2.right.clone().multiplyScalar(-0.7).add(new THREE.Vector3(0, -0.6, 0)).addScaledVector(fr2.fwd, -0.4));
+      arm(m, 'R', p.gripR, w, fr2.right.clone().add(new THREE.Vector3(0, -0.45, 0)).addScaledVector(fr2.fwd, -0.25));
+      arm(m, 'L', p.gripL, w, fr2.right.clone().negate().add(new THREE.Vector3(0, -0.45, 0)).addScaledVector(fr2.fwd, -0.25));
       leg(m, 'R', p.pegR, w, fr2.fwd.clone().add(new THREE.Vector3(0, 0.3, 0)));
       leg(m, 'L', p.pegL, w, fr2.fwd.clone().add(new THREE.Vector3(0, 0.3, 0)));
       fist(m, 'R', 0.8 * w); fist(m, 'L', 0.8 * w);

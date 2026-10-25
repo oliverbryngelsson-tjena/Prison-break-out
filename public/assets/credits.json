@@ -1112,5 +1112,89 @@
    "ui/portrait_elias.jpg",
    "ui/portrait_jax.jpg"
   ]
+ },
+ {
+  "kind": "model",
+  "title": "AK-47",
+  "author": "3dmodelscc0",
+  "link": "https://3dmodelscc0.itch.io/free-cc0-guns-explosives-pack",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/Paumen/lp-sources (repacked copy)",
+  "files": [
+   "models/weapon_ak47.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "M4A1",
+  "author": "3dmodelscc0",
+  "link": "https://3dmodelscc0.itch.io/free-cc0-guns-explosives-pack",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/Paumen/lp-sources (repacked copy)",
+  "files": [
+   "models/weapon_m4.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Sniper",
+  "author": "3dmodelscc0",
+  "link": "https://3dmodelscc0.itch.io/free-cc0-guns-explosives-pack",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/Paumen/lp-sources (repacked copy)",
+  "files": [
+   "models/weapon_sniper.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Shotgun",
+  "author": "3dmodelscc0",
+  "link": "https://3dmodelscc0.itch.io/free-cc0-guns-explosives-pack",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/Paumen/lp-sources (repacked copy)",
+  "files": [
+   "models/weapon_shotgun.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Makarov",
+  "author": "3dmodelscc0",
+  "link": "https://3dmodelscc0.itch.io/free-cc0-guns-explosives-pack",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/Paumen/lp-sources (repacked copy)",
+  "files": [
+   "models/weapon_pistol.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Grease Gun",
+  "author": "3dmodelscc0",
+  "link": "https://3dmodelscc0.itch.io/free-cc0-guns-explosives-pack",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/Paumen/lp-sources (repacked copy)",
+  "files": [
+   "models/weapon_smg.glb"
+  ]
+ },
+ {
+  "kind": "model",
+  "title": "Suomi KP",
+  "author": "3dmodelscc0",
+  "link": "https://3dmodelscc0.itch.io/free-cc0-guns-explosives-pack",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/Paumen/lp-sources (repacked copy)",
+  "files": [
+   "models/weapon_suomi.glb"
+  ]
  }
 ]

@@ -120,20 +120,15 @@
  },
  {
   "on": "AB",
-  "until": "window.__app.game.cutscenes.played.has('cs3_plan')",
+  "until": "window.__app.game.dialogue.active && !window.__app.game.cutscenes.current",
   "timeout": 20000
  },
  {
-  "wait": 1200
- },
- {
   "on": "AB",
-  "press": "Enter"
- },
- {
-  "on": "AB",
-  "until": "!window.__app.game.cutscenes.current",
-  "timeout": 60000
+  "check": {
+   "name": "plan: walk-and-talk, no cutscene (you keep control)",
+   "expr": "!window.__app.game.cutscenes.current && window.__app.game.local.state === 'free'"
+  }
  },
  {
   "tpA": [
@@ -151,15 +146,15 @@
  },
  {
   "on": "AB",
-  "until": "window.__app.game.cutscenes.played.has('cs3_farm')",
-  "timeout": 30000
- },
- {
-  "wait": 1000
+  "until": "window.__app.game.dialogue.active && !window.__app.game.cutscenes.current",
+  "timeout": 20000
  },
  {
   "on": "AB",
-  "press": "Enter"
+  "check": {
+   "name": "farm: walk-and-talk, no cutscene (you keep control)",
+   "expr": "!window.__app.game.cutscenes.current && window.__app.game.local.state === 'free'"
+  }
  },
  {
   "on": "AB",

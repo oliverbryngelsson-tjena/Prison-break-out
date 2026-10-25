@@ -36,7 +36,7 @@ export interface NpcDef {
   /** Cannot be taken down from behind. */
   noTakedown?: boolean;
   /** Carries a pistol: fights at range instead of punching. */
-  gun?: { dmg?: number; range?: number; rate?: number; acc?: number };
+  gun?: { dmg?: number; range?: number; rate?: number; acc?: number; /** Weapon model/sound (WeaponId). */ w?: string };
   /** Ignore players completely (ambient). */
   passive?: boolean;
   look?: boolean;
@@ -370,7 +370,7 @@ export class Npc implements Combatant {
     }
     const pitch = THREE.MathUtils.clamp((tgt.pos.y - b.pos.y) / Math.max(1, d), -0.5, 0.5);
     if (this.pose !== 'aim') { this.pose = 'aim'; this.poseAt = this.world.time; b.setPose('aim', { k: { pitch } }); }
-    else b.updatePoseCtx({ k: { pitch } });
+    else b.updatePoseCtx({ ...(b.poseCtx() ?? {}), k: { ...(b.poseCtx()?.k ?? {}), pitch } });
     // Back off a little when the player is right on top of them.
     if (d < 2.2) {
       tmp2.set(b.pos.x - tgt.pos.x, 0, b.pos.z - tgt.pos.z).normalize().multiplyScalar(2).add(b.pos);

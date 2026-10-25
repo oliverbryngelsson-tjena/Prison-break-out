@@ -16,7 +16,8 @@ export class BikeVisual {
   model!: THREE.Object3D;
   private steerBone: THREE.Object3D | null = null;
   private steerRest = new THREE.Quaternion();
-  private wheels: Array<{ bone: THREE.Object3D; rest: THREE.Quaternion }> = [];
+  /** Wheel bones with their axle direction in bone-local space (so they roll, not flip). */
+  private wheels: Array<{ bone: THREE.Object3D; rest: THREE.Quaternion; axle: THREE.Vector3 }> = [];
   private gripL: THREE.Object3D | null = null;
   private gripR: THREE.Object3D | null = null;
   /** Local anchor points (bike space) */
@@ -45,7 +46,7 @@ export class BikeVisual {
     if (v.steerBone) v.steerRest.copy(v.steerBone.quaternion);
     for (const name of ['FRONT-WHEEL-DEF', 'REAR-WHEEL-DEF']) {
       const b = find((n) => n.startsWith(name) && !n.includes('end'));
-      if (b) v.wheels.push({ bone: b, rest: b.quaternion.clone() });
+      if (b) v.wheels.push({ bone: b, rest: b.quaternion.clone(), axle: new THREE.Vector3(1, 0, 0) });
     }
     v.gripR = find((n) => n.startsWith('HAND-SNAPR') || n.startsWith('HAND-SNAP_R') || n === 'HAND-SNAPR_010');
     v.gripL = find((n) => n.startsWith('HAND-SNAPL') || n.startsWith('HAND-SNAP_L') || n === 'HAND-SNAPL_011');
@@ -72,12 +73,19 @@ export class BikeVisual {
     v.wheelR = Math.min(0.45, size.y * 0.3);
     // Grip anchors from the rig, in bike space.
     v.root.updateMatrixWorld(true);
+    // Axle = the bike's sideways axis (+X in bike space), expressed in each wheel bone's own frame.
+    const rootQ = v.root.getWorldQuaternion(new THREE.Quaternion());
+    for (const w of v.wheels) {
+      const boneQ = w.bone.getWorldQuaternion(new THREE.Quaternion());
+      w.axle.set(1, 0, 0).applyQuaternion(rootQ).applyQuaternion(boneQ.invert()).normalize();
+    }
     const inv = new THREE.Matrix4().copy(v.root.matrixWorld).invert();
     const toLocal = (o: THREE.Object3D | null, fallback: THREE.Vector3) => (o ? o.getWorldPosition(V()).applyMatrix4(inv) : fallback);
     v.anchors.gripL.copy(toLocal(v.gripL, v.anchors.gripL));
     v.anchors.gripR.copy(toLocal(v.gripR, v.anchors.gripR));
     if (v.anchors.gripL.x > v.anchors.gripR.x) { const t = v.anchors.gripL.clone(); v.anchors.gripL.copy(v.anchors.gripR); v.anchors.gripR.copy(t); }
-    v.anchors.seat.set(0, size.y * 0.74, -len * 0.14);
+    // Sit forward enough that the arms reach the grips without locking straight.
+    v.anchors.seat.set(0, size.y * 0.74, -len * 0.07);
     v.anchors.pegL.set(-0.24, size.y * 0.3, -len * 0.06);
     v.anchors.pegR.set(0.24, size.y * 0.3, -len * 0.06);
     v.lampAt.set(0, size.y * 0.7, len * 0.36);
@@ -131,7 +139,8 @@ export class BikeVisual {
       this.steerBone.quaternion.copy(this.steerRest);
       this.steerBone.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0).applyQuaternion(this.tilt.getWorldQuaternion(new THREE.Quaternion())), steer * 0.45);
     }
-    for (const w of this.wheels) { w.bone.quaternion.copy(w.rest); w.bone.rotateX(spin); }
+    // Positive spin rolls the top of the wheel forward (+Z).
+    for (const w of this.wheels) { w.bone.quaternion.copy(w.rest); w.bone.rotateOnAxis(w.axle, spin); }
     this.root.updateMatrixWorld(true);
     this.syncLight();
   }
@@ -208,14 +217,17 @@ export class BikeController {
     if (this.grounded) {
       const accel = inp.throttle * (this.speed < 8 ? 11 : this.speed < 18 ? 7.5 : 4.5);
       this.speed += accel * dt;
-      if (inp.brake > 0) this.speed -= (this.speed > 0.5 ? 16 : 4) * inp.brake * dt;
+      // Brake hard while rolling forward; once stopped, holding brake backs up.
+      if (inp.brake > 0) this.speed -= (this.speed > 0.5 ? 16 : 6) * inp.brake * dt;
       // Drag + rolling resistance + overspeed bleed
       this.speed -= (0.012 * this.speed * this.speed + 0.6) * dt * Math.sign(this.speed);
       if (this.speed > vmax) this.speed -= (this.speed - vmax) * Math.min(1, dt * 2.5);
       // Gravity along the slope
       this.speed -= Math.sin(this.pitch) * 9.8 * dt * 0.6;
-      if (this.speed < -3) this.speed = -3;
-      if (Math.abs(this.speed) < 0.05 && inp.throttle === 0) this.speed = 0;
+      if (this.speed < -4) this.speed = -4;
+      // Settle to a stop when nothing is pressed (not while reversing: at 120 fps one frame of
+      // reverse is under the threshold, which used to make backing up impossible).
+      if (Math.abs(this.speed) < 0.05 && inp.throttle === 0 && inp.brake === 0) this.speed = 0;
     }
     // --- steering
     this.steer += (inp.steer - this.steer) * Math.min(1, dt * 6);

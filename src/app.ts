@@ -11,6 +11,7 @@ import { releaseAssetCaches, onLoadProgress } from './engine/assets';
 import type { QualityLevel } from './engine/quality';
 import { NetClient, defaultServerUrl } from './net/client';
 import { Hud } from './ui/hud';
+import { HudLayout } from './ui/hudlayout';
 import { TouchControls } from './ui/touch';
 import { Menus } from './ui/menus';
 import { MenuScene } from './ui/menuScene';
@@ -49,6 +50,7 @@ export class App {
   private last = performance.now();
   private pauseBtn!: HTMLButtonElement;
   private editBar!: HTMLElement;
+  private hudLayout!: HudLayout;
   private paused = false;
   private pendingNext: number | null = null;
   private startingGame = false;
@@ -85,6 +87,7 @@ export class App {
     this.audio = new AudioManager();
     this.hud = new Hud(this.container);
     this.hud.setVisible(false);
+    this.hudLayout = new HudLayout(this.hud);
     this.touch = new TouchControls(this.container, this.input);
     this.touch.setMode('hidden');
     this.buildPauseButton();
@@ -171,13 +174,26 @@ export class App {
   private buildEditBar(): void {
     const bar = document.createElement('div');
     bar.className = 'edit-bar';
-    bar.innerHTML = `<span>Drag buttons to move them.</span>
-      <label style="display:flex;gap:0.375rem;align-items:center">Size <input type="range" min="44" max="120" step="2" value="72" data-size></label>
-      <button class="btn small" data-reset>Reset</button><button class="btn small primary" data-done>Done</button>`;
+    bar.innerHTML = `<span data-tip>Drag anything to move it · tap it, then Size</span>
+      <button class="btn small" data-mode>Bike buttons</button>
+      <label style="display:flex;gap:0.375rem;align-items:center">Size <input type="range" min="44" max="180" step="2" value="72" data-size></label>
+      <button class="btn small" data-reset>Reset all</button><button class="btn small primary" data-done>Done</button>`;
     const size = bar.querySelector('[data-size]') as HTMLInputElement;
-    size.addEventListener('input', () => this.touch.resizeSelected(Number(size.value)));
-    this.touch.onSelect = (n) => { size.value = String(this.touch.layout[n]?.size ?? 72); };
-    bar.querySelector('[data-reset]')!.addEventListener('click', () => this.touch.resetLayout());
+    // The slider means pixels for touch controls and a percentage for HUD items.
+    let target: 'touch' | 'hud' = 'touch';
+    size.addEventListener('input', () => {
+      if (target === 'hud') this.hudLayout.resizeSelected(Number(size.value) / 100);
+      else this.touch.resizeSelected(Number(size.value));
+    });
+    this.touch.onSelect = (n) => { target = 'touch'; this.hudLayout.selected = null; size.min = n === 'stick' ? '96' : '44'; size.max = n === 'stick' ? '200' : '140'; size.value = String(this.touch.layout[n]?.size ?? 72); };
+    this.hudLayout.onSelect = (id) => { target = 'hud'; this.touch.selected = null; size.min = '50'; size.max = '180'; size.value = String(Math.round(this.hudLayout.scaleOf(id) * 100)); };
+    bar.querySelector('[data-reset]')!.addEventListener('click', () => { this.touch.resetLayout(); this.hudLayout.reset(); });
+    const modeBtn = bar.querySelector('[data-mode]') as HTMLButtonElement;
+    modeBtn.addEventListener('click', () => {
+      const bike = this.touch.mode !== 'bike';
+      this.touch.setMode(bike ? 'bike' : 'foot');
+      modeBtn.textContent = bike ? 'Walking buttons' : 'Bike buttons';
+    });
     bar.querySelector('[data-done]')!.addEventListener('click', () => this.editLayout(false));
     this.container.appendChild(bar);
     this.editBar = bar;
@@ -190,11 +206,17 @@ export class App {
       this.touch.setMode('foot');
       this.touch.setFlags({ jump: true, combat: true, crouch: true, sprint: true });
       this.touch.setEditing(true);
+      (this.editBar.querySelector('[data-mode]') as HTMLElement).textContent = 'Bike buttons';
+      this.editBar.dataset.hudWasVisible = this.hud.root.style.display === 'none' ? 'false' : 'true';
+      this.hud.root.style.display = '';
+      this.hudLayout.setEditing(true);
       this.editBar.classList.add('show');
       this.menus.show(null);
       this.editBar.dataset.wasEnabled = String(wasEnabled);
     } else {
       this.touch.setEditing(false);
+      this.hudLayout.setEditing(false);
+      if (this.editBar.dataset.hudWasVisible === 'false') this.hud.root.style.display = 'none';
       this.editBar.classList.remove('show');
       this.touch.enabled = this.editBar.dataset.wasEnabled === 'true';
       this.touch.setMode(this.state === 'game' && !this.paused ? 'foot' : 'hidden');

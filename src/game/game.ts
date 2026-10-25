@@ -4,6 +4,7 @@ import { BARKS, BARK_DUR } from './voices';
 import { VoiceBank } from './voicebank';
 import { Capture } from './capture';
 import { Guns, PLAYER_SHOT_DMG, SHOT_RANGE, type ShotEvent } from './guns';
+import { DEFAULT_LOADOUT, hitChance, SHOP, WEAPONS, type WeaponId } from './weapons';
 import { MiniGames } from './minigames';
 import * as THREE from 'three';
 import type { CharacterId, NpcSnap, PlayerSnap, Progress } from '../../shared/protocol';
@@ -200,6 +201,7 @@ export class Game implements SessionHandlers, CutsceneHost {
     this.chapter.attach(this);
     this.flags = { ...this.chapter.flagsDefault };
     await this.chapter.build();
+    void this.guns.preload();
     const cp = checkpoint && this.chapter.checkpoints[checkpoint] ? checkpoint : Object.keys(this.chapter.checkpoints)[0];
     const outfit = this.chapter.checkpoints[cp].outfit ?? this.chapter.outfit;
     // Player characters
@@ -215,6 +217,7 @@ export class Game implements SessionHandlers, CutsceneHost {
     // NPCs
     await Promise.all(this.chapter.npcDefs.map((d) => this.spawnNpc(d)));
     if (savedFlags) this.chapter.flags = { ...savedFlags };
+    this.applyLoadout();
     this.chapter.checkpoint = cp;
     this.placeAtCheckpoint(cp);
     this.deps.renderer.setView(this.world.scene, this.cam.camera);
@@ -302,6 +305,7 @@ export class Game implements SessionHandlers, CutsceneHost {
       onShoot: (t, dir) => this.localShoot(t, dir),
       pickTarget: (list) => this.guns.pickTarget(this.local.body, list, this.cam.forward),
       canShoot: () => this.guns.reloadT <= 0,
+      weapon: () => this.guns.local,
       flags: this.flags,
     };
   }
@@ -382,35 +386,88 @@ export class Game implements SessionHandlers, CutsceneHost {
     }
   }
 
-  /** Local player pulls the trigger: decide hit or miss, show it now, send it to the authority. */
+  /** Local player pulls the trigger: roll each bullet against the weapon's spread, show it now, send it. */
   private localShoot(t: Combatant | null, dir: THREE.Vector3): void {
     const gn = this.guns;
+    const w = gn.local;
     if (gn.reloadT > 0) return;
     gn.ammo--;
     if (gn.ammo <= 0) {
-      gn.reloadT = 1.5;
-      this.audio.play('lock_open', { pos: this.local.body.chest(), volume: 0.5, rate: 1.4, delay: 0.5 });
-      this.hud.notify('Reloading…', 1.4);
+      gn.reloadT = w.reload;
+      this.audio.play('lock_open', { pos: this.local.body.chest(), volume: 0.5, rate: 1.4, delay: 0.4 });
+      this.audio.play('switch', { pos: this.local.body.chest(), volume: 0.4, delay: w.reload - 0.3 });
+      this.hud.notify('Reloading…', w.reload);
     }
     const from = this.local.body.chest().addScaledVector(dir, 0.55).add(new THREE.Vector3(0, 0.1, 0));
-    let hit = false;
-    let to: THREE.Vector3;
     const npc = t ? this.npcs.get(t.id) : undefined;
-    if (t && npc) {
-      const d = t.body.pos.distanceTo(this.local.body.pos);
-      hit = Math.random() < (d < 10 ? 0.95 : Math.max(0.55, 0.95 - ((d - 10) / SHOT_RANGE) * 0.6));
-      to = t.body.chest();
-      if (!hit) {
-        to.add(new THREE.Vector3((Math.random() - 0.5) * 1.4, (Math.random() - 0.3) * 0.7, (Math.random() - 0.5) * 1.4));
-        to = from.clone().addScaledVector(to.sub(from).normalize(), d + 8);
+    const spread = w.spread + gn.bloom;
+    gn.shotFired();
+    const aim = npc ? npc.body.chest() : from.clone().addScaledVector(dir, w.range);
+    const d = npc ? npc.body.pos.distanceTo(this.local.body.pos) : w.range;
+    let dmg = 0;
+    const ends: THREE.Vector3[] = [];
+    let wallAny = false;
+    for (let i = 0; i < w.pellets; i++) {
+      // Out of range: bullets fall short of doing anything useful.
+      const hit = !!npc && d <= w.range * 1.15 && Math.random() < hitChance(spread, d) * (d > w.range ? 0.4 : 1);
+      let to: THREE.Vector3;
+      if (hit) to = aim.clone().add(new THREE.Vector3((Math.random() - 0.5) * 0.25, (Math.random() - 0.5) * 0.35, (Math.random() - 0.5) * 0.25));
+      else {
+        // A miss: somewhere in the cone around the aim line, carried on past the target.
+        const base = aim.clone().sub(from).normalize();
+        const side = new THREE.Vector3(-base.z, 0, base.x).normalize();
+        const a = spread * (0.6 + Math.random() * 0.8) + (npc ? 0.03 : 0);
+        const ang = Math.random() * Math.PI * 2;
+        const off = side.clone().multiplyScalar(Math.cos(ang) * Math.tan(a)).add(new THREE.Vector3(0, Math.sin(ang) * Math.tan(a), 0));
+        to = from.clone().addScaledVector(base.add(off).normalize(), Math.max(d + 8, 12));
       }
-    } else to = from.clone().addScaledVector(dir, SHOT_RANGE);
-    const tr = gn.trace(from, to);
-    if (tr.wall) hit = false;
-    gn.fire(this.localChar, from, tr.end, tr.wall);
-    const ev: ShotEvent = { by: this.localChar, from: v3a(from), to: v3a(tr.end), wall: tr.wall };
-    if (hit && npc) { ev.id = npc.id; ev.dmg = PLAYER_SHOT_DMG; }
+      const tr = gn.trace(from, to);
+      if (hit && !tr.wall) dmg += w.dmg;
+      if (tr.wall) wallAny = true;
+      ends.push(tr.end);
+    }
+    gn.fire(this.localChar, from, ends[0], wallAny, ends.slice(1));
+    const ev: ShotEvent = { by: this.localChar, from: v3a(from), to: v3a(ends[0]), wall: wallAny, w: w.id };
+    if (ends.length > 1) ev.more = ends.slice(1, 6).map(v3a);
+    if (dmg > 0 && npc) { ev.id = npc.id; ev.dmg = dmg; }
     this.session.request('shot', ev);
+  }
+
+  /** Weapons carried over from earlier chapters (defaults if the chapter was started from the menu). */
+  applyLoadout(): void {
+    for (const c of ['elias', 'jax'] as CharacterId[]) {
+      const w = this.chapter.flags[`carry_weapon_${c}`] as WeaponId | undefined;
+      this.guns.setWeapon(c, w && WEAPONS[w] ? w : DEFAULT_LOADOUT[c]);
+    }
+  }
+
+  /** Opens the weapon shop for the local player; the pick is sent as a shared 'weapon' event. */
+  openWeaponShop(title: string, onDone?: (w: WeaponId) => void): void {
+    if (this.hud.shopOpen) return;
+    const partner = SPEAKERS[this.remoteChar].name;
+    const items = SHOP.map((id) => {
+      const d = WEAPONS[id];
+      return {
+        id, name: d.name, blurb: d.blurb,
+        taken: this.guns.loadout[this.remoteChar] === id && this.chapter.flags[`picked_${this.remoteChar}`] ? `${partner} has one` : undefined,
+        stats: [['Damage', Math.min(1, (d.dmg * d.pellets) / 110)], ['Fire rate', Math.min(1, 1 / d.rate / 14)], ['Accuracy', 1 - Math.min(0.95, d.spread / 0.1)], ['Range', d.range / 70], ['Magazine', d.mag / 30]] as Array<[string, number]>,
+      };
+    });
+    const prev = this.local.state;
+    this.local.state = 'busy';
+    this.hud.showShop(title, items, (id) => {
+      if (this.local.state === 'busy') this.local.state = prev === 'busy' ? 'free' : prev;
+      this.session.request('weapon', { who: this.localChar, w: id });
+      onDone?.(id as WeaponId);
+    }, () => { if (this.local.state === 'busy') this.local.state = prev === 'busy' ? 'free' : prev; });
+  }
+
+  /** A player picked a weapon (shared event): both clients update what that player carries. */
+  setWeapon(who: CharacterId, w: WeaponId): void {
+    if (!WEAPONS[w]) return;
+    this.guns.setWeapon(who, w);
+    // Carried into the next chapters.
+    this.chapter.flags[`carry_weapon_${who}`] = w;
   }
 
   private onLocalInteract(def: InteractDef, phase: 'press' | 'holdStart' | 'holdEnd' | 'complete'): void {
@@ -434,7 +491,9 @@ export class Game implements SessionHandlers, CutsceneHost {
     if (!this.authority) return;
     const now = this.world.time;
     const last = this.barkCooldown.get(npc.id) ?? -99;
-    if (now - last < (kind === 'alert' ? 2 : 4)) return;
+    if (now - last < (kind === 'alert' ? 5 : 12)) return;
+    // Not every hit or search gets a line.
+    if ((kind === 'hit' || kind === 'attack' || kind === 'search') && Math.random() < 0.6) return;
     this.barkCooldown.set(npc.id, now);
     const alert = BARKS.alert[npc.def.role as 'guard' | 'police'] ?? BARKS.alert.other;
     const opts: string[] = kind === 'alert' ? alert : BARKS[kind];
@@ -478,14 +537,16 @@ export class Game implements SessionHandlers, CutsceneHost {
         const at = Number(a.at ?? 0);
         const offset = at ? (this.session.sharedNow() - at) / 1000 : 0;
         if (offset < 0) this.pendingDialogue = { lines, at };
-        else this.dialogue.play(lines, undefined, offset);
+        else if (this.inCutscene) this.dialogue.play(lines, undefined, offset);
+        else this.dialogue.talk(lines, offset);
         return;
       }
       case 'bark': {
         if (this.dialogue.active || this.inCutscene) return;
         const npc = this.npcs.get(String(a.id));
         if (!npc || npc.body.pos.distanceTo(this.local.body.pos) > 22) return;
-        this.dialogue.play([{ who: String(a.id), text: String(a.text), dur: BARK_DUR }]);
+        // Alerts may cut in sooner; idle chatter needs a longer quiet spell.
+        this.dialogue.bark({ who: String(a.id), text: String(a.text), dur: BARK_DUR }, a.kind === 'alert' ? 2.5 : 6);
         return;
       }
       case 'door': {
@@ -524,7 +585,7 @@ export class Game implements SessionHandlers, CutsceneHost {
       case 'shot': {
         const sh = a as unknown as ShotEvent;
         const from = new THREE.Vector3(...sh.from), to = new THREE.Vector3(...sh.to);
-        if (sh.by !== this.localChar) this.guns.fire(sh.by, from, to, !!sh.wall);
+        if (sh.by !== this.localChar) this.guns.fire(sh.by, from, to, !!sh.wall, (sh.more ?? []).map((p) => new THREE.Vector3(...p)));
         const dir = to.clone().sub(from).setY(0).normalize();
         if (sh.id) {
           const npc = this.npcs.get(sh.id);
@@ -537,6 +598,12 @@ export class Game implements SessionHandlers, CutsceneHost {
           this.local.takeHit(sh.dmg ?? 10, Math.atan2(dir.x, dir.z), 'shot');
           this.chapter.onEvent('playerHit', { who: this.localChar, dmg: sh.dmg, kind: 'shot' });
         }
+        return;
+      }
+      case 'weapon': {
+        const who = a.who as CharacterId, w = String(a.w) as WeaponId;
+        this.setWeapon(who, w);
+        this.chapter.onEvent('weaponPicked', { who, w });
         return;
       }
       case 'npcHit': {
@@ -589,7 +656,9 @@ export class Game implements SessionHandlers, CutsceneHost {
       if (a.id) {
         const npc = this.npcs.get(String(a.id));
         if (!npc || !npc.alive) return false;
-        if (this.body(a.by as CharacterId).pos.distanceTo(npc.body.pos) > SHOT_RANGE + 6) return false;
+        if (this.body(a.by as CharacterId).pos.distanceTo(npc.body.pos) > 80) return false;
+        const wd = WEAPONS[this.guns.weaponOf(String(a.by)).id];
+        if (Number(a.dmg) > wd.dmg * wd.pellets + 1) return false;
       }
       return true;
     }
@@ -640,6 +709,7 @@ export class Game implements SessionHandlers, CutsceneHost {
       this.local.teleport(ap.clone().add(new THREE.Vector3(1, 0, 0.5)), 0);
       this.chapter.deserialize(s.ch as Record<string, unknown>);
     }
+    this.applyLoadout();
     for (const d of this.chapter.doors.values()) { d.t = d.target; this.chapter.applyDoor(d); }
     const tm = this.session.time;
     for (const ns of s.npcs as NpcSnap[]) this.npcs.get(ns.id)?.pushSnap(ns, tm, tm);
@@ -806,7 +876,9 @@ export class Game implements SessionHandlers, CutsceneHost {
   private endChapter(next: number | null): void {
     this.state = 'ended';
     if (next) {
-      const p: Progress = { chapter: next, checkpoint: '', flags: {}, savedAt: Date.now(), playTime: Math.round(this.playTime) };
+      // Things that travel with you (the weapons you picked) go into the next chapter's flags.
+      const carry = Object.fromEntries(Object.entries(this.chapter.flags).filter(([k]) => k.startsWith('carry_')));
+      const p: Progress = { chapter: next, checkpoint: '', flags: carry, savedAt: Date.now(), playTime: Math.round(this.playTime) };
       writeSave(p);
       if (this.authority) this.deps.net?.save(p);
     }
@@ -855,7 +927,7 @@ export class Game implements SessionHandlers, CutsceneHost {
       this.startCutscene(pc.id, pc.at);
     }
     if (this.pendingDialogue && this.session.sharedNow() >= this.pendingDialogue.at) {
-      this.dialogue.play(this.pendingDialogue.lines);
+      if (this.inCutscene) this.dialogue.play(this.pendingDialogue.lines); else this.dialogue.talk(this.pendingDialogue.lines);
       this.pendingDialogue = null;
     }
     // Partner absence freezes the simulation (co-op cannot continue alone).

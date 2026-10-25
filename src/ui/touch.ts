@@ -1,4 +1,4 @@
-// On-screen touch controls: floating joystick, camera drag area and customisable buttons.
+// On-screen touch controls: a fixed joystick, camera drag area and customisable buttons.
 import type { ButtonName, Input } from '../engine/input';
 
 export interface ButtonLayout {
@@ -28,6 +28,8 @@ const BTN_DEFS: BtnDef[] = [
 ];
 
 export const DEFAULT_LAYOUT: Record<string, ButtonLayout> = {
+  // The joystick: x/y are its centre, measured from the LEFT edge and the bottom (%).
+  stick: { x: 14, y: 26, size: 132 },
   interact: { x: 17, y: 34, size: 86 },
   attack: { x: 6, y: 14, size: 82 },
   block: { x: 17, y: 8, size: 64 },
@@ -42,6 +44,7 @@ export const DEFAULT_LAYOUT: Record<string, ButtonLayout> = {
 
 /** Phones held upright: buttons in the bottom-right quarter, above the thumb reach line. */
 export const DEFAULT_LAYOUT_PORTRAIT: Record<string, ButtonLayout> = {
+  stick: { x: 25, y: 15, size: 132 },
   interact: { x: 24, y: 20, size: 86 },
   attack: { x: 5, y: 9, size: 82 },
   block: { x: 30, y: 5, size: 62 },
@@ -66,6 +69,7 @@ export class TouchControls {
   private buttons = new Map<ButtonName, HTMLElement>();
   private stickId: number | null = null;
   private stickOrigin = { x: 0, y: 0 };
+  private stickR = 58;
   private lookIds = new Map<number, { x: number; y: number }>();
   layout: Record<string, ButtonLayout>;
   scale = 1;
@@ -106,11 +110,9 @@ export class TouchControls {
     // Joystick (left side)
     moveZone.addEventListener('pointerdown', (e) => {
       if (this.editing || this.stickId !== null) return;
+      // The stick stays where it is: a touch anywhere on the left side steers relative to its centre.
       this.stickId = e.pointerId;
       moveZone.setPointerCapture(e.pointerId);
-      this.stickOrigin = { x: e.clientX, y: e.clientY };
-      this.stickBase.style.left = `${e.clientX}px`;
-      this.stickBase.style.top = `${e.clientY}px`;
       this.stickBase.classList.add('active');
       this.updateStick(e.clientX, e.clientY);
       e.preventDefault();
@@ -154,18 +156,8 @@ export class TouchControls {
   private layoutPortrait = isPortrait();
 
   private updateStick(x: number, y: number): void {
-    const R = 58 * this.scale;
-    let dx = x - this.stickOrigin.x, dy = y - this.stickOrigin.y;
-    const d = Math.hypot(dx, dy);
-    // Drag the base along when the thumb goes far past the edge.
-    if (d > R * 1.6) {
-      const k = (d - R * 1.6) / d;
-      this.stickOrigin.x += dx * k;
-      this.stickOrigin.y += dy * k;
-      this.stickBase.style.left = `${this.stickOrigin.x}px`;
-      this.stickBase.style.top = `${this.stickOrigin.y}px`;
-      dx = x - this.stickOrigin.x; dy = y - this.stickOrigin.y;
-    }
+    const R = this.stickR;
+    const dx = x - this.stickOrigin.x, dy = y - this.stickOrigin.y;
     const dd = Math.hypot(dx, dy);
     const cl = Math.min(1, dd / R);
     const nx = dd > 0 ? dx / dd : 0, ny = dd > 0 ? dy / dd : 0;
@@ -240,13 +232,24 @@ export class TouchControls {
       if ((d.name === 'attack' || d.name === 'block' || d.name === 'dodge') && !this.flags.combat) vis = false;
       if (d.name === 'crouch' && !this.flags.crouch) vis = false;
       if (d.name === 'sprint' && !this.flags.sprint) vis = false;
-      b.style.display = vis || this.editing ? '' : 'none';
+      b.style.display = vis || (this.editing && d.modes.includes(this.mode)) ? '' : 'none';
     }
   }
 
   applyLayout(): void {
     const sMin = Math.min(window.innerWidth, window.innerHeight);
     const auto = Math.max(0.7, Math.min(1.25, sMin / 420));
+    // Fixed joystick, kept fully on screen.
+    const sl = this.layout.stick ?? defaults().stick;
+    const ss = Math.max(96, Math.min(200, sl.size * this.scale * auto));
+    const W = window.innerWidth, H = window.innerHeight, m = ss / 2 + 10;
+    const cx = Math.max(m, Math.min(W * 0.6, (sl.x / 100) * W));
+    const cy = Math.max(H * 0.3, Math.min(H - m, H - (sl.y / 100) * H));
+    this.stickOrigin = { x: cx, y: cy };
+    this.stickR = ss * 0.44;
+    this.stickBase.style.left = `${cx}px`;
+    this.stickBase.style.top = `${cy}px`;
+    this.stickBase.style.setProperty('--stick-size', `${ss}px`);
     for (const [name, b] of this.buttons) {
       const l = this.layout[name] ?? defaults()[name];
       const size = l.size * this.scale * auto;
@@ -256,20 +259,35 @@ export class TouchControls {
       b.style.fontSize = `${Math.round(size * 0.3)}px`;
     }
     this.root.style.setProperty('--touch-opacity', String(this.opacity));
-    this.stickBase.style.setProperty('--stick-size', `${132 * this.scale * auto}px`);
     this.applyVisibility();
   }
 
   // ---- layout editor
   setEditing(on: boolean): void {
     this.editing = on;
+    if (on && !this.stickDragBound) {
+      this.stickDragBound = true;
+      this.stickBase.addEventListener('pointerdown', (e) => {
+        if (!this.editing) return;
+        e.preventDefault(); e.stopPropagation();
+        try { this.stickBase.setPointerCapture(e.pointerId); } catch { /* not capturable */ }
+        const move = (ev: PointerEvent) => {
+          const cur = this.layout.stick ?? { ...defaults().stick };
+          this.layout.stick = { ...cur, x: Math.max(5, Math.min(60, (ev.clientX / window.innerWidth) * 100)), y: Math.max(5, Math.min(70, ((window.innerHeight - ev.clientY) / window.innerHeight) * 100)) };
+          this.applyLayout();
+        };
+        const upEv = () => { this.stickBase.removeEventListener('pointermove', move); this.stickBase.removeEventListener('pointerup', upEv); this.selected = 'stick'; this.onSelect?.('stick'); };
+        this.stickBase.addEventListener('pointermove', move);
+        this.stickBase.addEventListener('pointerup', upEv);
+      });
+    }
     this.root.classList.toggle('editing', on);
-    if (on) { this.root.style.display = ''; for (const b of this.buttons.values()) b.style.display = ''; }
+    if (on) { this.root.style.display = ''; this.applyVisibility(); }
     else { saveLayout(this.layout); this.applyVisibility(); }
   }
 
   private startDrag(b: HTMLElement, name: ButtonName, e: PointerEvent): void {
-    b.setPointerCapture(e.pointerId);
+    try { b.setPointerCapture(e.pointerId); } catch { /* not capturable */ }
     const move = (ev: PointerEvent) => {
       const x = ((window.innerWidth - ev.clientX) / window.innerWidth) * 100 - (b.offsetWidth / 2 / window.innerWidth) * 100;
       const y = ((window.innerHeight - ev.clientY) / window.innerHeight) * 100 - (b.offsetHeight / 2 / window.innerHeight) * 100;
@@ -282,8 +300,9 @@ export class TouchControls {
     b.addEventListener('pointerup', upEv);
   }
 
-  selected: ButtonName | null = null;
-  onSelect: ((n: ButtonName) => void) | null = null;
+  private stickDragBound = false;
+  selected: ButtonName | 'stick' | null = null;
+  onSelect: ((n: ButtonName | 'stick') => void) | null = null;
 
   resizeSelected(size: number): void {
     if (!this.selected) return;

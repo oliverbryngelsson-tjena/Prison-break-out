@@ -597,7 +597,7 @@ export class Chapter4 extends Chapter {
       beats: [
         { shot: () => twoShot(g, this.caughtBy, 'julius', 9, 2.4, 1.5, 1), lines: [
           { who: 'julius', text: 'Okay! Okay, okay — I give up! Don\'t hurt me!', anim: 'talk_nervous' },
-          { who: this.caughtByOther(), text: 'Nobody\'s getting hurt, Julius. Unless you lie to us.' },
+          { who: 'elias', text: 'Nobody\'s getting hurt, Julius. Unless you lie to us.' },
           { who: 'julius', text: 'I\'m just a builder! I build things! Ask anybody!' },
           { who: 'elias', text: 'Your office. Upstairs. Walk.' },
         ] },

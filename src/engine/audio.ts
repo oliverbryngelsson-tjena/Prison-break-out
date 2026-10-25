@@ -239,7 +239,7 @@ export class AudioManager {
 
   private shotBuf: AudioBuffer | null = null;
   /** Synthesised gunshot: noise crack + low thump + long tail through the reverb send. */
-  gunshot(pos?: THREE.Vector3, volume = 1, distant = false): void {
+  gunshot(pos?: THREE.Vector3, volume = 1, distant = false, tone?: { rate: number; cutoff: number; tail: number }): void {
     if (!this.ctx) return;
     const ctx = this.ctx;
     if (!this.shotBuf) {
@@ -259,14 +259,16 @@ export class AudioManager {
     }
     const src = ctx.createBufferSource();
     src.buffer = this.shotBuf;
-    src.playbackRate.value = 0.9 + Math.random() * 0.2;
+    src.playbackRate.value = (tone?.rate ?? 1) * (0.92 + Math.random() * 0.16);
     const f = ctx.createBiquadFilter();
     f.type = 'lowpass';
-    f.frequency.value = distant ? 1400 : 6000;
+    f.frequency.value = distant ? 1400 : tone?.cutoff ?? 6000;
     src.connect(f);
     const { out } = this.route(f, { pos, ref: 6, maxDist: 400 });
     out.gain.value = volume * (distant ? 0.6 : 1);
     src.start();
+    // Shorter tails for light guns (an SMG burst shouldn't smear into one roar).
+    if (tone && tone.tail < 1) src.stop(ctx.currentTime + 0.25 + tone.tail * 0.7);
     src.onended = () => out.disconnect();
   }
 

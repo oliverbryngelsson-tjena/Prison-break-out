@@ -208,7 +208,8 @@ body.sub-large .hud-subtitle { font-size: clamp(1.0625rem, 3.4vh, 1.5rem); }
 .tbtn.down { transform: scale(.92); background: rgba(224, 122, 46, .55); }
 .tbtn.hot { border-color: var(--accent-2); box-shadow: 0 0 1rem rgba(243,179,92,.6); background: rgba(224, 122, 46, .35); }
 .tbtn.on { background: rgba(127, 200, 255, .35); border-color: #7fc8ff; }
-.touch.editing { background: rgba(0,0,0,.35); pointer-events: auto; }
+.touch.editing { background: rgba(0,0,0,.35); pointer-events: none; }
+.touch.editing .stick-base { opacity: 1 !important; pointer-events: auto; outline: 2px dashed var(--accent-2); outline-offset: 0.1875rem; }
 .touch.editing .tbtn { outline: 2px dashed var(--accent-2); outline-offset: 0.1875rem; opacity: 1; }
 .edit-bar { position: absolute; left: 50%; top: calc(0.75rem + var(--safe-t)); transform: translateX(-50%); z-index: 30; display: none; gap: 0.625rem; align-items: center; background: var(--panel-solid); padding: 0.625rem 0.875rem; border-radius: 0.5rem; border: 1px solid var(--line); font-size: 0.8125rem; }
 .edit-bar.show { display: flex; }
@@ -250,7 +251,7 @@ body.portrait .hud-title { left: 6vw; bottom: 46vh; }
 body.portrait .loading .nm { font-size: clamp(2rem, 10vw, 3.5rem); }
 body.portrait .touch-look { width: 100%; height: 100%; }
 body.portrait .touch-move { top: 50%; width: 50%; height: 50%; }
-body.portrait .stick-base { left: 24%; top: 80%; }
+/* (joystick position comes from the layout) */
 body.portrait .letterbox.on { height: 7vh; }
 .chars .char img { height: clamp(6.5rem, 22vh, 11rem); }
 body.portrait .hud-title .nm { font-size: clamp(1.5rem, 8vw, 2.75rem); }
@@ -272,3 +273,22 @@ body.portrait .hud-title .ch { font-size: 0.6875rem; }
 .hud-mg.balance .track { background: linear-gradient(90deg, rgba(224,122,46,.55), rgba(255,255,255,.08) 50%, rgba(127,200,255,.55)); }
 .hud-mg .track .sweet { position: absolute; top: 0; bottom: 0; background: rgba(88, 194, 125, .55); }
 .hud-mg .track .mark { position: absolute; top: -0.125rem; bottom: -0.125rem; width: 0.25rem; margin-left: -0.125rem; background: #fff; border-radius: 0.125rem; box-shadow: 0 0 0.5rem rgba(255,255,255,.7); }
+/* HUD layout editor */
+.hud.hud-editing .hud-objective, .hud.hud-editing .hud-partner, .hud.hud-editing .hud-prompt, .hud.hud-editing .hud-subtitle, .hud.hud-editing .hud-banner, .hud.hud-editing .hud-notice { opacity: 1 !important; pointer-events: auto; touch-action: none; outline: 2px dashed var(--accent-2); outline-offset: 0.25rem; cursor: move; }
+.hud.hud-editing .hud-objective.empty { opacity: 1 !important; }
+.hud .moved { transition: opacity .2s; }
+.touch.editing .touch-look, .touch.editing .touch-move { pointer-events: none; }
+/* Weapon shop */
+.hud-shop { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(92vw, 46rem); max-height: 84vh; overflow: auto; pointer-events: auto; background: var(--panel-solid); border: 1px solid var(--line); border-radius: 0.75rem; padding: 0.875rem; z-index: 20; }
+.hud-shop .shop-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.625rem; font-family: var(--font); letter-spacing: .08em; }
+.hud-shop .shop-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 0.5rem; }
+.hud-shop .shop-item { text-align: left; background: rgba(255,255,255,.04); border: 1px solid var(--line); border-radius: 0.5rem; padding: 0.625rem; color: inherit; font: inherit; cursor: pointer; }
+.hud-shop .shop-item:hover, .hud-shop .shop-item:focus { border-color: var(--accent-2); background: rgba(224,122,46,.12); outline: none; }
+.hud-shop .shop-item.taken { opacity: .55; }
+.hud-shop .nm { font-family: var(--font); font-size: 1rem; letter-spacing: .04em; }
+.hud-shop .nm em { font-style: normal; font-size: .7rem; color: var(--muted); margin-left: .5rem; }
+.hud-shop .bl { font-size: .75rem; color: var(--muted); margin: .25rem 0 .45rem; line-height: 1.35; }
+.hud-shop .st { display: flex; align-items: center; gap: .5rem; font-size: .68rem; margin-top: .2rem; }
+.hud-shop .st span { width: 4.6rem; color: var(--muted); }
+.hud-shop .st i { flex: 1; height: .3rem; background: rgba(255,255,255,.1); border-radius: 2px; overflow: hidden; }
+.hud-shop .st i b { display: block; height: 100%; background: var(--accent-2); }
