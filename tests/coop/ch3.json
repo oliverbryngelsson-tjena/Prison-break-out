@@ -119,6 +119,23 @@
   }
  },
  {
+  "on": "AB",
+  "until": "window.__app.game.cutscenes.played.has('cs3_plan')",
+  "timeout": 20000
+ },
+ {
+  "wait": 1200
+ },
+ {
+  "on": "AB",
+  "press": "Enter"
+ },
+ {
+  "on": "AB",
+  "until": "!window.__app.game.cutscenes.current",
+  "timeout": 60000
+ },
+ {
   "tpA": [
    30,
    null,
@@ -270,6 +287,159 @@
    "a": "window.__app.game.remote.body.pos.toArray()",
    "b": "window.__app.game.local.body.pos.toArray()",
    "tol": 0.6
+  }
+ },
+ {
+  "tpA": [
+   50.5,
+   null,
+   111.5,
+   0.3
+  ],
+  "tpB": [
+   52.5,
+   null,
+   111.0,
+   0.3
+  ]
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.cutscenes.played.has('cs3_pickup')",
+  "timeout": 30000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "Ray's car picks them up at the county road",
+   "expr": "window.__app.game.cutscenes.played.has('cs3_pickup')"
+  }
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.chapter.checkpoint === 'cabin' && window.__app.game.cutscenes.played.has('cs3_trailer') && !window.__app.game.cutscenes.current",
+  "timeout": 120000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "arrive at Jax's trailer (night)",
+   "expr": "window.__app.game.chapter.flags.phase === 'cabin' && window.__app.game.chapter.tod === 'night'"
+  }
+ },
+ {
+  "tpA": [
+   -32.7,
+   null,
+   154.1,
+   3.1416
+  ],
+  "tpB": [
+   -31.3,
+   null,
+   154.1,
+   3.1416
+  ]
+ },
+ {
+  "wait": 1200
+ },
+ {
+  "on": "AB",
+  "hold": "KeyE",
+  "ms": 4000
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.chapter.flags.cash === true",
+  "timeout": 15000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "lift the floor panel together: the cash",
+   "expr": "window.__app.game.chapter.flags.cash === true"
+  }
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.cutscenes.played.has('cs3_campfire')",
+  "timeout": 40000
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "on": "AB",
+  "press": "Enter"
+ },
+ {
+  "on": "AB",
+  "until": "!window.__app.game.cutscenes.current && window.__app.game.chapter.flags.talked === true",
+  "timeout": 120000
+ },
+ {
+  "tpA": [
+   -26.6,
+   null,
+   151.1,
+   0
+  ],
+  "tpB": [
+   -25.0,
+   null,
+   151.1,
+   0
+  ]
+ },
+ {
+  "wait": 1200
+ },
+ {
+  "on": "AB",
+  "press": "KeyE"
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.chapter.flags.mounted_elias && window.__app.game.chapter.flags.mounted_jax",
+  "timeout": 15000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "both on Jax's bikes",
+   "expr": "window.__app.game.local.state === 'bike'"
+  }
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.cutscenes.played.has('cs3_dealer')",
+  "timeout": 60000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "'Later\u2026' the arms deal plays after a short ride",
+   "expr": "window.__app.game.cutscenes.played.has('cs3_dealer')"
+  }
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "on": "AB",
+  "press": "Enter"
+ },
+ {
+  "on": "AB",
+  "until": "!window.__app.game || window.__app.game.chapter.num === 4",
+  "timeout": 240000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "chapter 4 starts after the deal",
+   "expr": "window.__app.game && window.__app.game.chapter.num === 4"
   }
  }
 ]
