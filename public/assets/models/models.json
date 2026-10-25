@@ -69,16 +69,6 @@
   "tris": 1426,
   "kb": 271
  },
- "hay_bale": {
-  "file": "models/hay_bale.glb",
-  "size": [
-   0.657,
-   0.652,
-   1.2
-  ],
-  "tris": 2510,
-  "kb": 1403
- },
  "crate": {
   "file": "models/crate.glb",
   "size": [
@@ -229,26 +219,6 @@
   "tris": 2238,
   "kb": 570
  },
- "rock_a": {
-  "file": "models/rock_a.glb",
-  "size": [
-   0.169,
-   0.144,
-   0.32
-  ],
-  "tris": 3710,
-  "kb": 296
- },
- "rock_b": {
-  "file": "models/rock_b.glb",
-  "size": [
-   0.074,
-   0.033,
-   0.145
-  ],
-  "tris": 3104,
-  "kb": 266
- },
  "branches": {
   "file": "models/branches.glb",
   "size": [
@@ -293,11 +263,11 @@
   "file": "models/shrub_a.glb",
   "size": [
    1.31,
-   1.647,
+   1.651,
    1.663
   ],
-  "tris": 5548,
-  "kb": 493
+  "tris": 5980,
+  "kb": 501
  },
  "shrub_c": {
   "file": "models/shrub_c.glb",
@@ -306,48 +276,8 @@
    1.355,
    2.29
   ],
-  "tris": 5518,
-  "kb": 488
- },
- "tree_island": {
-  "file": "models/tree_island.glb",
-  "size": [
-   4.008,
-   3.401,
-   3.977
-  ],
-  "tris": 25091,
-  "kb": 2118
- },
- "tree_small": {
-  "file": "models/tree_small.glb",
-  "size": [
-   2.813,
-   4.276,
-   4.355
-  ],
-  "tris": 26537,
-  "kb": 2255
- },
- "fir_sapling_a": {
-  "file": "models/fir_sapling_a.glb",
-  "size": [
-   5.508,
-   8.867,
-   5.96
-  ],
-  "tris": 18723,
-  "kb": 1481
- },
- "fir_sapling_b": {
-  "file": "models/fir_sapling_b.glb",
-  "size": [
-   4.158,
-   7.806,
-   5.241
-  ],
-  "tris": 18485,
-  "kb": 1420
+  "tris": 5988,
+  "kb": 497
  },
  "tree_oak_a": {
   "file": "models/tree_oak_a.glb",

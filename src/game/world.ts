@@ -1,5 +1,7 @@
 // The World holds the scene, collision, lighting environment and registries for one chapter.
 import * as THREE from 'three';
+import { BUSH_STYLES, makeBush } from '../levels/bush';
+import { makeHayBale } from '../levels/hay';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { CollisionWorld, type Surface } from '../engine/physics';
 import { MaterialLib, canvasTexture, DRAW } from '../engine/materials';
@@ -131,6 +133,9 @@ export class World {
 
   /** Clones an imported model (static or skinned). */
   async model(id: string, opts: { shadows?: boolean; receive?: boolean } = {}): Promise<THREE.Object3D> {
+    // Procedural props (generated, not imported).
+    if (id in BUSH_STYLES) return makeBush(this.mats, id);
+    if (id === 'hay_bale') return makeHayBale(this.mats);
     const meta = this.modelMeta[id];
     const g = await loadGLTF(meta ? meta.file : `models/${id}.glb`);
     let skinned = false;

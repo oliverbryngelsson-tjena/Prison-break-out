@@ -203,7 +203,7 @@ export class Chapter4 extends Chapter {
       { model: 'tree_fir_a', impostor: true, collider: 0.25, colliderHeight: 4 },
       { model: 'tree_fir_b', impostor: true, collider: 0.25, colliderHeight: 4 },
       { model: 'fir_big', impostor: true, collider: 0.35, colliderHeight: 5 },
-      { model: 'shrub_c', near: 45, shadow: false },
+      { model: 'bush_b', near: 45, shadow: false },
       { model: 'boulder_b', near: 70, collider: 0.9, colliderHeight: 1.2 },
     ];
     const pl = scatter({

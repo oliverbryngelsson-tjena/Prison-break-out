@@ -13,13 +13,14 @@ scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.2));
 const d = new THREE.DirectionalLight(0xffffff, 2.5); d.position.set(3, 5, 4); scene.add(d);
 const cam = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 0.1, 200);
 (async () => {
-  const list: string[] = await (await fetch('/_staging/index.json')).json();
   const from = +(p.get('from') || 0), count = +(p.get('count') || 12);
-  const items = (p.get('files')?.split(',') ?? list.slice(from, from + count));
+  // ?files=a.glb,b.glb loads from /assets/models/; otherwise pages through the staging index.
+  const base = p.get('files') ? '/assets/models/' : '/_staging/';
+  const items = p.get('files')?.split(',') ?? ((await (await fetch('/_staging/index.json')).json()) as string[]).slice(from, from + count);
   const cols = 4;
   for (let i = 0; i < items.length; i++) {
     try {
-      const g = await loadGLTF('/_staging/' + items[i]);
+      const g = await loadGLTF(base + items[i]);
       const o = g.scene;
       const box = new THREE.Box3().setFromObject(o);
       const size = box.getSize(new THREE.Vector3());

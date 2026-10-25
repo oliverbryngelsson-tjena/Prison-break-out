@@ -9,6 +9,8 @@ import {
   type RoomState,
   type ServerMsg,
 } from '../../shared/protocol';
+import { normalizeCode } from '../../shared/protocol';
+import { GuestSocket, P2PHost, type SocketLike } from './p2p';
 
 export type NetStatus = 'offline' | 'connecting' | 'online' | 'reconnecting' | 'failed';
 
@@ -17,6 +19,25 @@ interface SessionInfo {
   token: string;
   you: string;
   savedAt: number;
+  /** Peer-to-peer room: whether this tab hosts it. */
+  p2p?: 'host' | 'guest';
+}
+
+/**
+ * 'ws'  = rooms on a game server (VITE_SERVER_URL, ?server=, Settings > Network, or same-origin /ws).
+ * 'p2p' = the room creator's browser hosts the room; no server needed (default for static hosting).
+ */
+export type NetMode = 'ws' | 'p2p';
+
+function explicitServer(): string {
+  return new URLSearchParams(location.search).get('server') || safeGet('pbo.serverUrl') || ((import.meta.env?.VITE_SERVER_URL as string | undefined) || '');
+}
+
+export function defaultNetMode(): NetMode {
+  const q = new URLSearchParams(location.search).get('net');
+  if (q === 'p2p' || q === 'ws') return q;
+  if (explicitServer()) return 'ws';
+  return (import.meta.env?.VITE_NET_MODE as string | undefined) === 'p2p' ? 'p2p' : 'ws';
 }
 
 type Handlers = {
@@ -65,7 +86,12 @@ export class NetClient {
   rtt = 0;
   /** serverTime ≈ Date.now() + offset */
   offset = 0;
-  private ws: WebSocket | null = null;
+  private ws: SocketLike | null = null;
+  mode: NetMode = defaultNetMode();
+  /** P2P: the room this tab hosts, or the code of the room this tab joins. */
+  private host: P2PHost | null = null;
+  private target: string | null = null;
+  private unavailableSince = 0;
   private url: string;
   private handlers: { [K in keyof Handlers]: Set<Handlers[K]> } = {
     status: new Set(), room: new Set(), joined: new Set(), start: new Set(), relay: new Set(), peer: new Set(), authority: new Set(), error: new Set(),
@@ -95,8 +121,9 @@ export class NetClient {
 
   get serverUrl(): string { return this.url; }
   setServerUrl(u: string): void {
-    this.url = toWs(u);
     safeSet('pbo.serverUrl', u || null);
+    this.url = u ? toWs(u) : defaultServerUrl();
+    this.mode = defaultNetMode();
     if (this.ws) { this.ws.close(); }
   }
 
@@ -121,6 +148,8 @@ export class NetClient {
   }
 
   connect(): Promise<void> {
+    // P2P with no room yet: nothing to connect to until a room is created or joined.
+    if (this.mode === 'p2p' && !this.host && !this.target) { this.setStatus('online'); return Promise.resolve(); }
     this.wantOnline = true;
     if (this.ws && (this.ws.readyState === WebSocket.OPEN)) return Promise.resolve();
     return new Promise((resolve, reject) => {
@@ -133,20 +162,27 @@ export class NetClient {
     });
   }
 
+  private makeSocket(): SocketLike {
+    if (this.mode === 'p2p' && this.host) return this.host.loopback();
+    if (this.mode === 'p2p' && this.target) return new GuestSocket(this.target);
+    return new WebSocket(this.url) as unknown as SocketLike;
+  }
+
   private open(): void {
     this.setStatus(this.retry > 0 ? 'reconnecting' : 'connecting');
-    let ws: WebSocket;
+    let ws: SocketLike;
     try {
-      ws = new WebSocket(this.url);
+      ws = this.makeSocket();
     } catch {
       this.scheduleRetry();
       return;
     }
     this.ws = ws;
-    const timeout = window.setTimeout(() => { if (ws.readyState !== WebSocket.OPEN) ws.close(); }, 8000);
+    const timeout = window.setTimeout(() => { if (ws.readyState !== WebSocket.OPEN) ws.close(); }, this.mode === 'p2p' ? 16000 : 8000);
     ws.onopen = () => {
       clearTimeout(timeout);
       this.retry = 0;
+      this.unavailableSince = 0;
       this.rawSend({ t: 'hello', v: PROTOCOL_VERSION, name: this.name });
       if (this.session) this.rawSend({ t: 'resume', code: this.session.code, token: this.session.token });
       this.setStatus('online');
@@ -162,18 +198,49 @@ export class NetClient {
     ws.onclose = () => {
       clearTimeout(timeout);
       this.stopPings();
-      if (this.ws === ws) this.ws = null;
+      if (this.ws !== ws) return;
+      this.ws = null;
+      if (this.mode === 'p2p' && this.target && ws instanceof GuestSocket && this.p2pGuestFailed(ws.lastError)) return;
       if (this.wantOnline) this.scheduleRetry();
-      else this.setStatus('offline');
+      else this.setStatus(this.mode === 'p2p' ? 'online' : 'offline');
     };
     ws.onerror = () => { /* close follows */ };
+  }
+
+  /** Guest could not reach the host. Returns true when retrying makes no sense. */
+  private p2pGuestFailed(err: string): boolean {
+    if (err !== 'peer-unavailable') { this.unavailableSince = 0; return false; }
+    const now = Date.now();
+    if (!this.session) {
+      // First join: nobody is hosting that code.
+      this.pendingAfterOpen = [];
+      this.wantOnline = false;
+      this.target = null;
+      this.retry = 0;
+      this.setStatus('online');
+      this.emit('error', 'ROOM_NOT_FOUND', 'No game with that code is open right now. Check the code with your friend.');
+      return true;
+    }
+    // In a game: the host may be reloading. Give up after the reconnection window.
+    if (!this.unavailableSince) this.unavailableSince = now;
+    if (now - this.unavailableSince > 100_000) {
+      this.wantOnline = false;
+      this.target = null;
+      this.retry = 0;
+      this.clearSession();
+      this.setStatus('online');
+      this.emit('error', 'SESSION_EXPIRED', 'Your friend closed the game.');
+      return true;
+    }
+    return false;
   }
 
   private scheduleRetry(): void {
     if (this.retryTimer !== null) return;
     this.retry++;
     // Give up on the first connection after a few tries; keep trying forever once in a room.
-    if (!this.session && this.retry > 4) {
+    if (!this.session && this.retry > (this.mode === 'p2p' ? 2 : 4)) {
+      this.target = null;
       this.setStatus('failed');
       this.wantOnline = false;
       this.retry = 0;
@@ -218,7 +285,7 @@ export class NetClient {
       case 'joined':
         this.you = msg.you;
         this.room = msg.room;
-        this.session = { code: msg.room.code, token: msg.token, you: msg.you, savedAt: Date.now() };
+        this.session = { code: msg.room.code, token: msg.token, you: msg.you, savedAt: Date.now(), p2p: this.mode === 'p2p' ? (this.host ? 'host' : 'guest') : undefined };
         this.persistSession();
         this.emit('joined', msg.room, msg.you);
         this.emit('room', msg.room);
@@ -275,20 +342,77 @@ export class NetClient {
     else if (m.t !== 'relay' && m.t !== 'ping') this.pendingAfterOpen.push(m);
   }
 
+  /** Switches the P2P role and opens a fresh socket for it. */
+  private async openP2P(): Promise<void> {
+    const old = this.ws;
+    this.ws = null;
+    old?.close();
+    this.retry = 0;
+    if (this.retryTimer !== null) { clearTimeout(this.retryTimer); this.retryTimer = null; }
+    await this.connect();
+  }
+
+  private dropHost(): void {
+    if (!this.host) return;
+    const h = this.host;
+    this.host = null;
+    // Let the 'left' notice reach the partner before the room disappears.
+    setTimeout(() => h.dispose(), 300);
+  }
+
   // ---- lobby API
   async createRoom(name: string, progress: Progress | null): Promise<void> {
     this.name = name;
     this.clearSession();
+    if (this.mode === 'p2p') {
+      this.dropHost();
+      this.target = null;
+      this.setStatus('connecting');
+      const host = new P2PHost();
+      try {
+        await host.start();
+      } catch (e) {
+        host.dispose();
+        this.setStatus('failed');
+        throw e;
+      }
+      this.host = host;
+      this.pendingAfterOpen = [{ t: 'create', name, progress }];
+      await this.openP2P();
+      return;
+    }
     await this.connect();
     this.send({ t: 'create', name, progress });
   }
   async joinRoom(code: string, name: string): Promise<void> {
     this.name = name;
     this.clearSession();
+    if (this.mode === 'p2p') {
+      this.dropHost();
+      this.target = normalizeCode(code);
+      this.pendingAfterOpen = [{ t: 'join', code, name }];
+      await this.openP2P().catch(() => { /* error event already shown */ });
+      return;
+    }
     await this.connect();
     this.send({ t: 'join', code, name });
   }
   async resume(): Promise<void> {
+    const s = this.session;
+    if (s?.p2p) {
+      this.mode = 'p2p';
+      if (s.p2p === 'host') {
+        this.setStatus('reconnecting');
+        const host = await P2PHost.restore(s.you).catch(() => null);
+        if (!host) { this.clearSession(); this.setStatus('online'); throw new Error('The game you hosted has ended.'); }
+        this.host = host;
+        this.target = null;
+      } else {
+        this.target = s.code;
+      }
+      await this.openP2P();
+      return;
+    }
     await this.connect();
   }
   select(character: CharacterId): void { this.send({ t: 'select', character }); }
@@ -299,6 +423,13 @@ export class NetClient {
   leave(): void {
     this.send({ t: 'leave' });
     this.clearSession();
+    if (this.mode === 'p2p') {
+      this.wantOnline = false;
+      this.target = null;
+      this.dropHost();
+      const ws = this.ws;
+      setTimeout(() => { if (this.ws === ws) { this.ws = null; ws?.close(); this.setStatus('online'); } }, 200);
+    }
   }
   disconnect(): void {
     this.wantOnline = false;
@@ -315,6 +446,8 @@ export class NetClient {
   get isHost(): boolean { return !!this.me?.isHost; }
   get isAuthority(): boolean { return !!this.me?.isAuthority; }
   get connected(): boolean { return this.status === 'online'; }
+  /** P2P: this tab is the room host. */
+  get hosting(): boolean { return !!this.host; }
 
   /** Testing hook: simulate a dropped connection. */
   simulateDrop(): void { this.ws?.close(); }

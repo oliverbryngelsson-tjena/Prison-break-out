@@ -426,9 +426,9 @@ export class Chapter2 extends Chapter {
     I.add({ id: 'drain_up', pos: v3(dx, TY, dz), radius: 1.3, label: 'Climb out', icon: 'climb', priority: 1,
       enabled: () => !!this.flags.drainOpen && this.g.local.body.pos.y < -1, onUse: () => this.climbDrain() });
     // Scaffold
-    I.add({ id: 'sc_give', coop: 'scaff', role: 'giver', pos: v3(2.3, 0, 41.9), radius: 1.3, label: 'Give a boost', icon: 'coop', mode: 'hold', pose: 'boost_give', facing: 0, stand: v3(2.3, 0, 41.95),
+    I.add({ id: 'sc_give', coop: 'scaff', role: 'giver', pos: v3(2.3, 0, 42.05), radius: 1.3, label: 'Give a boost', icon: 'coop', mode: 'hold', pose: 'boost_give', facing: 0, stand: v3(2.3, 0, 41.95),
       enabled: () => this.flags.phase === 'yard' && !this.flags.firstUp, onHold: (on) => { this.scaffRole = on ? 'giver' : null; } });
-    I.add({ id: 'sc_climb', coop: 'scaff', role: 'climber', pos: v3(2.3, 0, 41.3), radius: 1.3, label: 'Climb onto the scaffolding', icon: 'climb', mode: 'hold', facing: 0, stand: v3(2.3, 0, 41.3),
+    I.add({ id: 'sc_climb', coop: 'scaff', role: 'climber', pos: v3(2.3, 0, 41.2), radius: 1.3, label: 'Climb onto the scaffolding', icon: 'climb', mode: 'hold', facing: 0, stand: v3(2.3, 0, 41.2),
       enabled: () => this.flags.phase === 'yard' && !this.flags.firstUp, onHold: (on) => { this.scaffRole = on ? 'climber' : null; } });
     I.add({ id: 'sc_ladder', pos: v3(SCAFF.x1 - 0.5, P1Y, 42.9), radius: 1.2, label: 'Lower the ladder', icon: 'hand', facing: Math.PI,
       enabled: () => !!this.flags.firstUp && !this.flags.ladderDown, onUse: () => g.session.request('ladderDown', {}) });

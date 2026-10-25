@@ -140,6 +140,9 @@
   "n": "tex/bark_oak_n.jpg",
   "r": "tex/bark_oak_r.jpg"
  },
+ "leaves_oak": {
+  "c": "tex/leaves_oak_c.png"
+ },
  "bark_pine": {
   "c": "tex/bark_pine_c.jpg",
   "n": "tex/bark_pine_n.jpg",

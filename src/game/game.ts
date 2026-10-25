@@ -98,7 +98,7 @@ export class Game implements SessionHandlers, CutsceneHost {
   /** Loading screen status callback. */
   onLoadStatus: ((s: string) => void) | null = null;
   /** Local bike state for snapshots [lean, pitch, steer, rpm, spin] (set by BikeSystem). */
-  bikeSnap: [number, number, number, number, number] | null = null;
+  bikeSnap: number[] | null = null;
   /** Optional camera target override (bikes). */
   camTarget: (() => { pos: THREE.Vector3; yaw: number; speed: number; mode: 'follow' | 'bike' }) | null = null;
   debug: Record<string, unknown> = {};
@@ -122,8 +122,20 @@ export class Game implements SessionHandlers, CutsceneHost {
     if (deps.net) {
       this.unsubs.push(deps.net.on('peer', (ev) => this.onPeerEvent(ev)));
       this.unsubs.push(deps.net.on('status', (s) => {
-        if (s === 'reconnecting') deps.hud.setBanner('Connection lost — reconnecting…', 'warn');
-        else if (s === 'online') { deps.hud.setBanner(null); }
+        const net = deps.net!;
+        // Peer-to-peer guest: the room lives in the partner's browser, so losing it means losing the partner.
+        const p2pGuest = net.mode === 'p2p' && !net.hosting;
+        if (s === 'reconnecting') {
+          if (p2pGuest) { if (!this.partnerAway) this.onPeerEvent('disconnected'); }
+          else deps.hud.setBanner('Connection lost — reconnecting…', 'warn');
+        } else if (s === 'online') {
+          deps.hud.setBanner(null);
+        }
+      }));
+      this.unsubs.push(deps.net.on('room', (r) => {
+        if (!this.partnerAway || deps.net!.mode !== 'p2p') return;
+        const other = r.players.find((p) => p.id !== deps.net!.you);
+        if (other?.connected && deps.net!.connected) this.onPeerEvent('reconnected');
       }));
     }
   }
@@ -458,6 +470,8 @@ export class Game implements SessionHandlers, CutsceneHost {
         return;
       }
       case 'downed':
+        // Chapters may take over (the final fight).
+        if (this.chapter.onEvent('downed', a)) return;
         if (a.who === this.remoteChar) this.hud.notify(`${SPEAKERS[this.remoteChar].name} is down! Help them up.`, 3);
         if (this.authority && this.local.state === 'downed' && this.remote.downed) this.session.emit('fail', { reason: 'You both went down.' });
         if (this.authority && a.who === this.localChar && this.partnerAway) this.session.emit('fail', { reason: 'You went down.' });
@@ -470,6 +484,7 @@ export class Game implements SessionHandlers, CutsceneHost {
         void this.applyOutfit(a.who as CharacterId, String(a.v));
         return;
       case 'chapterEnd':
+        if (a.ending) writeSave(null, String(a.ending));
         this.endChapter((a.next as number | null) ?? null);
         return;
       default:
@@ -492,6 +507,7 @@ export class Game implements SessionHandlers, CutsceneHost {
   }
 
   fullState(): unknown {
+    if (this.state === 'loading' || !this.local || !this.chapter) return null;
     return {
       chapter: this.chapter.num,
       ch: this.chapter.serialize(),
@@ -617,6 +633,7 @@ export class Game implements SessionHandlers, CutsceneHost {
       this.local.state = 'cutscene';
       this.local.body.speed = 0;
       this.remote.scripted = true;
+      this.remote.cutsceneHold = true;
       this.hud.setSkipHint(this.cutscenes.current?.skippable === false ? null : this.input.device === 'touch' ? 'Tap and hold to skip' : 'Press Enter to skip');
     } else {
       if (this.local.state === 'cutscene') this.local.state = 'free';
@@ -743,8 +760,9 @@ export class Game implements SessionHandlers, CutsceneHost {
     // Skip cutscenes
     if (this.cutscenes.current && this.cutscenes.current.skippable !== false && (inp.buttons.skip.pressed || inp.heldFor('interact') > 0.8 || this.touchSkipHeld())) {
       if (!this.cutscenes.skipVotes.has('local')) {
-        this.session.skip(this.cutscenes.current.id);
+        // Set the hint first: offline, the skip applies synchronously and clears it.
         this.hud.setSkipHint(this.session.online && !this.partnerAway ? 'Waiting for your partner to skip…' : 'Skipping…');
+        this.session.skip(this.cutscenes.current.id);
       }
     }
     if (!frozen) {
@@ -819,6 +837,7 @@ export class Game implements SessionHandlers, CutsceneHost {
   skipTouch = 0;
 
   private updateReviveInteract(): void {
+    if (this.chapter.flags.pvp) { if (this.interact.items.has(this.reviveId)) this.interact.remove(this.reviveId); return; }
     if (this.remote.downed && !this.interact.items.has(this.reviveId)) {
       this.interact.add({
         id: this.reviveId, pos: this.remote.body.pos.clone(), label: `Help ${SPEAKERS[this.remoteChar].name} up`, mode: 'hold', holdTime: 2.2,
@@ -890,8 +909,8 @@ export class Game implements SessionHandlers, CutsceneHost {
     this.hud.setSubtitle(null, '');
     for (const n of this.npcs.values()) n.dispose();
     this.npcs.clear();
-    this.chapter?.dispose();
-    this.world?.dispose();
+    try { this.chapter?.dispose(); } catch (e) { console.warn('chapter dispose', e); }
+    try { this.world?.dispose(); } catch (e) { console.warn('world dispose', e); }
     this.audio.stopMusic(1.5);
   }
 }

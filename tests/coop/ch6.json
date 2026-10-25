@@ -1,0 +1,441 @@
+[
+ {
+  "on": "AB",
+  "until": "window.__app.game.begun",
+  "timeout": 120000
+ },
+ {
+  "wait": 2000
+ },
+ {
+  "on": "AB",
+  "press": "Enter"
+ },
+ {
+  "on": "AB",
+  "until": "!window.__app.game.cutscenes.current && window.__app.game.chapter.flags.pvp === true",
+  "timeout": 90000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "final fight starts on both (PvP enabled)",
+   "expr": "window.__app.game.chapter.flags.pvp === true && window.__app.game.flags.combat === true"
+  }
+ },
+ {
+  "tpA": [
+   -41.2,
+   -10,
+   -61,
+   1.5708
+  ],
+  "tpB": [
+   -40.2,
+   -10,
+   -61,
+   -1.5708
+  ]
+ },
+ {
+  "wait": 1200
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "tpA": [
+   -41.2,
+   -10,
+   -61,
+   1.5708
+  ],
+  "tpB": [
+   -40.2,
+   -10,
+   -61,
+   -1.5708
+  ]
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "tpA": [
+   -41.2,
+   -10,
+   -61,
+   1.5708
+  ],
+  "tpB": [
+   -40.2,
+   -10,
+   -61,
+   -1.5708
+  ]
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "tpA": [
+   -41.2,
+   -10,
+   -61,
+   1.5708
+  ],
+  "tpB": [
+   -40.2,
+   -10,
+   -61,
+   -1.5708
+  ]
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "tpA": [
+   -41.2,
+   -10,
+   -61,
+   1.5708
+  ],
+  "tpB": [
+   -40.2,
+   -10,
+   -61,
+   -1.5708
+  ]
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "on": "A",
+  "press": "KeyJ"
+ },
+ {
+  "wait": 420
+ },
+ {
+  "tpA": [
+   -41.2,
+   -10,
+   -61,
+   1.5708
+  ],
+  "tpB": [
+   -40.2,
+   -10,
+   -61,
+   -1.5708
+  ]
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.chapter.flags.winner === 'elias' || window.__app.game.cutscenes.current",
+  "timeout": 30000,
+  "critical": false
+ },
+ {
+  "on": "AB",
+  "eval": "(() => { const g = window.__app.game; return { me: g.localChar, hp: Math.round(g.local.body.hp), remoteHp: Math.round(g.remote.body.hp), winner: g.chapter.flags.winner, cs: g.cutscenes.current && g.cutscenes.current.id, ls: g.local.state }; })()"
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "Elias wins the fight: winner agreed on both clients",
+   "expr": "window.__app.game.chapter.flags.winner === 'elias'"
+  }
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.cutscenes.played.has('cs6_end_elias')",
+  "timeout": 30000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "Elias's ending cutscene plays on both",
+   "expr": "window.__app.game.cutscenes.played.has('cs6_end_elias')"
+  }
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.state === 'end'",
+  "timeout": 150000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "game ends on both with the final screen",
+   "expr": "document.querySelector('[data-screen=end].show') !== null"
+  }
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "ending saved",
+   "expr": "JSON.parse(localStorage.getItem('pbo.save')||'{}').endings?.includes('elias_lives')"
+  }
+ }
+]

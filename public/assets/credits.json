@@ -190,6 +190,461 @@
   "files": []
  },
  {
+  "kind": "texture",
+  "title": "Concrete Wall 008",
+  "author": "Dario Barresi, Charlotte Baglioni (Poly Haven)",
+  "link": "https://polyhaven.com/a/concrete_wall_008",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "tex/concrete_wall_c.jpg",
+   "tex/concrete_wall_n.jpg",
+   "tex/concrete_wall_r.jpg"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Concrete Wall 008 (greyscale)",
+  "author": "Poly Haven",
+  "link": "https://polyhaven.com/a/concrete_wall_008",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "tex/concrete_grey_c.jpg",
+   "tex/concrete_grey_n.jpg",
+   "tex/concrete_grey_r.jpg"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Metal Plate 02",
+  "author": "Rob Tuytel (Poly Haven)",
+  "link": "https://polyhaven.com/a/metal_plate_02",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "tex/metal_plate_c.jpg",
+   "tex/metal_plate_n.jpg",
+   "tex/metal_plate_r.jpg"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Metal Plate 02 (greyscale)",
+  "author": "Poly Haven",
+  "link": "https://polyhaven.com/a/metal_plate_02",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "tex/steel_c.jpg",
+   "tex/steel_n.jpg",
+   "tex/steel_r.jpg"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Plywood",
+  "author": "Rob Tuytel (Poly Haven)",
+  "link": "https://polyhaven.com/a/plywood",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "tex/plywood_c.jpg",
+   "tex/plywood_n.jpg",
+   "tex/plywood_r.jpg"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Brown Planks 03",
+  "author": "Rob Tuytel (Poly Haven)",
+  "link": "https://polyhaven.com/a/brown_planks_03",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "tex/planks_c.jpg",
+   "tex/planks_n.jpg",
+   "tex/planks_r.jpg"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Red Brick 03",
+  "author": "Rob Tuytel (Poly Haven)",
+  "link": "https://polyhaven.com/a/red_brick_03",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "tex/brick_red_c.jpg",
+   "tex/brick_red_n.jpg",
+   "tex/brick_red_r.jpg"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Rustic Stone Wall 02",
+  "author": "Amal Kumar (Poly Haven)",
+  "link": "https://polyhaven.com/a/rustic_stone_wall_02",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "tex/stone_wall_c.jpg",
+   "tex/stone_wall_n.jpg",
+   "tex/stone_wall_r.jpg"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Asphalt Pit Lane",
+  "author": "Dimitrios Savva (Poly Haven)",
+  "link": "https://polyhaven.com/a/asphalt_pit_lane",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "tex/asphalt_c.jpg",
+   "tex/asphalt_n.jpg",
+   "tex/asphalt_r.jpg"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Asphalt 02",
+  "author": "Rob Tuytel (Poly Haven)",
+  "link": "https://polyhaven.com/a/asphalt_02",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "tex/asphalt_old_c.jpg",
+   "tex/asphalt_old_n.jpg",
+   "tex/asphalt_old_r.jpg"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Concrete Floor Worn 001",
+  "author": "Poly Haven",
+  "link": "https://polyhaven.com/a/concrete_floor_worn_001",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "tex/concrete_floor_c.jpg",
+   "tex/concrete_floor_n.jpg",
+   "tex/concrete_floor_r.jpg"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Dry Ground Rocks",
+  "author": "Poly Haven",
+  "link": "https://polyhaven.com/a/dry_ground_rocks",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
+  "files": [
+   "tex/dry_ground_c.jpg",
+   "tex/dry_ground_n.jpg",
+   "tex/dry_ground_r.jpg"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Aerial Mud 1",
+  "author": "Poly Haven",
+  "link": "https://polyhaven.com/a/aerial_mud_1",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/gazlappy/motocross-bobness (redistributed copy)",
+  "files": [
+   "tex/mud_c.jpg",
+   "tex/mud_n.jpg"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Brown Mud Dry",
+  "author": "Poly Haven",
+  "link": "https://polyhaven.com/a/brown_mud_dry",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/gazlappy/motocross-bobness (redistributed copy)",
+  "files": [
+   "tex/mud_dry_c.jpg",
+   "tex/mud_dry_n.jpg"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Red Dirt Mud 01",
+  "author": "Poly Haven",
+  "link": "https://polyhaven.com/a/red_dirt_mud_01",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/gazlappy/motocross-bobness (redistributed copy)",
+  "files": [
+   "tex/dirt_red_c.jpg",
+   "tex/dirt_red_n.jpg"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Rocky Terrain 02",
+  "author": "Poly Haven",
+  "link": "https://polyhaven.com/a/rocky_terrain_02",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/gazlappy/motocross-bobness (redistributed copy)",
+  "files": [
+   "tex/rocky_c.jpg",
+   "tex/rocky_n.jpg"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Sparse Grass",
+  "author": "Amal Kumar (Poly Haven)",
+  "link": "https://polyhaven.com/a/sparse_grass",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/gazlappy/motocross-bobness (redistributed copy)",
+  "files": [
+   "tex/grass_sparse_c.jpg",
+   "tex/grass_sparse_n.jpg"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Gravelly Sand",
+  "author": "Dario Barresi (Poly Haven)",
+  "link": "https://polyhaven.com/a/gravelly_sand",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/gazlappy/motocross-bobness (redistributed copy)",
+  "files": [
+   "tex/gravel_sand_c.jpg",
+   "tex/gravel_sand_n.jpg"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "PaintedPlaster017",
+  "author": "ambientCG",
+  "link": "https://ambientcg.com/view?id=PaintedPlaster017",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "tex/painted_plaster_c.ktx2",
+   "tex/painted_plaster_n.ktx2"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Concrete048",
+  "author": "ambientCG",
+  "link": "https://ambientcg.com/view?id=Concrete048",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "tex/concrete_048_c.ktx2",
+   "tex/concrete_048_n.ktx2"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Gravel035",
+  "author": "ambientCG",
+  "link": "https://ambientcg.com/view?id=Gravel035",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "tex/gravel_c.ktx2",
+   "tex/gravel_n.ktx2"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "PavingStones136",
+  "author": "ambientCG",
+  "link": "https://ambientcg.com/view?id=PavingStones136",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "tex/paving_c.ktx2",
+   "tex/paving_n.ktx2"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Rock026",
+  "author": "ambientCG",
+  "link": "https://ambientcg.com/view?id=Rock026",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "tex/rock_face_c.ktx2",
+   "tex/rock_face_n.ktx2"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Brick Wall 02",
+  "author": "Dimitrios Savva (Poly Haven)",
+  "link": "https://polyhaven.com/a/brick_wall_02",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "tex/brick_wall_c.ktx2",
+   "tex/brick_wall_n.ktx2"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Corrugated Iron",
+  "author": "Jenelle van Heerden, Dimitrios Savva (Poly Haven)",
+  "link": "https://polyhaven.com/a/corrugated_iron",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "tex/corrugated_c.ktx2",
+   "tex/corrugated_n.ktx2"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Dark Planks",
+  "author": "Rob Tuytel (Poly Haven)",
+  "link": "https://polyhaven.com/a/dark_planks",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "tex/dark_planks_c.ktx2",
+   "tex/dark_planks_n.ktx2"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Forest Leaves 02",
+  "author": "Rob Tuytel (Poly Haven)",
+  "link": "https://polyhaven.com/a/forest_leaves_02",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "tex/forest_floor_c.ktx2",
+   "tex/forest_floor_n.ktx2"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Rocks Ground 05",
+  "author": "Rob Tuytel (Poly Haven)",
+  "link": "https://polyhaven.com/a/rocks_ground_05",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "tex/rocks_ground_c.ktx2",
+   "tex/rocks_ground_n.ktx2"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Old Stone Wall",
+  "author": "Charlotte Baglioni (Poly Haven)",
+  "link": "https://polyhaven.com/a/old_stone_wall",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "tex/old_stone_c.ktx2",
+   "tex/old_stone_n.ktx2"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Sparse Grass",
+  "author": "Amal Kumar (Poly Haven)",
+  "link": "https://polyhaven.com/a/sparse_grass",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "tex/grass_ktx_c.ktx2",
+   "tex/grass_ktx_n.ktx2"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Grey Roof Tiles 02",
+  "author": "Rob Tuytel (Poly Haven)",
+  "link": "https://polyhaven.com/a/grey_roof_tiles_02",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "github.com/openzigs/onyourleft (redistributed copy)",
+  "files": [
+   "tex/roof_tiles_c.ktx2",
+   "tex/roof_tiles_n.ktx2"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Bark Brown 02",
+  "author": "Poly Haven",
+  "link": "https://polyhaven.com/a/bark_brown_02",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "npm @dgreenheck/ez-tree (MIT)",
+  "files": [
+   "tex/bark_oak_c.jpg",
+   "tex/bark_oak_n.jpg",
+   "tex/bark_oak_r.jpg"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Oak leaf sprig texture",
+  "author": "Daniel Greenheck (ez-tree)",
+  "link": "https://github.com/dgreenheck/ez-tree",
+  "license": "MIT",
+  "licenseUrl": "https://opensource.org/licenses/MIT",
+  "via": "npm @dgreenheck/ez-tree (MIT)",
+  "files": [
+   "tex/leaves_oak_c.png"
+  ]
+ },
+ {
+  "kind": "texture",
+  "title": "Pine bark",
+  "author": "TextureCan",
+  "link": "https://www.texturecan.com/details/588/",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "via": "npm @dgreenheck/ez-tree (MIT)",
+  "files": [
+   "tex/bark_pine_c.jpg",
+   "tex/bark_pine_n.jpg",
+   "tex/bark_pine_r.jpg"
+  ]
+ },
+ {
   "kind": "model",
   "title": "Hospital Bed",
   "author": "loxfear",
@@ -271,18 +726,6 @@
   "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
   "files": [
    "models/tire.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Hay bale",
-  "author": "NoodePoodle",
-  "link": "https://sketchfab.com/3d-models/hay-bale-e01a6a0f9ed843279adfac2427c99679",
-  "license": "CC-BY-4.0",
-  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/hay_bale.glb"
   ]
  },
  {
@@ -467,30 +910,6 @@
  },
  {
   "kind": "model",
-  "title": "Rock 07",
-  "author": "Poly Haven",
-  "link": "https://polyhaven.com/a/rock_07",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/rock_a.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Rock 09",
-  "author": "Poly Haven",
-  "link": "https://polyhaven.com/a/rock_09",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/89502147777r-wq/Daggie (redistributed copy)",
-  "files": [
-   "models/rock_b.glb"
-  ]
- },
- {
-  "kind": "model",
   "title": "Dry Branches Medium 01",
   "author": "Poly Haven",
   "link": "https://polyhaven.com/a/dry_branches_medium_01",
@@ -563,54 +982,6 @@
  },
  {
   "kind": "model",
-  "title": "Island Tree 02",
-  "author": "Poly Haven (Rob Tuytel, Rico Cilliers)",
-  "link": "https://polyhaven.com/a/island_tree_02",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/openzigs/onyourleft (redistributed copy)",
-  "files": [
-   "models/tree_island.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Tree Small 02",
-  "author": "Poly Haven (Rico Cilliers)",
-  "link": "https://polyhaven.com/a/tree_small_02",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/openzigs/onyourleft (redistributed copy)",
-  "files": [
-   "models/tree_small.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Fir Sapling Medium",
-  "author": "Poly Haven (Rob Tuytel, Rico Cilliers)",
-  "link": "https://polyhaven.com/a/fir_sapling_medium",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/openzigs/onyourleft (redistributed copy)",
-  "files": [
-   "models/fir_sapling_a.glb"
-  ]
- },
- {
-  "kind": "model",
-  "title": "Fir Sapling Medium",
-  "author": "Poly Haven (Rob Tuytel, Rico Cilliers)",
-  "link": "https://polyhaven.com/a/fir_sapling_medium",
-  "license": "CC0-1.0",
-  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-  "via": "github.com/openzigs/onyourleft (redistributed copy)",
-  "files": [
-   "models/fir_sapling_b.glb"
-  ]
- },
- {
-  "kind": "model",
   "title": "Generated oak a tree (EZ-Tree, ambientCG/Poly Haven textures)",
   "author": "onyourleft contributors; textures ambientCG / Poly Haven",
   "link": "https://github.com/openzigs/onyourleft",
@@ -679,6 +1050,67 @@
   "via": "github.com/openzigs/onyourleft (redistributed copy)",
   "files": [
    "models/tree_fir_b.glb"
+  ]
+ },
+ {
+  "kind": "character",
+  "title": "Microsoft Rocketbox Avatar Library (avatars, recoloured outfits)",
+  "author": "Microsoft",
+  "link": "https://github.com/microsoft/Microsoft-Rocketbox",
+  "license": "MIT",
+  "licenseUrl": "https://opensource.org/licenses/MIT",
+  "via": "github.com/microsoft/Microsoft-Rocketbox",
+  "files": [
+   "characters/bodyguard.glb",
+   "characters/cop1.glb",
+   "characters/cop2.glb",
+   "characters/cop3.glb",
+   "characters/crane.glb",
+   "characters/elias.glb",
+   "characters/elias_civil_body.webp",
+   "characters/guard1.glb",
+   "characters/guard2.glb",
+   "characters/inmate1.glb",
+   "characters/inmate2.glb",
+   "characters/inmate3.glb",
+   "characters/inmate4.glb",
+   "characters/inmate5.glb",
+   "characters/inmate6.glb",
+   "characters/jax.glb",
+   "characters/jax_civil_body.webp",
+   "characters/marsh.glb",
+   "characters/mia.glb",
+   "characters/mo.glb",
+   "characters/swat.glb",
+   "characters/thug1.glb",
+   "characters/thug2.glb",
+   "characters/thug3.glb"
+  ]
+ },
+ {
+  "kind": "animation",
+  "title": "Microsoft Rocketbox Avatar Library (motion-capture animations, retimed)",
+  "author": "Microsoft",
+  "link": "https://github.com/microsoft/Microsoft-Rocketbox",
+  "license": "MIT",
+  "licenseUrl": "https://opensource.org/licenses/MIT",
+  "via": "github.com/microsoft/Microsoft-Rocketbox",
+  "files": [
+   "anims/anims_f.glb",
+   "anims/anims_m.glb"
+  ]
+ },
+ {
+  "kind": "image",
+  "title": "Character portraits rendered in-engine from the Rocketbox avatars",
+  "author": "Microsoft",
+  "link": "https://github.com/microsoft/Microsoft-Rocketbox",
+  "license": "MIT",
+  "licenseUrl": "https://opensource.org/licenses/MIT",
+  "via": "github.com/microsoft/Microsoft-Rocketbox",
+  "files": [
+   "ui/portrait_elias.jpg",
+   "ui/portrait_jax.jpg"
   ]
  }
 ]

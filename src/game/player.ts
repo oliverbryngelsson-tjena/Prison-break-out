@@ -62,6 +62,8 @@ export class PlayerController {
   private moveVel = new THREE.Vector3();
   private script: { steps: ScriptStep[]; i: number; t: number; from: THREE.Vector3; fromYaw: number; done?: () => void } | null = null;
   crawlMode = false;
+  /** Health regenerates after a few seconds without damage (off in the final fight). */
+  regen = true;
   /** Seconds since last damage (for regeneration). */
   private sinceHit = 99;
   private combo = 0;
@@ -193,7 +195,7 @@ export class PlayerController {
     const inp = this.ctx.input;
     this.invulnerable = Math.max(0, this.invulnerable - dt);
     this.sinceHit += dt;
-    if (this.sinceHit > 5 && b.hp < b.maxHp && this.state !== 'downed') b.hp = Math.min(b.maxHp, b.hp + 9 * dt);
+    if (this.regen && this.sinceHit > 5 && b.hp < b.maxHp && this.state !== 'downed') b.hp = Math.min(b.maxHp, b.hp + 9 * dt);
     this.ctx.interact.time += dt;
 
     switch (this.state) {
@@ -583,9 +585,11 @@ export class RemoteAvatar {
   blocking = false;
   /** Riding a bike (snapshot bit 4) and the interpolated bike state [lean, pitch, steer, rpm, spin]. */
   onBike = false;
-  bike: [number, number, number, number, number] | null = null;
-  /** Driven by a local script (cutscene) instead of the network. */
+  bike: number[] | null = null;
+  /** Driven by a local script instead of the network. */
   scripted = false;
+  /** Held by a cutscene: stays script-driven after a script ends until release(). */
+  cutsceneHold = false;
   private lastPoseKey = '';
   variant = 'prison';
   onVariant: ((v: string) => void) | null = null;
@@ -654,7 +658,7 @@ export class RemoteAvatar {
         const lerp = (i: number) => a.b![i] + (c.b![i] - a.b![i]) * k;
         let ds = c.b[4] - a.b[4];
         if (ds < -Math.PI) ds += Math.PI * 2;
-        this.bike = [lerp(0), lerp(1), lerp(2), lerp(3), a.b[4] + ds * k];
+        this.bike = [lerp(0), lerp(1), lerp(2), lerp(3), a.b[4] + ds * k, lerp(5), c.b[6] ?? 0];
       } else this.bike = a.b ?? null;
       if (a.hp !== undefined) b.hp = a.hp;
       if (a.v && a.v !== this.variant) { this.variant = a.v; this.onVariant?.(a.v); }
@@ -693,6 +697,8 @@ export class RemoteAvatar {
       s.steps = null;
       b.speed = 0;
       b.clearPose(0.25);
+      // Gameplay moves (boosts, climbs) hand the avatar back to the partner's snapshots.
+      if (!this.cutsceneHold) this.scripted = false;
       s.done?.();
       return;
     }
@@ -724,6 +730,7 @@ export class RemoteAvatar {
   /** Back to network control (after a cutscene). */
   release(): void {
     this.scripted = false;
+    this.cutsceneHold = false;
     this.scriptCtl.steps = null;
     this.buf = [];
   }

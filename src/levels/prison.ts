@@ -362,12 +362,13 @@ export async function buildPrison(world: World, mode: 'day' | 'night', opts: { b
   const yardDoorCol = P.addBox({ x: 0, y: 1.4, z: 6 }, { x: 2.6, y: 2.8, z: 0.3 }, 0, { surface: 'metal' });
 
   // ================================================================ EAST MAINTENANCE CHASE (behind east cells)
-  // x [14.3, 16.0], z [-22, -4.4], height 3.2
+  // x [14.3, 16.0], z [-26, -4.4], height 3.7
   if (opts.breakout) kit.floorWithHole(concreteM, 14.3, -26, 16.1, -4.2, HATCH, 0, 0.3);
   else kit.floor(concreteM, 14.3, -26, 16.1, -4.2, 0, 0.3);
-  kit.wall(concreteM, 16.1, -26, 16.1, -4.2, 0, 3.4, 0.25);
-  kit.wall(concreteM, 14.3, -4.2, 16.1, -4.2, 0, 3.4, 0.25);
-  kit.ceiling(concreteM, 14.3, -26, 16.1, -4.2, 3.3);
+  // The ceiling sits above the laundry duct (duct interior y 2.65-3.6, z -26.3..-21.4), so crawlers fit.
+  kit.wall(concreteM, 16.1, -26, 16.1, -4.2, 0, 3.8, 0.25);
+  kit.wall(concreteM, 14.3, -4.2, 16.1, -4.2, 0, 3.8, 0.25);
+  kit.ceiling(concreteM, 14.3, -26, 16.1, -4.2, 3.7);
   // pipes along the chase
   for (const [y, r, c] of [[2.9, 0.09, steelM], [2.6, 0.06, rustM], [0.3, 0.07, steelDark]] as const) B.add(cylinderBetween(new THREE.Vector3(15.85, y, -25.8), new THREE.Vector3(15.85, y, -4.4), r, 10), c);
   for (let z = -24; z <= -6; z += 3) { B.box(steelDark, { x: 15.9, y: 2.75, z }, { x: 0.12, y: 0.5, z: 0.05 }, 0, null); }

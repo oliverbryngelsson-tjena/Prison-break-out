@@ -1,0 +1,11 @@
+[
+ {"on":"AB","until":"window.__app.game.begun","timeout":120000},
+ {"on":"A","reload":true},
+ {"on":"B","until":"window.__app.game.partnerAway === true","timeout":30000},
+ {"on":"B","check":{"name":"guest sees the host drop","expr":"window.__app.game.partnerAway === true"}},
+ {"on":"A","until":"window.__app && window.__app.state === 'game' && window.__app.game && window.__app.game.begun","timeout":300000},
+ {"on":"A","check":{"name":"host reloads and is back hosting the same room","expr":"window.__app.net.hosting === true && window.__app.net.room.players.length === 2"}},
+ {"on":"B","until":"window.__app.game.partnerAway === false","timeout":60000},
+ {"on":"AB","check":{"name":"both connected again after the host reload","expr":"window.__app.net.room.players.every(p => p.connected)"}},
+ {"sync":{"name":"positions synced after the host reload","a":"window.__app.game.remote.body.pos.toArray()","b":"window.__app.game.local.body.pos.toArray()","tol":0.6}}
+]

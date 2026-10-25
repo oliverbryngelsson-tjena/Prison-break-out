@@ -120,7 +120,9 @@ export class Session {
 
   sendFull(): void {
     if (!this.authority || !this.handlers) return;
-    this.send({ k: 'full', state: this.handlers.fullState(), tm: this.time });
+    const state = this.handlers.fullState();
+    if (state == null) return; // still loading; the peer's 'loaded' triggers a resend
+    this.send({ k: 'full', state, tm: this.time });
   }
 
   update(dt: number, snap: () => PlayerSnap | null, npcs: () => NpcSnap[]): void {

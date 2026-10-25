@@ -43,7 +43,7 @@ export class Chapter5 extends Chapter {
   private track: THREE.Vector3[] = [];
   private trackS: number[] = [];
   private trackPath!: Path;
-  private cops: Array<{ car: Car; s: number; v: number; lane: number; siren: ReturnType<import('../engine/audio').AudioManager['siren']>; stuckT: number }> = [];
+  private cops: Array<{ car: Car; s: number; v: number; lane: number; siren: ReturnType<import('../engine/audio').AudioManager['siren']>; stuckT: number; active: boolean }> = [];
   private block: Car[] = [];
   private catchT: Record<CharacterId, number> = { elias: 0, jax: 0 };
   private respawnT = -1;
@@ -84,10 +84,10 @@ export class Chapter5 extends Chapter {
     const g = this.g;
     const w = g.world;
     await w.setEnvironment({
-      hdr: 'env/sunset.hdr', envIntensity: 0.18, background: 0x0b0f17,
-      fog: { color: 0x0e131b, density: 0.008 },
-      hemi: { sky: 0x34445e, ground: 0x0e0c0a, intensity: 0.4 },
-      sun: { color: 0x9fb4e0, intensity: 0.7, dir: [-0.4, 0.75, -0.5], shadows: true },
+      hdr: 'env/sunset.hdr', envIntensity: 0.24, background: 0x111826,
+      fog: { color: 0x131a26, density: 0.007 },
+      hemi: { sky: 0x4a5c7c, ground: 0x15120e, intensity: 0.75 },
+      sun: { color: 0xa9bde6, intensity: 1.05, dir: [-0.4, 0.75, -0.5], shadows: true },
       grade: { saturation: 0.85, contrast: 1.08, lift: [0.0, 0.008, 0.018], gain: [1.0, 1.0, 1.04], shadowTint: [0.9, 0.96, 1.12], highlightTint: [1.06, 1.0, 0.92], exposure: 1.15, bloom: 1.0, vignette: 0.55 },
       reverb: 0.1,
     });
@@ -96,6 +96,7 @@ export class Chapter5 extends Chapter {
     this.track = densify(CTRL, 4);
     let acc = 0;
     this.trackS = this.track.map((p, i) => (i ? (acc += p.distanceTo(this.track[i - 1])) : 0));
+    this.buildGrid();
     this.computeTrackHeights();
     await this.buildTerrain();
     for (const p of this.track) p.y = this.terrain.height(p.x, p.z);
@@ -113,14 +114,14 @@ export class Chapter5 extends Chapter {
     await this.buildProps();
     this.kit.finish();
     this.bikes = new BikeSystem(g);
-    await this.bikes.init();
+    await this.bikes.init({ headlights: true });
     this.bikes.ctrl.onCrash = (why) => this.onLocalCrash(why);
     this.bikes.ctrl.onLand = (impact) => { if (impact > 6) { g.audio.play('land', { pos: this.bikes.ctrl.pos, volume: Math.min(1, impact / 14) }); g.cam.addShake(Math.min(0.4, impact / 30)); } };
     for (let i = 0; i < 3; i++) {
       const car = await Car.create(w, { police: true });
       car.sirenOn = true;
       car.root.visible = false;
-      this.cops.push({ car, s: -60 - i * 25, v: 0, lane: i % 2 ? 2.2 : -2.2, siren: null, stuckT: 0 });
+      this.cops.push({ car, s: -60 - i * 25, v: 0, lane: i % 2 ? 2.2 : -2.2, siren: null, stuckT: 0, active: false });
     }
     w.ambientLoop('amb_wind', 0.35);
     w.tickers.add((dt, t) => {
@@ -179,13 +180,31 @@ export class Chapter5 extends Chapter {
     return h;
   }
 
+  private grid = new Map<number, number[]>();
+  private static readonly GC = 16;
+  private gridKey(cx: number, cz: number): number { return (cx + 1000) * 4096 + (cz + 1000); }
+  private buildGrid(): void {
+    this.grid.clear();
+    this.track.forEach((p, i) => {
+      const k = this.gridKey(Math.floor(p.x / Chapter5.GC), Math.floor(p.z / Chapter5.GC));
+      let l = this.grid.get(k);
+      if (!l) { l = []; this.grid.set(k, l); }
+      l.push(i);
+    });
+  }
+  /** Nearest dense track point within ~32 m (d = Infinity beyond that). */
   private nearestTrack(x: number, z: number): { d: number; i: number } {
-    // Coarse grid search over the dense track (cached per call region).
+    if (!this.grid.size) this.buildGrid();
+    const cx = Math.floor(x / Chapter5.GC), cz = Math.floor(z / Chapter5.GC);
     let best = Infinity, bi = 0;
-    for (let i = 0; i < this.track.length; i++) {
-      const p = this.track[i];
-      const d = (p.x - x) * (p.x - x) + (p.z - z) * (p.z - z);
-      if (d < best) { best = d; bi = i; }
+    for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) {
+      const l = this.grid.get(this.gridKey(cx + dx, cz + dz));
+      if (!l) continue;
+      for (const i of l) {
+        const p = this.track[i];
+        const d = (p.x - x) * (p.x - x) + (p.z - z) * (p.z - z);
+        if (d < best) { best = d; bi = i; }
+      }
     }
     return { d: Math.sqrt(best), i: bi };
   }
@@ -237,7 +256,7 @@ export class Chapter5 extends Chapter {
       { model: 'tree_fir_b', impostor: true, collider: 0.25, colliderHeight: 4 },
       { model: 'fir_big', impostor: true, collider: 0.35, colliderHeight: 5 },
       { model: 'tree_oak_c', impostor: true, collider: 0.3 },
-      { model: 'shrub_a', near: 40, shadow: false },
+      { model: 'bush_a', near: 40, shadow: false },
       { model: 'boulder_b', near: 60, collider: 0.9, colliderHeight: 1.2 },
     ];
     const field = (x: number, z: number) => x > -90 && x < 60 && z > -210 && z < -110;
@@ -413,12 +432,13 @@ export class Chapter5 extends Chapter {
     this.cops.forEach((c, i) => {
       c.s = s0 - i * 22;
       c.v = 0;
-      c.car.root.visible = true;
+      c.active = true;
+      c.car.root.visible = c.s > 0;
       c.siren ??= g.audio.siren();
     });
   }
   private stopCops(): void {
-    for (const c of this.cops) { c.car.root.visible = false; c.siren?.stop(); c.siren = null; c.car.collider && (c.car.collider.enabled = false); }
+    for (const c of this.cops) { c.active = false; c.car.root.visible = false; c.siren?.stop(); c.siren = null; c.car.collider && (c.car.collider.enabled = false); }
   }
 
   // ================================================================== events
@@ -445,7 +465,7 @@ export class Chapter5 extends Chapter {
       case 'cars': {
         if (this.authority) return true;
         const s = a.s as number[], v = a.v as number[];
-        this.cops.forEach((c, i) => { if (s[i] !== undefined) { c.s = s[i]; c.v = v[i]; c.car.root.visible = true; c.siren ??= g.audio.siren(); } });
+        this.cops.forEach((c, i) => { if (s[i] !== undefined) { c.s = s[i]; c.v = v[i]; c.active = true; c.siren ??= g.audio.siren(); } });
         return true;
       }
       case 'progress': {
@@ -505,7 +525,10 @@ export class Chapter5 extends Chapter {
     if (!this.authority) return;
     // Checkpoints reached by both riders
     const both = Math.min(myS, otherS);
+    const order = ['start', 'cp_farm', 'cp_river', 'cp_highway', 'cp_climb'];
+    const curIdx = order.indexOf(this.checkpoint);
     for (const id of ['cp_farm', 'cp_river', 'cp_highway', 'cp_climb']) {
+      if (order.indexOf(id) <= curIdx) continue;
       if (both > this.cpS[id] + 3 && !this.flags[`cp_${id}`]) {
         g.session.emit('flag', { k: `cp_${id}`, v: true });
         g.session.emit('progress', { cp: id });
@@ -534,7 +557,7 @@ export class Chapter5 extends Chapter {
     const slow = Math.min(this.lastS.elias, this.lastS.jax);
     const total = this.trackS[this.trackS.length - 1];
     for (const [i, c] of this.cops.entries()) {
-      if (!c.car.root.visible) continue;
+      if (!c.active) continue;
       if (this.authority) {
         // Rubber band: catch up when far, ease off when close; never pass the slow rider by much.
         const gap = slow - c.s - i * 14;
@@ -550,6 +573,7 @@ export class Chapter5 extends Chapter {
       const p = at.pos.clone().addScaledVector(side, c.lane);
       p.y = this.terrain.height(p.x, p.z);
       c.car.root.visible = c.s > 0;
+      if (c.car.collider) c.car.collider.enabled = c.s > 0;
       if (c.s > 0) c.car.setPose(p, at.yaw, g.world.physics);
       c.siren?.set(p.clone().setY(p.y + 1.5), 0.55, 0);
     }
@@ -562,8 +586,9 @@ export class Chapter5 extends Chapter {
       // A cruiser catches a stopped/crashed rider
       for (const ch of ['elias', 'jax'] as CharacterId[]) {
         const b = g.body(ch);
-        const near = this.cops.some((c) => c.car.root.visible && c.car.root.position.distanceTo(b.pos) < 4.5);
-        const slowRider = ch === g.localChar ? (this.bikes.ctrl.crashed || Math.abs(this.bikes.ctrl.speed) < 3) : (g.remote.bike ? false : true) || b.speed < 0.1 && !g.remote.onBike;
+        const near = this.cops.some((c) => c.active && c.s > 0 && c.car.root.position.distanceTo(b.pos) < 4.5);
+        const rb = g.remote.bike;
+        const slowRider = ch === g.localChar ? (this.bikes.ctrl.crashed || Math.abs(this.bikes.ctrl.speed) < 3) : !g.remote.onBike || !rb || (rb[6] ?? 0) > 0.5 || Math.abs(rb[5] ?? 0) < 3;
         this.catchT[ch] = near && slowRider ? this.catchT[ch] + dt : Math.max(0, this.catchT[ch] - dt);
         if (this.catchT[ch] > 1.6) {
           this.catchT[ch] = 0;

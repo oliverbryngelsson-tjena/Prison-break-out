@@ -5,6 +5,7 @@ import type { World } from './world';
 import type { Game } from './game';
 import type { EngineSound } from '../engine/audio';
 import { lerpAngle } from './poses';
+import { beamMat, coneGeometry } from '../levels/lights';
 
 const V = () => new THREE.Vector3();
 
@@ -22,6 +23,12 @@ export class BikeVisual {
   readonly anchors = { seat: new THREE.Vector3(0, 1.02, -0.3), gripL: new THREE.Vector3(-0.36, 1.28, 0.5), gripR: new THREE.Vector3(0.36, 1.28, 0.5), pegL: new THREE.Vector3(-0.24, 0.42, -0.12), pegR: new THREE.Vector3(0.24, 0.42, -0.12) };
   wheelbase = 1.7;
   wheelR = 0.38;
+  /** Headlamp (bike space). The light lives outside the bike's group so hiding the bike never changes the scene's light count (no shader recompiles). */
+  readonly lampAt = new THREE.Vector3(0, 1.05, 0.7);
+  light: THREE.SpotLight | null = null;
+  private beam: THREE.Mesh | null = null;
+  private lens: THREE.Mesh | null = null;
+  headlight = false;
 
   static async create(world: World): Promise<BikeVisual> {
     const v = new BikeVisual();
@@ -73,8 +80,45 @@ export class BikeVisual {
     v.anchors.seat.set(0, size.y * 0.74, -len * 0.14);
     v.anchors.pegL.set(-0.24, size.y * 0.3, -len * 0.06);
     v.anchors.pegR.set(0.24, size.y * 0.3, -len * 0.06);
+    v.lampAt.set(0, size.y * 0.7, len * 0.36);
     world.root.add(v.root);
     return v;
+  }
+
+  /** Adds a headlamp: lens + beam always, a real spot light only when `real`. */
+  addHeadlight(world: World, real: boolean): void {
+    if (real) {
+      const l = new THREE.SpotLight(0xfff0d6, 0, 60, 0.5, 0.55, 1.25);
+      l.castShadow = false;
+      world.root.add(l, l.target);
+      this.light = l;
+    }
+    const m = beamMat();
+    m.uniforms.uStrength.value = 0.1;
+    this.beam = new THREE.Mesh(coneGeometry(9, 2.6), m);
+    this.beam.renderOrder = 3;
+    this.beam.frustumCulled = false;
+    this.beam.position.copy(this.lampAt);
+    this.beam.rotation.x = 0.12;
+    this.tilt.add(this.beam);
+    this.lens = new THREE.Mesh(new THREE.CircleGeometry(0.07, 12), new THREE.MeshBasicMaterial({ color: 0xfff4dc }));
+    this.lens.position.copy(this.lampAt).add(new THREE.Vector3(0, 0, 0.02));
+    this.tilt.add(this.lens);
+    this.headlight = true;
+  }
+
+  syncLight(): void {
+    const on = this.headlight && this.root.visible;
+    if (this.beam) this.beam.visible = on;
+    if (this.lens) this.lens.visible = on;
+    const l = this.light;
+    if (!l) return;
+    l.intensity = on ? 110 : 0;
+    if (!on) return;
+    const m = this.tilt.matrixWorld;
+    l.position.copy(this.lampAt).applyMatrix4(m);
+    l.target.position.set(this.lampAt.x, this.lampAt.y - 1.6, this.lampAt.z + 10).applyMatrix4(m);
+    l.target.updateMatrixWorld();
   }
 
   /** Places the bike: pos = ground point between the wheels. */
@@ -89,6 +133,7 @@ export class BikeVisual {
     }
     for (const w of this.wheels) { w.bone.quaternion.copy(w.rest); w.bone.rotateX(spin); }
     this.root.updateMatrixWorld(true);
+    this.syncLight();
   }
 
   /** Anchor points in world space. */
@@ -103,7 +148,7 @@ export class BikeVisual {
     };
   }
 
-  dispose(): void { this.root.removeFromParent(); }
+  dispose(): void { this.root.removeFromParent(); this.light?.target.removeFromParent(); this.light?.removeFromParent(); }
 }
 
 export interface BikeInput { throttle: number; brake: number; steer: number }
@@ -264,7 +309,7 @@ export class BikeSystem {
   ctrl: BikeController;
   mounted = false;
   private engines = new Map<CharacterId, EngineSound>();
-  private remoteB: [number, number, number, number, number] = [0, 0, 0, 1200, 0];
+  private remoteB: number[] = [0, 0, 0, 1200, 0, 0, 0];
   private dustT = 0;
   enabled = true;
 
@@ -272,12 +317,15 @@ export class BikeSystem {
     this.ctrl = new BikeController(game.world);
   }
 
-  async init(): Promise<void> {
-    for (const c of ['elias', 'jax'] as CharacterId[]) this.visuals.set(c, await BikeVisual.create(this.game.world));
-    // Remote rider: pose the body on the bike right before it is drawn.
-    const remote = this.game.remote;
-    remote.body.preVisual = () => this.syncRemote();
-    this.game.updaters.add((dt) => this.update(dt));
+  async init(opts: { headlights?: boolean } = {}): Promise<void> {
+    const g = this.game;
+    for (const c of ['elias', 'jax'] as CharacterId[]) {
+      const v = await BikeVisual.create(g.world);
+      // Real lights cost per-pixel shading on every surface: the partner's bike gets one only above 'low'.
+      if (opts.headlights) v.addHeadlight(g.world, c === g.localChar || g.world.q.level !== 'low');
+      this.visuals.set(c, v);
+    }
+    g.updaters.add((dt) => this.update(dt));
   }
 
   /** Puts the local player on their bike at p. */
@@ -319,6 +367,8 @@ export class BikeSystem {
   update(dt: number): void {
     const g = this.game;
     if (!this.enabled) return;
+    // Remote rider: pose the body on the bike right before it is drawn (players exist after the level is built).
+    if (g.remote && !g.remote.body.preVisual) g.remote.body.preVisual = () => this.syncRemote();
     if (this.mounted && g.local.state === 'bike') {
       const c = this.ctrl;
       const ctl = g.inCutscene ? { throttle: 0, brake: 0, steer: 0 } : this.input();
@@ -337,7 +387,7 @@ export class BikeSystem {
         if (b.poseName !== 'ride') b.setPose('ride', {}, { restart: true });
         b.updatePoseCtx({ points: vis.points(), k: { lean: c.lean, stand: c.grounded ? 0 : 0.6, steer: c.steer } });
       }
-      g.bikeSnap = [+c.lean.toFixed(2), +c.pitch.toFixed(2), +c.steer.toFixed(2), Math.round(c.rpm), +c.spin.toFixed(2)];
+      g.bikeSnap = [+c.lean.toFixed(2), +c.pitch.toFixed(2), +c.steer.toFixed(2), Math.round(c.rpm), +c.spin.toFixed(2), +c.speed.toFixed(1), c.crashed ? 1 : 0];
       this.engines.get(g.localChar)?.set(c.rpm, ctl.throttle, 0.55, c.pos);
       // Dust / mud from the rear wheel
       this.dustT -= dt;
@@ -352,6 +402,7 @@ export class BikeSystem {
       const vis = this.visuals.get(g.localChar);
       if (vis && !this.parkedLocal) vis.root.visible = false;
     }
+    for (const v of this.visuals.values()) if (!v.root.visible) v.syncLight();
   }
   /** Keep the local bike visible when parked (e.g. before mounting). */
   parkedLocal = false;
@@ -396,7 +447,7 @@ export class BikeSystem {
     for (const v of this.visuals.values()) v.dispose();
     for (const e of this.engines.values()) e.stop();
     this.engines.clear();
-    this.game.remote.body.preVisual = null;
+    if (this.game.remote) this.game.remote.body.preVisual = null;
     this.game.bikeSnap = null;
   }
 }

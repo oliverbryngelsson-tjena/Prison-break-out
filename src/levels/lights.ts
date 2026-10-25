@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import type { World } from '../game/world';
 import type { Body } from '../game/body';
 
-const beamMat = () => new THREE.ShaderMaterial({
+export const beamMat = () => new THREE.ShaderMaterial({
   transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: true,
   uniforms: { uColor: { value: new THREE.Color(0xfff1d0) }, uStrength: { value: 0.22 }, ...THREE.UniformsLib.fog },
   vertexShader: /* glsl */ `
@@ -31,7 +31,7 @@ const beamMat = () => new THREE.ShaderMaterial({
     }`,
 });
 
-function coneGeometry(len: number, radius: number): THREE.BufferGeometry {
+export function coneGeometry(len: number, radius: number): THREE.BufferGeometry {
   // Open cone from apex (uv.y = 1) to base (uv.y = 0), pointing along +Z.
   const g = new THREE.CylinderGeometry(0.02, radius, len, 24, 1, true);
   g.translate(0, -len / 2, 0);
@@ -187,7 +187,7 @@ export function inSearchlight(s: Searchlight, p: THREE.Vector3): boolean {
 }
 
 let radial: THREE.Texture | null = null;
-function radialTex(): THREE.Texture {
+export function radialTex(): THREE.Texture {
   if (radial) return radial;
   const c = document.createElement('canvas');
   c.width = c.height = 128;
