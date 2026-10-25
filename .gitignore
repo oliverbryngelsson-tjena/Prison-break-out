@@ -11,3 +11,4 @@ android/app/build/
 dist-p2p/
 dist-ui/
 dist-old/
+dist-mem/

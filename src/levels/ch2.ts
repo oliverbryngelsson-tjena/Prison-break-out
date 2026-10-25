@@ -394,6 +394,11 @@ export class Chapter2 extends Chapter {
   private buildInteractions(): void {
     const g = this.g;
     const I = g.interact;
+    g.extras.addMemory({ id: 'c2_letter', pos: v3(11.3, 0, -8.5), radius: 1.3, label: 'Read the letter', enabled: () => this.flags.phase === 'cells', lines: [
+      { who: 'jax', text: 'My mum. "Eat something green. Don\'t trust anyone with a nice watch."' },
+      { who: 'elias', text: 'Smart woman.' },
+      { who: 'jax', text: 'She\'s going to kill me when she sees the news tomorrow.', pause: 0.5 },
+    ] });
     // Cells: open the vents
     I.add({ id: 'vent_c16', who: 'elias', pos: v3(12.7, 0, -10.0), radius: 1.2, label: 'Unscrew the vent (under the bunk)', icon: 'tool', mode: 'hold', holdTime: 3.0, pose: 'kneel', facing: Math.PI * 0.8,
       enabled: () => this.flags.phase === 'cells' && !this.flags.vent_elias, onUse: () => g.session.request('ventOpen', { who: 'elias' }) });

@@ -1,4 +1,5 @@
 // The running game: owns the world, both player characters, NPCs, story events and the frame loop.
+import { Extras } from './extras';
 import { MiniGames } from './minigames';
 import * as THREE from 'three';
 import type { CharacterId, NpcSnap, PlayerSnap, Progress } from '../../shared/protocol';
@@ -98,6 +99,8 @@ export class Game implements SessionHandlers, CutsceneHost {
   readonly updaters = new Set<(dt: number) => void>();
   /** Co-op mini-games (arm wrestling, hoops) that chapters can place. */
   readonly minigames: MiniGames = new MiniGames(this);
+  /** Optional memories to examine (story extras). */
+  readonly extras: Extras = new Extras(this);
   /** Loading screen status callback. */
   onLoadStatus: ((s: string) => void) | null = null;
   /** Local bike state for snapshots [lean, pitch, steer, rpm, spin] (set by BikeSystem). */
@@ -493,6 +496,7 @@ export class Game implements SessionHandlers, CutsceneHost {
         return;
       default:
         if (type.startsWith('mg') && this.minigames.onEvent(type, args)) return;
+        if (type === 'memory' && this.extras.onEvent(type, args)) return;
         if (!this.chapter.onEvent(type, args)) console.warn('unhandled event', type);
     }
   }
@@ -642,6 +646,9 @@ export class Game implements SessionHandlers, CutsceneHost {
       this.hud.setSkipHint(this.cutscenes.current?.skippable === false ? null : this.input.device === 'touch' ? 'Tap and hold to skip' : `Press ${this.input.glyph('skip')} or hold ${this.input.glyph('interact')} to skip`);
     } else {
       if (this.local.state === 'cutscene') this.local.state = 'free';
+      // Cutscene poses (lying, sitting, kneeling…) must not stick once you have control again.
+      if (this.local.state === 'free' && this.local.body.poseName && this.local.body.poseName !== 'ride') this.local.body.clearPose(0.4);
+      this.local.body.model.lookTarget = null;
       this.remote.release();
       this.hud.setSkipHint(null);
     }

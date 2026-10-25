@@ -250,6 +250,13 @@ export class Chapter4 extends Chapter {
     win.rotation.y = Math.PI;
     w.root.add(win);
     kit.bulb(L.emissive(0xffd29a, 3), L.plain(0x333333, 0.6, 0.5), YARD.x + 0.4, yy + 2.6, YARD.z + 7.0, 0xffc890, 2.5, 10, 'yard');
+    // Photos pinned to the trailer wall (memory)
+    for (const [dx, dy, c] of [[5.2, 1.75, 0xd8cdb0], [5.6, 1.55, 0xc8d0d8], [6.0, 1.8, 0xe0d4c0]] as const) {
+      const ph = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.16), L.plain(c, 0.9));
+      ph.position.set(YARD.x + dx, yy + dy, YARD.z + 7.08);
+      ph.rotation.y = Math.PI;
+      w.root.add(ph);
+    }
     // Mia's old basketball hoop (mini-game): pole, backboard, rim and net.
     const hx = YARD.x - 8, hz = YARD.z - 6.6;
     const steelH = L.plain(0x55595c, 0.5, 0.6);
@@ -446,6 +453,16 @@ export class Chapter4 extends Chapter {
   private buildInteractions(): void {
     const g = this.g;
     const I = g.interact;
+    g.extras.addMemory({ id: 'c4_photos', pos: v3(YARD.x + 5.6, RIM_Y - 1, YARD.z + 6.4), radius: 1.3, label: 'Look at the photos', enabled: () => this.flags.phase === 'yard', lines: [
+      { who: 'jax', text: 'That you? With the ears?' },
+      { who: 'elias', text: 'Mia and me. Our dad\'s first tow truck. She could drive it before she could read.' },
+      { who: 'jax', text: 'She got the brains.' },
+      { who: 'elias', text: 'She got everything. I got a job with Crane.', pause: 0.6 },
+    ] });
+    g.extras.addMemory({ id: 'c4_sign', pos: v3(-47.5, this.y(-47.5, -45), -45), radius: 1.8, label: 'Read the sign', enabled: () => this.flags.phase === 'rim', lines: [
+      { who: 'jax', text: '"Crane Aggregates. Building Harlow\'s future." He named a hole in the ground after himself.' },
+      { who: 'elias', text: 'He\'s been filling holes with people for thirty years. Let\'s go.', anim: 'talk_angry' },
+    ] });
     g.minigames.addHoops({ id: 'hoops_mia', rim: this.hoop.rim, spots: this.hoop.spots, enabled: () => this.flags.phase === 'yard' && !this.flags.metMia });
     I.add({ id: 'talk_mia', pos: v3(YARD.x + 3, this.y(YARD.x + 3, YARD.z + 4), YARD.z + 4), radius: 2.2, label: 'Talk to Mia', icon: 'talk',
       enabled: () => this.flags.phase === 'yard' && !this.flags.metMia, onUse: () => g.session.request('meetMia', {}) });
