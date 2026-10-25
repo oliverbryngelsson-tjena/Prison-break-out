@@ -181,9 +181,25 @@ export function coneLight(c: LightCone, p: THREE.Vector3, height = 1.0): number 
   return c.intensity * edge * (1 - (d / c.range) ** 2 * 0.5);
 }
 
+/**
+ * How deep a point is in the searchlight's pool on the ground: 0 at the centre, 1 at the visible
+ * edge, >1 outside. Uses the same stretched ellipse that is drawn (a shallow beam makes a long
+ * pool), so being in the light you see is what counts.
+ */
+export function searchlightDepth(s: Searchlight, p: THREE.Vector3): number {
+  if (!s.on) return Infinity;
+  const r = Math.tan(s.half) * s.pos.distanceTo(s.target) * 1.1;
+  const hx = s.dir.x, hz = s.dir.z, hl = Math.hypot(hx, hz) || 1;
+  const ax = hx / hl, az = hz / hl;
+  const dx = p.x - s.target.x, dz = p.z - s.target.z;
+  const along = dx * ax + dz * az, across = -dx * az + dz * ax;
+  const rl = r / Math.max(0.3, -s.dir.y);
+  return Math.hypot(across / r, along / rl);
+}
+
+/** Standing in the clearly lit part of the pool. */
 export function inSearchlight(s: Searchlight, p: THREE.Vector3): boolean {
-  if (!s.on) return false;
-  return Math.hypot(p.x - s.target.x, p.z - s.target.z) < Math.tan(s.half) * s.pos.distanceTo(s.target) * 1.05;
+  return searchlightDepth(s, p) < 0.8;
 }
 
 let radial: THREE.Texture | null = null;
