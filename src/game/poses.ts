@@ -238,6 +238,20 @@ export const POSES: Record<string, PoseDef> = {
       void t;
     },
   },
+  jump: {
+    // Hop: knees tuck and arms come up, peaking mid-air.
+    dur: 0.75, canMove: true, lockTurn: false, fade: 0.06,
+    apply(m, t, w) {
+      const fr = frame(m);
+      const k = Math.sin(Math.min(1, t / 0.75) * Math.PI) * w;
+      if (k <= 0.01) return;
+      const pelvis = m.bone('Bip01')!.getWorldPosition(new THREE.Vector3());
+      for (const [side, s] of [['R', 1], ['L', -1]] as const) {
+        leg(m, side, pelvis.clone().addScaledVector(fr.right, s * 0.12).addScaledVector(fr.fwd, 0.22).add(new THREE.Vector3(0, -0.62, 0)), k, fr.fwd);
+        arm(m, side, fr.chest.clone().addScaledVector(fr.right, s * 0.38).addScaledVector(fr.fwd, 0.2).add(new THREE.Vector3(0, 0.1, 0)), k * 0.8, new THREE.Vector3(0, -1, 0));
+      }
+    },
+  },
   balance: {
     // Arms out to the sides, walking a beam.
     dur: Infinity, canMove: true, lockTurn: false, fade: 0.3,

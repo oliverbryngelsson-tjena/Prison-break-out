@@ -43,7 +43,7 @@ export class Chapter6 extends Chapter {
 
   constructor() {
     super();
-    this.flagsDefault = { jump: false, sprint: true, combat: false, crouch: false };
+    this.flagsDefault = { jump: true, sprint: true, combat: false, crouch: false };
     const d = this.npcDefs;
     d.push({ id: 'marsh', char: 'marsh', role: 'police', name: 'Det. Lena Marsh', pos: [70, CREST_Y, 0], yaw: -Math.PI / 2, passive: true, idleClip: 'idle' });
     d.push({ id: 'cop_a', char: 'cop1', role: 'police', name: 'Officer', pos: [72, CREST_Y, 2], yaw: -Math.PI / 2, passive: true });

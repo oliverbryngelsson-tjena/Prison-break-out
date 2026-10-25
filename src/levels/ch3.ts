@@ -66,7 +66,7 @@ export class Chapter3 extends Chapter {
 
   constructor() {
     super();
-    this.flagsDefault = { jump: false, sprint: true, combat: false, crouch: true };
+    this.flagsDefault = { jump: true, sprint: true, combat: false, crouch: true };
     const d = this.npcDefs;
     d.push({ id: 'cole', char: 'cop1', role: 'police', name: 'Deputy Cole', pos: [-24, 0, -97], yaw: Math.PI, catches: true, vision: { range: 15, fov: 95 }, walk: 1.0,
       patrol: [[-24, -97, 5, Math.PI], [-10, -106, 2], [6, -112, 4, Math.PI], [-12, -104, 1]] });

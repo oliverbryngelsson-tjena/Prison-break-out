@@ -62,7 +62,7 @@ export class Chapter5 extends Chapter {
 
   constructor() {
     super();
-    this.flagsDefault = { jump: false, sprint: true, combat: false, crouch: false };
+    this.flagsDefault = { jump: true, sprint: true, combat: false, crouch: false };
     this.defineDialogue();
   }
 

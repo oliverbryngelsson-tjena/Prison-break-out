@@ -56,7 +56,7 @@ export class Chapter2 extends Chapter {
 
   constructor() {
     super();
-    this.flagsDefault = { jump: false, sprint: true, combat: false, crouch: true };
+    this.flagsDefault = { jump: true, sprint: true, combat: false, crouch: true };
     const d = this.npcDefs;
     d.push({ id: 'vance', char: 'guard2', role: 'guard', name: 'Officer Vance', pos: [9.4, 0, -20], yaw: 0, catches: true, vision: { range: 9, fov: 80 }, walk: 0.95,
       patrol: [[9.4, -20, 3, 0], [9.4, -12, 1.5, Math.PI / 2], [9.4, -6, 1.5, Math.PI / 2], [9.4, -2.5, 4, Math.PI], [9.4, -9, 1.5, Math.PI / 2], [9.4, -16, 1, Math.PI / 2]] });
@@ -640,7 +640,6 @@ export class Chapter2 extends Chapter {
     const g = this.g;
     const P = this.P;
     g.flags.combat = false;
-    g.flags.jump = false;
     g.local.crawlMode = false;
     for (const c of P.cells) this.setDoorNow(c.id, 0);
     for (const n of g.npcs.values()) { n.reset(); n.enabled = false; n.body.visible = false; n.body.solid = false; }

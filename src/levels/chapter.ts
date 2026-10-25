@@ -65,7 +65,7 @@ export abstract class Chapter {
   music = 'music_explore';
   /** Outfit used in this chapter. */
   outfit: 'prison' | 'civil' = 'prison';
-  flagsDefault: { jump: boolean; sprint: boolean; combat: boolean; crouch: boolean } = { jump: false, sprint: true, combat: false, crouch: true };
+  flagsDefault: { jump: boolean; sprint: boolean; combat: boolean; crouch: boolean } = { jump: true, sprint: true, combat: false, crouch: true };
 
   attach(g: Game): void {
     this.g = g;

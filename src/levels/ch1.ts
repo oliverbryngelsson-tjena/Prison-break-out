@@ -26,7 +26,7 @@ export class Chapter1 extends Chapter {
 
   constructor() {
     super();
-    this.flagsDefault = { jump: false, sprint: true, combat: false, crouch: true };
+    this.flagsDefault = { jump: true, sprint: true, combat: false, crouch: true };
     this.defineNpcs();
     this.defineDialogue();
   }
@@ -297,7 +297,9 @@ export class Chapter1 extends Chapter {
       ],
       end: () => {
         this.setDoorNow('gate', 0);
-        for (const c of ['C-16', 'C-17']) this.setDoorNow(c, 0);
+        // On the guest this can run just after the host's 'morning' event already opened the cells;
+        // closing them then left that player locked in (usually Elias, in C-16).
+        if (this.flags.phase !== 'morning') for (const c of ['C-16', 'C-17']) this.setDoorNow(c, 0);
         placeChar(g, 'elias', c16().center.clone(), SIDE_OUT);
         placeChar(g, 'jax', c17().center.clone(), SIDE_OUT);
         clipChar(g, 'elias', null);
@@ -487,7 +489,6 @@ export class Chapter1 extends Chapter {
         setPassive(['vance'], false);
         break;
     }
-    g.flags.jump = false;
   }
 
   // ---------------------------------------------------------------- events
@@ -734,6 +735,11 @@ export class Chapter1 extends Chapter {
     const lp = g.local.body.pos;
     const inDuct = lp.x > 14.6 && lp.x < 15.8 && lp.y > 2.3 && lp.z > -26.5 && lp.z < -21.3;
     if (!g.local.scripted) g.local.crawlMode = inDuct;
+    // Safety net: the cells stay open all morning on every client.
+    if (this.flags.phase === 'morning' && !g.inCutscene) for (const id of ['C-16', 'C-17']) {
+      const d = this.doors.get(id);
+      if (d && d.target === 0) d.target = 1;
+    }
     // Haskins faces the cage area when idle; when distracted he's away at the window.
     if (!this.authority) return;
     if (this.flags.counting) this.updateCount(dt);
