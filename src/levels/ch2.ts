@@ -204,8 +204,10 @@ export class Chapter2 extends Chapter {
     w.physics.addRamp({ x: (x0 + x1) / 2, y: TY - dip / 2, z: flood1 + 0.5 }, { x: x1 - x0, y: dip, z: 1 }, 0, 'z', TY - dip, TY, { surface: 'mud' });
     B.box(mud, { x: (x0 + x1) / 2, y: TY - dip / 2, z: flood0 - 0.5 }, { x: x1 - x0, y: dip, z: 1 }, 0, null, { faces: ['py'] });
     B.box(mud, { x: (x0 + x1) / 2, y: TY - dip / 2, z: flood1 + 0.5 }, { x: x1 - x0, y: dip, z: 1 }, 0, null, { faces: ['py'] });
-    kit.wall(brick, x0, -7.2, x0, 20.4, TY - dip, TH + dip, 0.3);
-    kit.wall(brick, x1, 22.6, x1, -7.2, TY - dip, TH + dip, 0.3, [{ at: 0.0, width: 0.01, bottom: 0, top: 0.01 }]);
+    // West wall runs the full length; the east wall stops where tunnel B branches off toward the drain
+    // (they were swapped: the east wall blocked tunnel B and the west corner was left open).
+    kit.wall(brick, x0, -7.2, x0, 22.6, TY - dip, TH + dip, 0.3);
+    kit.wall(brick, x1, 20.4, x1, -7.2, TY - dip, TH + dip, 0.3);
     kit.wall(brick, x1, -7.2, x0, -7.2, TY, TH, 0.3);
     // Ceiling with the hatch shaft opening.
     kit.ceiling(conc, x0, -7.2, x1, HATCH.z1 - 0.1, top);
