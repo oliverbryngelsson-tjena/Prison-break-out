@@ -7,7 +7,7 @@ import { Input } from './engine/input';
 import { AudioManager } from './engine/audio';
 import { MaterialLib } from './engine/materials';
 import { CharacterLibrary } from './engine/characters';
-import { onLoadProgress } from './engine/assets';
+import { releaseAssetCaches, onLoadProgress } from './engine/assets';
 import type { QualityLevel } from './engine/quality';
 import { NetClient, defaultServerUrl } from './net/client';
 import { Hud } from './ui/hud';
@@ -432,6 +432,9 @@ export class App {
     if (!this.game) return;
     try { this.game.dispose(); } catch (e) { console.error('dispose failed', e); }
     this.game = null;
+    this.debug.game = null;
+    // Drop cached models/textures of the finished chapter (the next one loads what it needs).
+    void releaseAssetCaches();
     this.hud.setVisible(false);
     this.touch.setMode('hidden');
     this.pauseBtn.classList.remove('show');

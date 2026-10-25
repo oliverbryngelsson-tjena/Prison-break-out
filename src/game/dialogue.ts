@@ -28,6 +28,18 @@ export function lineDuration(l: Line): number {
   return Math.max(1.6, words * 0.34 + 0.7);
 }
 
+const VOICES: SpeechSynthesisVoice[] = [];
+let voicesHooked = false;
+function loadVoicesOnce(): void {
+  if (voicesHooked) return;
+  voicesHooked = true;
+  try {
+    const load = () => { VOICES.length = 0; VOICES.push(...(window.speechSynthesis?.getVoices() ?? [])); };
+    load();
+    window.speechSynthesis?.addEventListener?.('voiceschanged', load);
+  } catch { /* no TTS */ }
+}
+
 export class DialogueRunner {
   queue: Line[] = [];
   current: Line | null = null;
@@ -43,12 +55,10 @@ export class DialogueRunner {
   active = false;
 
   constructor() {
-    try {
-      const load = () => { this.voices = window.speechSynthesis?.getVoices() ?? []; };
-      load();
-      window.speechSynthesis?.addEventListener?.('voiceschanged', load);
-    } catch { /* no TTS */ }
+    // One module-level listener (a per-instance one kept every finished chapter's game alive).
+    loadVoicesOnce();
   }
+  private get voicesNow(): SpeechSynthesisVoice[] { return VOICES.length ? VOICES : this.voices; }
 
   play(lines: Line[], onDone?: () => void, startOffset = 0): void {
     this.stop();
@@ -104,7 +114,7 @@ export class DialogueRunner {
       if (v) {
         u.pitch = v.pitch;
         u.rate = v.rate;
-        const en = this.voices.filter((x) => /^en/i.test(x.lang));
+        const en = this.voicesNow.filter((x) => /^en/i.test(x.lang));
         u.voice = en.find((x) => v.prefer.test(x.name)) ?? en[0] ?? null;
       }
       u.volume = l.radio ? 0.7 : 1;

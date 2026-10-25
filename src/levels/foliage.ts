@@ -122,6 +122,7 @@ export class Foliage {
     this.gl.toneMapping = prevTM;
     const mat = new THREE.MeshStandardMaterial({ map: rt.texture, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 1, metalness: 0 });
     mat.envMapIntensity = 0.3;
+    mat.userData.renderTarget = rt; // freed with the level (disposeTree)
     // Two crossed quads, normals tilted up so lighting matches the 3D trees.
     const g1 = new THREE.PlaneGeometry(w, h);
     const g2 = new THREE.PlaneGeometry(w, h);

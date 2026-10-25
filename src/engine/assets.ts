@@ -120,3 +120,48 @@ export function loadEnvironment(path: string): Promise<THREE.DataTexture> {
     return t;
   });
 }
+
+// ---------------------------------------------------------------- freeing memory between chapters
+const TEX_KEYS = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap', 'alphaMap', 'bumpMap', 'displacementMap', 'lightMap', 'specularMap', 'clearcoatNormalMap', 'transmissionMap', 'sheenColorMap'] as const;
+
+function disposeMaterial(m: THREE.Material, seen: Set<object>): void {
+  if (seen.has(m)) return;
+  seen.add(m);
+  const r = m as unknown as Record<string, unknown>;
+  for (const k of TEX_KEYS) { const t = r[k] as THREE.Texture | undefined; if (t?.isTexture && !seen.has(t)) { seen.add(t); t.dispose(); } }
+  const u = (m as THREE.ShaderMaterial).uniforms;
+  if (u) for (const v of Object.values(u)) { const t = v?.value as THREE.Texture | undefined; if (t?.isTexture && !seen.has(t)) { seen.add(t); t.dispose(); } }
+  (r.userData as { renderTarget?: THREE.WebGLRenderTarget } | undefined)?.renderTarget?.dispose();
+  m.dispose();
+}
+
+/** Frees the GPU resources (geometry, materials, textures, skeletons) of everything under `root`. */
+export function disposeTree(root: THREE.Object3D, seen = new Set<object>()): void {
+  root.traverse((o) => {
+    const mesh = o as THREE.Mesh & { isInstancedMesh?: boolean; isSkinnedMesh?: boolean; skeleton?: THREE.Skeleton; dispose?: () => void };
+    if (mesh.geometry && !seen.has(mesh.geometry)) { seen.add(mesh.geometry); mesh.geometry.dispose(); }
+    const mat = mesh.material as THREE.Material | THREE.Material[] | undefined;
+    if (mat) for (const m of Array.isArray(mat) ? mat : [mat]) disposeMaterial(m, seen);
+    if (mesh.isInstancedMesh) mesh.dispose?.();
+    if (mesh.isSkinnedMesh && mesh.skeleton && !seen.has(mesh.skeleton)) { seen.add(mesh.skeleton); mesh.skeleton.dispose(); }
+    // Lights own their shadow-map render targets.
+    if ((o as THREE.Light).isLight) (o as THREE.Light).dispose?.();
+  });
+  const sc = root as THREE.Scene;
+  if (sc.isScene) {
+    for (const t of [sc.environment, sc.background]) if ((t as THREE.Texture | null)?.isTexture && !seen.has(t as object)) { seen.add(t as object); (t as THREE.Texture).dispose(); }
+  }
+}
+
+/**
+ * Drops every cached model and texture (and frees their GPU copies). Called between chapters so a
+ * long session does not keep each level's assets alive — on phones that runs out of memory.
+ */
+export async function releaseAssetCaches(): Promise<void> {
+  const seen = new Set<object>();
+  const gl = [...gltfCache.values()], tx = [...texCache.values()];
+  gltfCache.clear();
+  texCache.clear();
+  for (const p of gl) { try { disposeTree((await p).scene, seen); } catch { /* failed load */ } }
+  for (const p of tx) { try { const t = await p; if (!seen.has(t)) { seen.add(t); t.dispose(); } } catch { /* failed load */ } }
+}
