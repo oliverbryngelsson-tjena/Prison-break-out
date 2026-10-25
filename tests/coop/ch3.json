@@ -427,6 +427,22 @@
  },
  {
   "on": "AB",
+  "until": "window.__app.game.chapter.flags.phase === 'dealer' && !window.__app.game.cutscenes.current",
+  "timeout": 90000
+ },
+ {
+  "on": "AB",
+  "eval": "(() => { const g = window.__app.game; g.local.teleport(g.chapter.dealPos.clone().add({ x: g.localChar === 'elias' ? 1.5 : -1.5, y: 0.05, z: 0 }), 0); return 1; })()"
+ },
+ {
+  "wait": 1000
+ },
+ {
+  "on": "AB",
+  "eval": "(() => { const g = window.__app.game; g.openWeaponShop('test'); const it = [...document.querySelectorAll('.hud-shop .shop-item')].find(e => (g.localChar === 'elias' ? /M4A1/ : /AK-47/).test(e.textContent)); it.click(); return 1; })()"
+ },
+ {
+  "on": "AB",
   "until": "window.__app.state === 'end' || (window.__app.game && window.__app.game.state === 'ended')",
   "timeout": 240000
  },

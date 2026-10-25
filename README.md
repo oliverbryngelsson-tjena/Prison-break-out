@@ -184,15 +184,15 @@ Developer solo mode (not in the menus): `?dev=solo&ch=3&cp=farm` loads a checkpo
 - The two-player tests pass:
   - Chapter 1: 23/23
   - Chapter 2: 26/26
-  - Chapter 3: 22/22
-  - Chapter 4: 18/18
-  - Chapter 5: 8/8
-  - Chapter 6: 10/10
+  - Chapter 3: 38/38 (plus the arms deal on its own: 11/11)
+  - Chapter 4: 20/20
+  - Chapter 5: 20/20
+  - Chapter 6: 12/12 (to the ending)
   - Lobby/reconnect end-to-end: 17/17, over both the WebSocket server and peer-to-peer
   - Server protocol: 11/11
   - Host reload in peer-to-peer: 5/5
   - Mini-games: arm wrestling 8/8, hoops 6/6
-  - Memories: 6/6 (and all eight can be reached in their chapters)
+  - Memories: 6/6
 - No falling through the ground in the steep-slope test at 8 fps. The previous build failed it in chapters 3, 4 and 6.
 - Memory stays flat across six chapter loads.
 - The UI was checked at phone (portrait and landscape), tablet and 1080p sizes.
