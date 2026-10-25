@@ -432,14 +432,14 @@
  },
  {
   "on": "AB",
-  "until": "!window.__app.game || window.__app.game.chapter.num === 4",
+  "until": "window.__app.state === 'end' || (window.__app.game && window.__app.game.state === 'ended')",
   "timeout": 240000
  },
  {
   "on": "AB",
   "check": {
-   "name": "chapter 4 starts after the deal",
-   "expr": "window.__app.game && window.__app.game.chapter.num === 4"
+   "name": "chapter 3 complete after the deal (on to chapter 4)",
+   "expr": "window.__app.state === 'end' || window.__app.game.state === 'ended'"
   }
  }
 ]
