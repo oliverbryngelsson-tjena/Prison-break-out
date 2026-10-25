@@ -10,6 +10,7 @@ import { Water } from './water';
 import { Foliage, scatter, type FoliageItem, type Placement } from './foliage';
 import { Flashlight, coneLight } from './lights';
 import { Car, Path } from './vehicles';
+import { BikeSystem } from '../game/bike';
 import { cylinderBetween } from '../engine/geometry';
 import { canvasTexture } from '../engine/materials';
 import type { Line } from '../game/dialogue';
@@ -20,7 +21,9 @@ const ROAD: Array<[number, number]> = [];
 for (let x = -170; x <= 190; x += 10) ROAD.push([x, 112 + Math.sin(x / 40) * 5]);
 const TRACK: Array<[number, number]> = [[-170, -98], [-90, -94], [-30, -96], [20, -92], [80, -97], [190, -94]];
 const FARM = { x: 40, z: 58, r: 34 };
-const CABIN = { x: -32, z: 152 };
+const CABIN = { x: -32, z: 152 }; // Jax's trailer in Black Hollow
+/** Where Ray's car stops on the county road. */
+const PICKUP = { x: 52, z: 112 + Math.sin(52 / 40) * 5 - 3 };
 const ravZ = (x: number) => -30 + Math.sin(x / 30) * 4;
 const LOG_X = 8;
 
@@ -60,8 +63,8 @@ export class Chapter3 extends Chapter {
     bank: { spawn: { elias: { pos: [-2, 0, -139], yaw: 0.1 }, jax: { pos: [1.5, 0, -138.5], yaw: -0.2 } }, objective: 'Get away from the river before the search teams arrive', intro: 'cs3_wake', outfit: 'prison' },
     ravine: { spawn: { elias: { pos: [LOG_X - 1, 0, -23], yaw: 0 }, jax: { pos: [LOG_X + 1, 0, -22.5], yaw: 0 } }, objective: 'Head north through the woods', outfit: 'prison' },
     farm: { spawn: { elias: { pos: [18, 0, 26], yaw: 0.6 }, jax: { pos: [20, 0, 25], yaw: 0.6 } }, objective: 'Steal clothes from the line — don\'t let the farmer see you', intro: 'cs3_farm', outfit: 'prison' },
-    road: { spawn: { elias: { pos: [46, 0, 92], yaw: 0 }, jax: { pos: [48, 0, 91], yaw: 0 } }, objective: 'Cross the county road without being seen', outfit: 'civil' },
-    cabin: { spawn: { elias: { pos: [-20, 0, 132], yaw: -0.6 }, jax: { pos: [-18, 0, 131], yaw: -0.6 } }, objective: 'Follow the stream to the hunting cabin', outfit: 'civil' },
+    road: { spawn: { elias: { pos: [46, 0, 92], yaw: 0 }, jax: { pos: [48, 0, 91], yaw: 0 } }, objective: 'Get to the mile marker on the county road — stay out of the patrol\'s headlights', outfit: 'civil' },
+    cabin: { spawn: { elias: { pos: [-28.5, 0, 146.5], yaw: -0.4 }, jax: { pos: [-26.8, 0, 147.2], yaw: -0.6 } }, objective: 'Find the cash Jax hid under his trailer', intro: 'cs3_trailer', outfit: 'civil' },
   };
 
   constructor() {
@@ -77,6 +80,7 @@ export class Chapter3 extends Chapter {
       patrol: [[-40, -60, 4, Math.PI / 2], [-14, -56, 2], [-4, -70, 3, Math.PI], [-26, -74, 1]] });
     d.push({ id: 'walt', char: 'thug2', role: 'guard', name: 'Walt Ashby', pos: [56, 0, 62], yaw: Math.PI / 2, catches: true, vision: { range: 17, fov: 100 }, walk: 0.9,
       patrol: [[56, 62, 7, Math.PI / 2], [44, 72, 5, 0], [30, 56, 6, -Math.PI / 2], [46, 52, 2]] });
+    d.push({ id: 'dutch', char: 'thug1', role: 'story', name: 'Dutch', pos: [36, 0, 40], yaw: Math.PI, passive: true, idleClip: 'idle_wait' });
     this.defineDialogue();
   }
 
@@ -107,11 +111,18 @@ export class Chapter3 extends Chapter {
     D.clothes_both = [{ who: 'jax', text: 'Barn. Before he turns around.' }];
     D.road = [
       { who: 'elias', text: 'County road. That cruiser makes a loop every minute or so.' },
-      { who: 'jax', text: 'Then we cross when its back is turned. Simple.' },
+      { who: 'jax', text: 'Then we wait for Ray where it can\'t see us. He\'ll be at the mile marker.' },
     ];
-    D.road_tip = [{ who: 'narrator', text: 'Stay out of the headlights. Cross when the patrol car is far away.', dur: 3.5 }];
-    D.stream = [{ who: 'elias', text: 'There\'s a hunting cabin up this stream. Empty this time of year.' }];
+    D.road_tip = [{ who: 'narrator', text: 'Stay out of the patrol car\'s headlights. Move when it is far away.', dur: 3.5 }];
+    D.pickup_go = [{ who: 'jax', text: 'Mile marker\'s just past the bend. Ray will flash his lights twice.' }];
+    D.trailer_cash = [
+      { who: 'jax', text: 'Got it. Eleven grand, give or take what the mice ate.' },
+      { who: 'elias', text: 'You buried eleven thousand dollars under a trailer.' },
+      { who: 'jax', text: 'Banks ask questions. Dirt doesn\'t.' },
+    ];
+    D.bikes_go = [{ who: 'jax', text: 'Dutch doesn\'t wait. Bikes are by the tarp — keys are in them, nobody comes out here.' }];
     D.walt_spot = [{ who: 'walt', text: 'Hey! Who\'s out there? Martha, call the sheriff!', dur: 2.6 }];
+    D.plan = [];
   }
 
   // ================================================================== build
@@ -135,6 +146,14 @@ export class Chapter3 extends Chapter {
     await this.buildCabin();
     await this.buildLog();
     await this.buildVehicles();
+    this.bikes = new BikeSystem(g);
+    await this.bikes.init({ headlights: true });
+    for (const v of this.bikes.visuals.values()) v.root.visible = false;
+    this.bikes.ctrl.onCrash = () => { /* a short ride: crashes just stop the bike */ };
+    this.rayCar = await Car.create(w, { tint: 0x6a2a24 });
+    this.rayCar.root.visible = false;
+    this.dutchVan = await Car.create(w, { tint: 0x2c2f33 });
+    this.dutchVan.root.visible = false;
     this.kit.initLightPool(Math.max(1, g.deps.renderer.q.maxLights - 2));
     this.kit.finish();
     w.ambientLoop('amb_wind', 0.3);
@@ -146,6 +165,7 @@ export class Chapter3 extends Chapter {
       this.foliage?.update(dt, g.cam.camera.position);
       this.updateCars(t);
       this.updateFire(dt);
+      this.updateRayCar(dt, t);
     });
     this.buildInteractions();
     this.buildTriggers();
@@ -406,13 +426,23 @@ export class Chapter3 extends Chapter {
     ]);
     const y = this.baseAt(CABIN.x, CABIN.z);
     const { x, z } = CABIN;
-    kit.floor(logs, x - 3, z - 3.5, x + 3, z + 3.5, y + 0.3, 0.3, 'wood');
-    kit.wall(logs, x - 3, z - 3.5, x + 3, z - 3.5, y + 0.3, 2.6, 0.2, [{ at: 3, width: 1.0, bottom: 0, top: 2.0 }]);
-    kit.wall(logs, x + 3, z + 3.5, x - 3, z + 3.5, y + 0.3, 2.6, 0.2);
-    kit.wall(logs, x - 3, z + 3.5, x - 3, z - 3.5, y + 0.3, 2.6, 0.2, [{ at: 3.5, width: 1.0, bottom: 1.0, top: 1.8 }]);
-    kit.wall(logs, x + 3, z - 3.5, x + 3, z + 3.5, y + 0.3, 2.6, 0.2);
+    // Jax's trailer: an old single-wide on blocks, porch light, a lit window, a tarp for the bikes.
+    void roof;
+    const shell = await L.pbr('corrugated', { scale: 0.6, color: 0xb8b0a0, metalness: 0.35, roughness: 0.6 });
+    kit.box(shell, [x, y + 1.75, z], [7.6, 2.7, 2.7], 0, { surface: 'metal' });
+    for (const dx of [-3, 0, 3]) kit.box(L.plain(0x6e6a64, 0.95), [x + dx, y + 0.2, z], [0.4, 0.4, 2.4], 0, false);
+    const win = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.6), L.emissive(0xffd9a0, 2.2));
+    win.position.set(x - 1.8, y + 2.0, z - 1.36); win.rotation.y = Math.PI;
+    this.g.world.root.add(win);
+    kit.box(L.plain(0x5a4630, 0.8), [x + 1.6, y + 1.5, z - 1.37], [0.9, 2.0, 0.04], 0, false); // door
+    kit.stairs(logs, x + 1.6, z - 2.6, 0, 1.0, y, y + 0.4, 1.2, 'wood');
+    kit.bulb(L.emissive(0xffd29a, 3), L.plain(0x333333, 0.6, 0.5), x + 2.4, y + 2.6, z - 1.5, 0xffc890, 2.2, 9, 'trailer');
+    // Floor panel at the back (the cash)
+    kit.box(L.plain(0x4a3a2a, 0.9), [x, y + 0.45, z + 1.45], [1.4, 0.06, 0.6], 0, false);
+    // Tarp lean-to where the bikes live
+    kit.box(L.plain(0x3d4a3a, 1), [x + 6.2, y + 2.1, z - 0.5], [3.6, 0.05, 3.2], 0, false);
+    for (const [dx, dz] of [[4.5, -2], [7.9, -2], [4.5, 1], [7.9, 1]] as const) this.kit.batch.add(cylinderBetween(v3(x + dx, y, z + dz), v3(x + dx, y + 2.1, z + dz), 0.05, 6), L.plain(0x6a5a46, 0.9));
     this.gableMat = logs;
-    this.roofHalves(roof, x, y + 2.9, z, 6.6, 7.6, 1.6);
     // Campfire ring in front of the cabin
     const fx = x + 1, fz = z - 7;
     this.firePos = v3(fx, this.y(fx, fz), fz);
@@ -539,7 +569,7 @@ export class Chapter3 extends Chapter {
   private updateCars(t: number): void {
     const g = this.g;
     this.cruiser.update(t);
-    const on = this.flags.phase === 'road' || this.flags.phase === 'cabin';
+    const on = this.flags.phase === 'road';
     this.patrol.root.visible = on;
     if (!on) { this.patrol.lightsOn = false; return; }
     this.patrol.lightsOn = true;
@@ -552,6 +582,25 @@ export class Chapter3 extends Chapter {
     this.patrolSound?.set(1800, 0.3, 0.5, pos);
   }
   private patrolSound: ReturnType<import('../engine/audio').AudioManager['engine']> = null;
+
+  /** Ray's car rolls in along the county road and stops at the pickup spot. */
+  private updateRayCar(dt: number, t: number): void {
+    if (!this.rayCar) return;
+    const d = this.rayDrive;
+    if (d) {
+      // Shared clock, so the car is in the same place on both screens (and in step with the cutscene).
+      const u = Math.min(1, Math.max(0, (this.g.session.sharedNow() - d.start) / 1000 / d.dur));
+      const k = 1 - (1 - u) ** 2;
+      void dt;
+      const x = THREE.MathUtils.lerp(PICKUP.x + 70, PICKUP.x + 2, k);
+      const z = 112 + Math.sin(x / 40) * 5 - 1.6;
+      const x2 = x + 0.5, z2 = 112 + Math.sin(x2 / 40) * 5 - 1.6;
+      this.rayCar.setPose(v3(x, this.y(x, z), z), Math.atan2(x - x2, z - z2), this.g.world.physics);
+      this.rayCar.lightsOn = true;
+    }
+    if (this.rayCar.root.visible) this.rayCar.update(t);
+    if (this.dutchVan.root.visible) this.dutchVan.update(t);
+  }
 
   // ================================================================== interactions
   private buildInteractions(): void {
@@ -575,11 +624,32 @@ export class Chapter3 extends Chapter {
       enabled: () => !!this.flags.logDown && this.logT >= 0.99 && this.g.local.body.pos.z < lb.z + 1, onUse: () => this.crossLog() });
     I.add({ id: 'log_b', coop: 'log', role: 'b', pos: v3(lb.x + 0.7, lb.y, lb.z - 0.8), radius: 1.3, label: 'Push the dead pine', icon: 'coop', mode: 'hold', holdTime: 1.4, pose: 'push', facing: -0.3,
       enabled: () => this.flags.phase === 'ravine' && !this.flags.logDown });
+    // Jax's trailer: lift the floor panel together, then the bikes.
+    const ty = this.baseAt(CABIN.x, CABIN.z);
+    for (const [role, dx] of [['a', -0.7], ['b', 0.7]] as const) {
+      I.add({ id: `cash_${role}`, coop: 'cash', role, pos: v3(CABIN.x + dx, ty, CABIN.z + 2.1), radius: 1.2, label: 'Lift the floor panel', icon: 'coop', mode: 'hold', holdTime: 1.4, pose: 'pick_low', facing: Math.PI,
+        enabled: () => this.flags.phase === 'cabin' && !this.flags.cash });
+    }
+    for (const c of ['elias', 'jax'] as CharacterId[]) {
+      const bp = this.bikeSpot(c);
+      I.add({ id: `bike_${c}`, who: c, pos: bp.pos, radius: 1.6, label: 'Get on the bike', icon: 'hand',
+        enabled: () => this.flags.phase === 'cabin' && !!this.flags.talked && !this.bikes.mounted,
+        onUse: () => { this.bikes.parkedLocal = false; this.bikes.mount(bp.pos.clone(), bp.yaw); g.session.request('mounted', { who: c }); } });
+    }
     for (const c of ['elias', 'jax'] as CharacterId[]) {
       I.add({ id: `clothes_${c}`, who: c, pos: v3(c === 'elias' ? 36.2 : 38.8, this.farmY, 58.6), radius: 1.4, label: 'Take clothes off the line', icon: 'hand', facing: Math.PI,
         enabled: () => this.flags.phase === 'farm' && !this.flags[`clothes_${c}`], onUse: () => { g.local.body.setPose('pick_low', {}, { restart: true }); g.session.request('clothes', { who: c }); } });
     }
   }
+
+  /** Where each bike waits under the tarp. */
+  private bikeSpot(c: CharacterId): { pos: THREE.Vector3; yaw: number } {
+    const x = CABIN.x + (c === 'elias' ? 5.4 : 7.0), z = CABIN.z - 0.6;
+    return { pos: v3(x, this.baseAt(CABIN.x, CABIN.z), z), yaw: -Math.PI / 2 - 0.3 };
+  }
+  private bikes!: BikeSystem;
+  /** Seconds since both were riding (the short ride before 'Later…'). */
+  private rideT = -1;
 
   // ================================================================== triggers
   private buildTriggers(): void {
@@ -590,8 +660,8 @@ export class Chapter3 extends Chapter {
     this.addTrigger({ id: 'ravine_cross', min: [-80, -20, -22], max: [80, 30, -10], who: 'both', enabled: () => this.flags.phase === 'ravine' && !!this.flags.logDown });
     this.addTrigger({ id: 'farm', min: [FARM.x - 32, -20, FARM.z - 34], max: [FARM.x + 32, 30, FARM.z + 34], who: 'both', enabled: () => this.flags.phase === 'north' });
     this.addTrigger({ id: 'barn', min: [this.barn.x - 5.8, -20, this.barn.z - 7.8], max: [this.barn.x + 5.8, 40, this.barn.z + 3.4], who: 'both', enabled: () => this.flags.phase === 'farm' && !!this.flags.clothes_elias && !!this.flags.clothes_jax });
-    this.addTrigger({ id: 'road_crossed', min: [-80, -20, 121], max: [120, 40, 140], who: 'both', enabled: () => this.flags.phase === 'road' });
-    this.addTrigger({ id: 'cabin', min: [CABIN.x - 9, -20, CABIN.z - 12], max: [CABIN.x + 9, 40, CABIN.z + 4], who: 'both', enabled: () => this.flags.phase === 'cabin' });
+    // Ray picks them up at the mile marker on the county road.
+    this.addTrigger({ id: 'pickup', min: [PICKUP.x - 9, -20, PICKUP.z - 9], max: [PICKUP.x + 9, 40, PICKUP.z + 4], who: 'both', enabled: () => this.flags.phase === 'road' });
   }
 
   onTrigger(id: string): void {
@@ -611,6 +681,7 @@ export class Chapter3 extends Chapter {
         this.saveCheckpoint('ravine');
         g.session.emit('flag', { k: 'phase', v: 'north' });
         this.objective('Keep heading north — there\'s a farm past the ridge', [FARM.x, this.farmY + 2, FARM.z - 20]);
+        this.cutscene('cs3_plan');
         break;
       case 'farm':
         this.saveCheckpoint('farm');
@@ -618,13 +689,7 @@ export class Chapter3 extends Chapter {
         this.cutscene('cs3_farm');
         break;
       case 'barn': this.cutscene('cs3_barn'); break;
-      case 'road_crossed':
-        this.saveCheckpoint('cabin');
-        g.session.emit('flag', { k: 'phase', v: 'cabin' });
-        this.say('stream');
-        this.objective('Follow the stream to the hunting cabin', [CABIN.x, this.baseAt(CABIN.x, CABIN.z) + 2, CABIN.z]);
-        break;
-      case 'cabin': this.cutscene('cs3_campfire'); break;
+      case 'pickup': this.cutscene('cs3_pickup'); break;
     }
   }
 
@@ -686,24 +751,24 @@ export class Chapter3 extends Chapter {
         { shot: () => twoShot(g, 'elias', 'jax', 7, 2.2, 1.45, 1), lines: [
           { who: 'jax', text: 'How do I look?', anim: 'shrug' },
           { who: 'elias', text: 'Like a man who stole a farmer\'s Sunday shirt.' },
-          { who: 'jax', text: 'There\'s a phone back there. I\'ll keep watch on the road. Two minutes.', anim: 'talk' },
+          { who: 'jax', text: 'There\'s a phone back there. Time to call in that favour. Two minutes.', anim: 'talk' },
         ] },
         { dur: 2.2, shot: () => shot(v3(this.barn.x + 3, this.farmY + 1.7, this.barn.z + 4.2), v3(this.barn.x + 5.6, this.farmY + 1.4, this.barn.z + 6), 2.2, { fov: 38 }),
           run: () => { walkChar(g, 'jax', [v3(this.barn.x + 0.5, this.farmY + 0.1, this.barn.z + 3.5), v3(this.barn.x + 5.0, this.farmY + 0.1, this.barn.z + 6.0)], 1.4, () => { poseChar(g, 'jax', 'talk_phone'); }, Math.PI / 2); } },
         { shot: () => shot(v3(this.barn.x + 3.8, this.farmY + 1.65, this.barn.z + 5.0), v3(this.barn.x + 5.2, this.farmY + 1.6, this.barn.z + 6.05), 13, { fov: 34 }),
           run: () => { placeChar(g, 'jax', v3(this.barn.x + 5.1, this.farmY + 0.1, this.barn.z + 6.0), Math.PI / 2); poseChar(g, 'jax', 'talk_phone'); clipChar(g, 'jax', 'phone_listen', 'upper'); },
           lines: [
-            { who: 'jax', text: '(quietly) It\'s me.', pause: 1.2 },
-            { who: 'jax', text: 'We\'re out. Both of us. ...No. Not yet.', pause: 1.0 },
-            { who: 'jax', text: 'He hasn\'t said. He doesn\'t trust anybody. ...I know what I signed.', pause: 0.8 },
-            { who: 'jax', text: 'Just— give me time. I\'ll call when I can.', pause: 0.6 },
+            { who: 'jax', text: '(quietly) Ray. It\'s me.', pause: 1.0 },
+            { who: 'jax', text: 'Yeah, you saw the news. Both of us. ...I told you I would.', pause: 0.8 },
+            { who: 'jax', text: 'County road, the mile marker past the Ashby farm. Dusk. Lights twice.', pause: 0.8 },
+            { who: 'jax', text: 'And bring the car, Ray. Not the truck. The truck has your name on it.', pause: 0.6 },
           ] },
         { dur: 1.6, shot: () => closeUp(g, 'jax', 1.6, 0.9, 0.2, { fov: 32 }), run: () => { clipChar(g, 'jax', null, 'upper'); poseChar(g, 'jax', null); g.audio.play('switch', { pos: v3(this.barn.x + 5.8, this.farmY + 1.5, this.barn.z + 6), volume: 0.5 }); placeChar(g, 'elias', v3(this.barn.x + 1.4, this.farmY + 0.1, this.barn.z + 5.0), Math.PI / 2); } },
         { shot: () => twoShot(g, 'elias', 'jax', 9, 2.0, 1.45, 1), lines: [
           { who: 'elias', text: 'Who was that?' },
-          { who: 'jax', text: 'My cousin. In Harlow. Figured he could lend us a car.', anim: 'talk' },
-          { who: 'elias', text: 'And?' },
-          { who: 'jax', text: 'Didn\'t pick up. Left a message. Let\'s go before the old man comes in for his tractor keys.', anim: 'shrug' },
+          { who: 'jax', text: 'Ray. He\'s coming. Dusk, at the county road.', anim: 'talk' },
+          { who: 'elias', text: 'Just like that.' },
+          { who: 'jax', text: 'Just like that. Let\'s go before the old man comes in for his tractor keys.', anim: 'shrug' },
         ] },
         { dur: 2.5, fade: 'out', shot: () => shot(v3(this.barn.x, this.farmY + 4, this.barn.z - 12), v3(this.barn.x, this.farmY + 2, this.barn.z), 2.5, { fov: 46 }) },
       ],
@@ -730,7 +795,7 @@ export class Chapter3 extends Chapter {
       },
       beats: [
         { dur: 5, fade: 'in', shot: () => shot(v3(this.firePos.x + 6, this.firePos.y + 3, this.firePos.z - 8), v3(this.firePos.x, this.firePos.y + 0.8, this.firePos.z), 5, { fov: 42, fromEnd: v3(this.firePos.x + 4, this.firePos.y + 2, this.firePos.z - 6) }),
-          lines: [{ who: 'narrator', text: 'Night. A hunting cabin twenty miles from Harlow.', dur: 3.4 }] },
+          lines: [{ who: 'narrator', text: 'Black Hollow. Jax\'s trailer, forty miles from anywhere.', dur: 3.4 }] },
         { shot: () => twoShot(g, 'elias', 'jax', 60, 3.0, 0.9, 1), lines: [
           { who: 'jax', text: 'So. Victor Crane.', pause: 0.6 },
           { who: 'elias', text: 'I kept his books for nine years. Crane Development. Roads, bridges, a shopping mall that never got built.' },
@@ -750,23 +815,140 @@ export class Chapter3 extends Chapter {
           { who: 'jax', text: 'Crane made a phone call.' },
         ] },
         { shot: () => twoShot(g, 'jax', 'elias', 40, 2.6, 1.0, -1), lines: [
-          { who: 'elias', text: 'The ballistics on Tom never matched. The bullet was from a different lot than the box in my drawer. My lawyer couldn\'t get it in front of the jury.', pause: 0.5 },
-          { who: 'jax', text: 'Yeah. The lot numbers. Somebody at the lab buried that.', pause: 1.5 },
-          { who: 'elias', text: '...That was never in the papers, Jax.', look: 'jax', pause: 1.5 },
-          { who: 'jax', text: 'You hear things in county. Lawyers talk. Guards talk.', anim: 'shrug', pause: 0.8 },
-          { who: 'elias', text: 'Mm.', pause: 1.5 },
-          { who: 'elias', text: 'My sister Mia runs a scrapyard in Harlow. She\'ll hide us. And she knows where Crane spends his nights.' },
+          { who: 'elias', text: 'Crane never goes anywhere without four men, and the four men never go anywhere without guns.', pause: 0.5 },
+          { who: 'jax', text: 'Then we bring guns. I know a guy. Dutch. He sells to people who don\'t fill out forms.' },
+          { who: 'elias', text: 'That\'s what the cash is for.' },
+          { who: 'jax', text: 'That\'s what the cash is for.', pause: 0.8 },
+          { who: 'elias', text: 'Victor has a little brother. Julius. Runs his building sites. Victor tells him everything.' },
+          { who: 'jax', text: 'So we ask Julius where his big brother sleeps.' },
+          { who: 'elias', text: 'We ask. Once. Nicely.' },
           { who: 'jax', text: 'And then?' },
-          { who: 'elias', text: 'And then he tells the truth. Or he never tells anything again.' },
+          { who: 'elias', text: 'And then Victor Crane tells the truth. Or he never tells anything again.' },
         ] },
         { dur: 4, fade: 'out', shot: () => shot(v3(this.firePos.x, this.firePos.y + 10, this.firePos.z - 14), v3(this.firePos.x, this.firePos.y, this.firePos.z), 4, { fov: 40 }) },
       ],
       end: () => {
         poseChar(g, 'elias', null); poseChar(g, 'jax', null);
-        if (this.authority) g.session.emit('chapterEnd', { next: 4 });
+        if (this.authority) {
+          g.session.emit('flag', { k: 'talked', v: true });
+          this.say('bikes_go');
+          this.objective('Take the bikes — Dutch is waiting', [CABIN.x + 6, this.baseAt(CABIN.x, CABIN.z) + 1.2, CABIN.z - 2]);
+        }
       },
     };
+    this.buildStoryCutscenes();
   }
+
+  // ------------------------------------------------------------------ new story beats
+  private buildStoryCutscenes(): void {
+    const g = this.g;
+    const C = this.cutscenes;
+    // After the log: walking north, Jax reveals the plan he made on visiting day.
+    C.cs3_plan = {
+      id: 'cs3_plan', music: 'music_explore', skippable: true,
+      start: () => {
+        const z = ravZ(LOG_X) + 12;
+        placeChar(g, 'elias', v3(LOG_X - 0.8, this.y(LOG_X - 0.8, z), z), 0);
+        placeChar(g, 'jax', v3(LOG_X + 0.8, this.y(LOG_X + 0.8, z), z), 0);
+        run(g, 'elias', [{ to: v3(LOG_X - 0.6, this.y(LOG_X - 0.6, z + 14), z + 14), dur: 16, anim: 1.0 }]);
+        run(g, 'jax', [{ to: v3(LOG_X + 1.0, this.y(LOG_X + 1.0, z + 14), z + 14), dur: 16, anim: 1.0 }]);
+      },
+      beats: [
+        { shot: () => twoShot(g, 'elias', 'jax', 16, 3.0, 1.5, 1), lines: [
+          { who: 'elias', text: 'We can\'t walk to Harlow in prison orange. We need a car, a phone, a miracle.' },
+          { who: 'jax', text: 'We need Ray.', anim: 'talk' },
+          { who: 'elias', text: 'Who\'s Ray?' },
+          { who: 'jax', text: 'Visiting day, three weeks ago. The guy in the Raiders cap who cried a little.' },
+          { who: 'elias', text: 'That was your cousin?' },
+          { who: 'jax', text: 'I told him: if I ever get out, the county road past the Ashby farm, dusk. He\'s been watching the news every night since.', anim: 'talk_cool' },
+          { who: 'elias', text: 'You planned this before you even met me.' },
+          { who: 'jax', text: 'I planned to get out. You were the bonus. The guy with the map.', anim: 'laugh' },
+          { who: 'elias', text: 'Then let\'s not keep Ray waiting.' },
+        ] },
+      ],
+      end: () => { if (this.authority) this.objective('Keep heading north — get clothes at the farm past the ridge, then meet Ray', [FARM.x, this.farmY + 2, FARM.z - 20]); },
+    };
+    // County road at dusk: Ray's car comes round the bend and picks them up.
+    C.cs3_pickup = {
+      id: 'cs3_pickup', music: 'music_explore',
+      start: () => {
+        this.setTOD('dusk');
+        const y = this.baseAt(PICKUP.x, PICKUP.z);
+        placeChar(g, 'elias', v3(PICKUP.x - 1.4, y, PICKUP.z - 2.2), 0.4);
+        placeChar(g, 'jax', v3(PICKUP.x + 0.4, y, PICKUP.z - 2.6), 0.2);
+        this.rayDrive = { start: g.session.sharedNow(), dur: 4.5 };
+        this.rayCar.root.visible = true;
+      },
+      beats: [
+        { dur: 4.6, shot: () => shot(v3(PICKUP.x - 8, this.baseAt(PICKUP.x, PICKUP.z) + 2.2, PICKUP.z - 8), v3(PICKUP.x + 8, this.baseAt(PICKUP.x, PICKUP.z) + 1.0, PICKUP.z + 3), 4.6, { fov: 44, toEnd: v3(PICKUP.x + 1, this.baseAt(PICKUP.x, PICKUP.z) + 1.0, PICKUP.z + 3) }),
+          lines: [{ who: 'jax', text: 'Lights. Twice. That\'s him.', dur: 2.4 }] },
+        { dur: 6.5, shot: () => twoShot(g, 'jax', 'elias', 6.5, 2.4, 1.4, 1), lines: [
+          { who: 'ray', text: 'Get in, get in! That cruiser comes round every two minutes!', dur: 3.0 },
+          { who: 'jax', text: 'Ray, you beautiful idiot.', dur: 2.0 },
+        ] },
+        { dur: 2.4, fade: 'out', run: () => { walkChar(g, 'elias', [v3(PICKUP.x + 1.2, this.baseAt(PICKUP.x, PICKUP.z), PICKUP.z + 0.6)], 1.3); walkChar(g, 'jax', [v3(PICKUP.x + 2.4, this.baseAt(PICKUP.x, PICKUP.z), PICKUP.z + 0.6)], 1.3); },
+          shot: () => shot(v3(PICKUP.x - 4, this.baseAt(PICKUP.x, PICKUP.z) + 1.8, PICKUP.z - 5), v3(PICKUP.x + 2, this.baseAt(PICKUP.x, PICKUP.z) + 1.0, PICKUP.z + 1), 2.4, { fov: 40 }) },
+      ],
+      end: () => {
+        this.rayDrive = null;
+        if (this.authority) { this.saveCheckpoint('cabin'); g.session.emit('restart', { checkpoint: 'cabin' }); }
+      },
+    };
+    // Black Hollow: Ray drops them at Jax's trailer.
+    C.cs3_trailer = {
+      id: 'cs3_trailer', music: 'music_night',
+      start: () => { this.setTOD('night'); },
+      beats: [
+        { dur: 4.5, fade: 'in', shot: () => shot(v3(CABIN.x + 10, this.baseAt(CABIN.x, CABIN.z) + 4, CABIN.z - 12), v3(CABIN.x, this.baseAt(CABIN.x, CABIN.z) + 1.5, CABIN.z), 4.5, { fov: 44, fromEnd: v3(CABIN.x + 7, this.baseAt(CABIN.x, CABIN.z) + 2.6, CABIN.z - 9) }),
+          lines: [{ who: 'narrator', text: 'Later. Black Hollow.', dur: 2.6 }] },
+        { shot: () => twoShot(g, 'jax', 'elias', 9, 2.4, 1.45, -1), lines: [
+          { who: 'jax', text: 'Home sweet home. Rent\'s cheap when you never pay it.', anim: 'talk_cool' },
+          { who: 'elias', text: 'Ray didn\'t want to come in?' },
+          { who: 'jax', text: 'Ray doesn\'t want to know anything. Smartest man in our family.' },
+          { who: 'jax', text: 'Cash is under the floor at the back. Panel\'s heavy — give me a hand.' },
+        ] },
+      ],
+      end: () => { if (this.authority) this.objective('Find the cash Jax hid under his trailer — lift the floor panel together', [CABIN.x, this.baseAt(CABIN.x, CABIN.z) + 1, CABIN.z + 2.2]); },
+    };
+    // Later: the arms deal at the old Ashby barn.
+    C.cs3_dealer = {
+      id: 'cs3_dealer', music: 'music_tension',
+      start: () => {
+        this.setTOD('night');
+        if (this.bikes.mounted) this.bikes.dismount();
+        const b = this.barn, y = this.farmY;
+        this.bikes.park('elias', v3(b.x - 4.5, y, b.z - 11), 0.4);
+        this.bikes.park('jax', v3(b.x - 3.0, y, b.z - 12), 0.2);
+        placeChar(g, 'elias', v3(b.x - 1.6, y, b.z - 9.4), 0.3);
+        placeChar(g, 'jax', v3(b.x - 0.4, y, b.z - 9.0), 0.1);
+        const d = g.npcs.get('dutch');
+        if (d) { d.enabled = true; d.body.visible = true; d.body.solid = true; npcPlace(g, 'dutch', v3(b.x - 0.6, y, b.z - 6.8), Math.PI); }
+        this.dutchVan.root.visible = true;
+        this.dutchVan.setPose(v3(b.x + 2.6, y, b.z - 7.5), Math.PI * 0.55, g.world.physics);
+      },
+      beats: [
+        { dur: 4, fade: 'in', shot: () => shot(v3(this.barn.x - 9, this.farmY + 3.2, this.barn.z - 16), v3(this.barn.x, this.farmY + 1.4, this.barn.z - 8), 4, { fov: 42 }),
+          lines: [{ who: 'narrator', text: 'Later that night. The old Ashby barn.', dur: 3 }] },
+        { shot: () => twoShot(g, 'jax', 'dutch', 30, 2.6, 1.5, 1), lines: [
+          { who: 'dutch', text: 'The famous two. You\'re on every channel.', anim: 'talk_cool' },
+          { who: 'jax', text: 'Then you know we\'re in a hurry, Dutch. It\'s all there.', anim: 'talk' },
+          { who: 'dutch', text: '(counting) ...Two nines. Four magazines each. A box of shells.' },
+          { who: 'dutch', text: 'Don\'t point them at anything you\'re not ready to bury.' },
+          { who: 'elias', text: 'We won\'t.' },
+          { who: 'dutch', text: 'And boys — you never met me.' },
+          { who: 'jax', text: 'Never met who?', anim: 'laugh' },
+        ] },
+        { dur: 3.2, shot: () => closeUp(g, 'elias', 3.2, 1.0, -0.3, { fov: 34 }), run: () => { g.audio.play('switch', { volume: 0.5 }); },
+          lines: [{ who: 'elias', text: 'Julius Crane. Tomorrow morning.', dur: 2.6 }] },
+        { dur: 3, fade: 'out', shot: () => shot(v3(this.barn.x - 4, this.farmY + 6, this.barn.z - 20), v3(this.barn.x, this.farmY + 1, this.barn.z - 8), 3, { fov: 46 }) },
+      ],
+      end: () => { if (this.authority) g.session.emit('chapterEnd', { next: 4 }); },
+    };
+  }
+  /** Ray's car driving in for the pickup (cutscene). */
+  private rayDrive: { start: number; dur: number } | null = null;
+  private rayCar!: Car;
+  private dutchVan!: Car;
 
   // ================================================================== time of day
   setTOD(t: TOD): void {
@@ -809,6 +991,17 @@ export class Chapter3 extends Chapter {
     this.applyLog(this.flags.logDown ? 1 : 0);
     for (let i = 0; i < this.clothes.length; i++) this.clothes[i].visible = !(past('farm') || (i === 1 && this.flags.clothes_elias) || (i === 3 && this.flags.clothes_jax));
     this.roadSpotT = { elias: 0, jax: 0 };
+    // Trailer-phase state.
+    if (this.bikes) {
+      if (this.bikes.mounted) this.bikes.dismount();
+      for (const v of this.bikes.visuals.values()) v.root.visible = false;
+      this.bikes.parkedLocal = this.bikes.parkedRemote = false;
+    }
+    for (const k of ['cash', 'talked', 'mounted_elias', 'mounted_jax']) delete this.flags[k];
+    this.rideT = -1;
+    this.rayDrive = null;
+    if (this.rayCar) this.rayCar.root.visible = false;
+    if (this.dutchVan) this.dutchVan.root.visible = false;
     switch (id) {
       case 'bank': case 'ravine':
         this.setTOD('dawn');
@@ -823,12 +1016,15 @@ export class Chapter3 extends Chapter {
       case 'road':
         this.setTOD('dusk');
         g.audio.playMusic('music_stealth', 2);
-        if (this.authority) setTimeout(() => { this.say('road'); this.objective('Cross the county road without being seen', [46, this.baseAt(46, 112) + 1, 112]); }, 800);
+        if (this.authority) setTimeout(() => { this.say('road'); this.objective('Get to the mile marker on the county road — stay out of the patrol\'s headlights', [PICKUP.x, this.baseAt(PICKUP.x, PICKUP.z) + 1, PICKUP.z]); }, 800);
         setTimeout(() => { if (this.authority) this.say('road_tip'); }, 7000);
         break;
       case 'cabin':
+        // Jax's trailer at night: campfire going, the bikes under the tarp.
         this.setTOD('night');
+        this.fire.visible = true;
         g.audio.playMusic('music_night', 2);
+        for (const c of ['elias', 'jax'] as CharacterId[]) { const bp = this.bikeSpot(c); this.bikes.park(c, bp.pos, bp.yaw); }
         break;
     }
   }
@@ -839,6 +1035,12 @@ export class Chapter3 extends Chapter {
     const a = (args ?? {}) as Record<string, unknown>;
     switch (type) {
       case 'coop':
+        if (a.group === 'cash') {
+          this.flags.cash = true;
+          g.audio.play('wood_break', { pos: v3(CABIN.x, this.baseAt(CABIN.x, CABIN.z) + 0.5, CABIN.z + 1.5), volume: 0.7 });
+          if (this.authority) { this.say('trailer_cash'); setTimeout(() => this.cutscene('cs3_campfire'), 7500); }
+          return true;
+        }
         if (a.group === 'log') {
           this.flags.logDown = true;
           g.audio.play('creak', { pos: this.logBase, volume: 0.9 });
@@ -847,6 +1049,11 @@ export class Chapter3 extends Chapter {
           return true;
         }
         return false;
+      case 'mounted': {
+        this.flags[`mounted_${a.who}`] = true;
+        if (this.authority && this.flags.mounted_elias && this.flags.mounted_jax && this.rideT < 0) { this.rideT = 0; this.objective('Ride out to meet Dutch'); }
+        return true;
+      }
       case 'clothes': {
         const who = a.who as CharacterId;
         this.flags[`clothes_${who}`] = true;
@@ -867,6 +1074,8 @@ export class Chapter3 extends Chapter {
         return true;
       }
       case 'restarted':
+        // Arriving at the trailer from the pickup (a checkpoint jump doesn't run its intro by itself).
+        if (this.authority && a.checkpoint === 'cabin' && !this.g.cutscenes.played.has('cs3_trailer')) this.cutscene('cs3_trailer');
         return true;
       case 'flag':
         return true;
@@ -889,6 +1098,11 @@ export class Chapter3 extends Chapter {
     const lb = g.local.body;
     lb.concealed = lb.crouched && this.covers.some((c) => Math.hypot(lb.pos.x - c.x, lb.pos.z - c.z) < c.r);
     if (!this.authority) return;
+    // A short ride from the trailer, then 'Later…' at the arms deal.
+    if (this.rideT >= 0 && this.flags.phase === 'cabin' && !g.inCutscene) {
+      this.rideT += dt;
+      if (this.rideT > 9) { this.rideT = -2; this.cutscene('cs3_dealer'); }
+    }
     // Road: the patrol car spots anyone in its headlights or right next to it.
     if (this.flags.phase === 'road' && g.state === 'playing') {
       for (const c of ['elias', 'jax'] as CharacterId[]) {

@@ -53,6 +53,9 @@ export const SPEAKERS: Record<string, Omit<SpeakerInfo, 'body'>> = {
   cop: { name: 'Officer', color: '#8fb0ff', voice: { pitch: 0.9, rate: 1.05, prefer: /male/i } },
   radio: { name: 'Radio', color: '#9fe0a0', voice: { pitch: 1.0, rate: 1.1, prefer: /male/i } },
   thug: { name: 'Crane\'s man', color: '#e09090', voice: { pitch: 0.85, rate: 1.0, prefer: /male/i } },
+  ray: { name: 'Ray', color: '#f2b36b', voice: { pitch: 1.1, rate: 1.1, prefer: /male/i } },
+  dutch: { name: 'Dutch', color: '#b8c48a', voice: { pitch: 0.8, rate: 0.92, prefer: /male/i } },
+  julius: { name: 'Julius Crane', color: '#d9a35a', voice: { pitch: 1.0, rate: 1.1, prefer: /male/i } },
   mia: { name: 'Mia', color: '#f0a0c8', voice: { pitch: 1.2, rate: 1.0, prefer: /female|samantha|karen/i } },
   narrator: { name: '', color: '#ddd' },
 };
