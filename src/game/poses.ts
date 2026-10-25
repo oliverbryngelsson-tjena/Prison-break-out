@@ -481,6 +481,44 @@ export const POSES: Record<string, PoseDef> = {
     dur: Infinity, canMove: true, fade: 0.3, upperClip: 'phone_talk',
     apply() { /* clip only */ },
   },
+  arm_wrestle: {
+    // Bent over a table, right elbow down, hand locked with the opponent's at points.grip (shared point),
+    // left hand flat on the table. k.strain 0..1 adds effort shake.
+    dur: Infinity, canMove: false, lockTurn: true, fade: 0.3, clip: 'idle',
+    apply(m, t, w, c) {
+      const fr = frame(m);
+      const strain = c.k?.strain ?? 0.5;
+      spine(m, fr, 0.78 * w, 0.18 * w);
+      hip(m, 0, -0.34 * w, 0.04 * w);
+      const fr2 = frame(m);
+      const shake = Math.sin(t * 23) * 0.008 * strain;
+      const grip = c.points?.grip ?? fr2.chest.clone().addScaledVector(fr2.fwd, 0.5);
+      const table = c.k?.table ?? grip.y - 0.25;
+      arm(m, 'R', grip.clone().add(new THREE.Vector3(shake, shake * 0.5, 0)), w, new THREE.Vector3(0, -1, 0).addScaledVector(fr2.fwd, 0.4).addScaledVector(fr2.right, 0.3));
+      fist(m, 'R', w);
+      arm(m, 'L', fr2.base.clone().addScaledVector(fr2.fwd, 0.42).addScaledVector(fr2.right, -0.32).setY(table + 0.04), w, new THREE.Vector3(0, -1, 0).addScaledVector(fr2.right, -1));
+      headTurn(m, frame(m), -0.25 * w, 0);
+    },
+  },
+  shoot: {
+    // Basketball shot: dip, raise the ball overhead, release toward the hoop (release at ~0.55 s).
+    dur: 1.05, canMove: false, lockTurn: true, fade: 0.1,
+    apply(m, t, w) {
+      const fr = frame(m);
+      const dip = Math.sin(smooth(0, 0.45, t) * Math.PI) * w;
+      hip(m, 0, -0.14 * dip, 0);
+      spine(m, fr, -0.08 * w * smooth(0.3, 0.6, t), 0);
+      const fr2 = frame(m);
+      const raise = smooth(0.05, 0.5, t), rel = smooth(0.5, 0.7, t), back = smooth(0.8, 1.05, t);
+      const ball = fr2.chest.clone().addScaledVector(fr2.fwd, 0.32).add(new THREE.Vector3(0, -0.1, 0))
+        .lerp(fr2.head.clone().addScaledVector(fr2.fwd, 0.18).add(new THREE.Vector3(0, 0.28, 0)), raise)
+        .lerp(fr2.head.clone().addScaledVector(fr2.fwd, 0.45).add(new THREE.Vector3(0, 0.42, 0)), rel)
+        .lerp(fr2.chest.clone().addScaledVector(fr2.fwd, 0.3), back);
+      const e = w * (1 - back * 0.9);
+      arm(m, 'R', ball.clone().addScaledVector(fr2.right, 0.06).addScaledVector(fr2.fwd, -0.06), e, new THREE.Vector3(0, -1, 0).addScaledVector(fr2.right, 1));
+      arm(m, 'L', ball.clone().addScaledVector(fr2.right, -0.13).add(new THREE.Vector3(0, -0.04, 0)), e * (1 - rel), new THREE.Vector3(0, -1, 0).addScaledVector(fr2.right, -1));
+    },
+  },
 };
 
 /** Applies a pose (by name) with blend weight to a model; used by both local and remote characters. */

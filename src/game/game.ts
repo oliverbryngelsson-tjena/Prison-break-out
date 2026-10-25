@@ -1,4 +1,5 @@
 // The running game: owns the world, both player characters, NPCs, story events and the frame loop.
+import { MiniGames } from './minigames';
 import * as THREE from 'three';
 import type { CharacterId, NpcSnap, PlayerSnap, Progress } from '../../shared/protocol';
 import type { Renderer } from '../engine/renderer';
@@ -95,6 +96,8 @@ export class Game implements SessionHandlers, CutsceneHost {
   private reviveId = '__revive';
   /** Hook for chapter-specific per-frame logic that needs the game loop (bikes etc.). */
   readonly updaters = new Set<(dt: number) => void>();
+  /** Co-op mini-games (arm wrestling, hoops) that chapters can place. */
+  readonly minigames: MiniGames = new MiniGames(this);
   /** Loading screen status callback. */
   onLoadStatus: ((s: string) => void) | null = null;
   /** Local bike state for snapshots [lean, pitch, steer, rpm, spin] (set by BikeSystem). */
@@ -439,6 +442,7 @@ export class Game implements SessionHandlers, CutsceneHost {
         this.coopSince.delete(group);
         this.interact.coopHeld.delete(group);
         if (this.interact.holding?.coop === group) this.local.endCoopHold();
+        if (group.startsWith('mg_')) { this.minigames.onCoop(group); return; }
         this.chapter.onEvent('coop', { group });
         return;
       }
@@ -488,6 +492,7 @@ export class Game implements SessionHandlers, CutsceneHost {
         this.endChapter((a.next as number | null) ?? null);
         return;
       default:
+        if (type.startsWith('mg') && this.minigames.onEvent(type, args)) return;
         if (!this.chapter.onEvent(type, args)) console.warn('unhandled event', type);
     }
   }
@@ -921,6 +926,7 @@ export class Game implements SessionHandlers, CutsceneHost {
     this.hud.setSubtitle(null, '');
     for (const n of this.npcs.values()) n.dispose();
     this.npcs.clear();
+    this.minigames.dispose();
     try { this.chapter?.dispose(); } catch (e) { console.warn('chapter dispose', e); }
     try { this.world?.dispose(); } catch (e) { console.warn('world dispose', e); }
     this.audio.stopMusic(1.5);

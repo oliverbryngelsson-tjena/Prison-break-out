@@ -52,7 +52,7 @@ export interface ScriptStep {
 
 const easeF = (t: number, e?: ScriptStep['ease']) => (e === 'linear' ? t : e === 'out' ? 1 - (1 - t) ** 2 : t * t * (3 - 2 * t));
 
-export type PlayerState = 'free' | 'scripted' | 'busy' | 'downed' | 'cutscene' | 'bike' | 'hidden';
+export type PlayerState = 'free' | 'scripted' | 'busy' | 'downed' | 'cutscene' | 'bike' | 'hidden' | 'minigame';
 
 export class PlayerController {
   state: PlayerState = 'free';
@@ -202,6 +202,7 @@ export class PlayerController {
     switch (this.state) {
       case 'scripted': this.updateScript(dt); break;
       case 'cutscene': case 'bike': break;
+      case 'minigame': b.speed = 0; break;
       case 'downed': b.speed = 0; this.applyGravity(dt); break;
       case 'hidden': b.speed = 0; if (inp.buttons.interact.pressed) this.interactNearby(); break;
       case 'busy': this.updateHold(dt); this.applyGravity(dt); break;

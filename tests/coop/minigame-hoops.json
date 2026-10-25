@@ -1,0 +1,69 @@
+[
+ {
+  "on": "AB",
+  "until": "window.__app.game.begun && !window.__app.game.cutscenes.current",
+  "timeout": 120000
+ },
+ {
+  "on": "AB",
+  "eval": "(() => { const s = window.__app.game.minigames; return !!s; })()"
+ },
+ {
+  "on": "A",
+  "eval": "(() => { const g = window.__app.game; const p = g.chapter.hoop.spots[0]; g.local.teleport(p, 3.14); return p.toArray(); })()"
+ },
+ {
+  "on": "B",
+  "eval": "(() => { const g = window.__app.game; const p = g.chapter.hoop.spots[1]; g.local.teleport(p, 3.14); return p.toArray(); })()"
+ },
+ {
+  "wait": 1200
+ },
+ {
+  "on": "AB",
+  "hold": "KeyE",
+  "ms": 2000
+ },
+ {
+  "on": "AB",
+  "until": "window.__app.game.minigames.active && window.__app.game.minigames.active.kind === 'hoops'",
+  "timeout": 10000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "shooting hoops starts for both",
+   "expr": "window.__app.game.minigames.active.kind === 'hoops'"
+  }
+ },
+ {
+  "wait": 3500
+ },
+ {
+  "on": "A",
+  "eval": "new Promise(res => { const g = window.__app.game; const ev = (t) => window.dispatchEvent(new KeyboardEvent(t, { code: 'KeyE', key: 'e' })); const good = true; let shots = 0, busy = false; const iv = setInterval(() => { const m = g.minigames.active; if (!m) { clearInterval(iv); return res(shots); } const me = m.shots[g.localChar]; if (me >= 5) { clearInterval(iv); return res(me); } if (m.pendingShot) return; const meter = 0.5 + 0.5 * Math.sin((g.session.sharedNow() / 1000) * 3.4); const ok = Math.abs(meter - 0.78) < 0.03; if ((good && ok) || (!good && meter < 0.3)) { ev('keydown'); setTimeout(() => ev('keyup'), 30); shots++; } }, 16); })"
+ },
+ {
+  "on": "B",
+  "eval": "new Promise(res => { const g = window.__app.game; const ev = (t) => window.dispatchEvent(new KeyboardEvent(t, { code: 'KeyE', key: 'e' })); const good = false; let shots = 0, busy = false; const iv = setInterval(() => { const m = g.minigames.active; if (!m) { clearInterval(iv); return res(shots); } const me = m.shots[g.localChar]; if (me >= 5) { clearInterval(iv); return res(me); } if (m.pendingShot) return; const meter = 0.5 + 0.5 * Math.sin((g.session.sharedNow() / 1000) * 3.4); const ok = Math.abs(meter - 0.78) < 0.03; if ((good && ok) || (!good && meter < 0.3)) { ev('keydown'); setTimeout(() => ev('keyup'), 30); shots++; } }, 16); })"
+ },
+ {
+  "on": "AB",
+  "until": "!window.__app.game.minigames.active",
+  "timeout": 30000
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "Elias (good timing) wins hoops on both screens",
+   "expr": "(window.__app.game.minigames.wins.hoops_mia || {}).elias === 1"
+  }
+ },
+ {
+  "on": "AB",
+  "check": {
+   "name": "both players are free again",
+   "expr": "window.__app.game.local.state === 'free'"
+  }
+ }
+]
